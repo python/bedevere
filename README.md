@@ -1,7 +1,15 @@
 # bedevere
 This bot is meant to help identify issues with a CPython pull request.
 
-## Aside: where does the name come from?
+## What the bot identifies
+### bugs.python.org issue numbers in the title
+If no b.p.o issue number is found the the status fails and the
+"Details" link points to the relevant
+[section of the devguide](https://cpython-devguide.readthedocs.io/pullrequest.html?highlight=bpo-#submitting).
+If an issue number is found then the "Details" link points to the
+issue itself, making it easier to navigate from PR to issue.
+
+## *Aside*: where does the name come from?
 Since this bot is about identifying pull requests that need changes,
 it seemed fitting to name it after Sir Bedevere who knew
 [how to identify a witch](https://youtu.be/k3jt5ibfRzw).

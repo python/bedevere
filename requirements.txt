@@ -1,0 +1,7 @@
+aiohttp==2.0.5
+async-timeout==1.2.0
+chardet==2.3.0
+gidgethub==2.0.0
+multidict==2.1.4
+uritemplate==3.0.0
+yarl==0.10.0

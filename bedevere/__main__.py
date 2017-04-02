@@ -37,4 +37,4 @@ async def main(request):
 if __name__ == "__main__":
     app = web.Application()
     app.router.add_post("/", main)
-    web.run_app(app)
+    web.run_app(app, port=os.environ.get("PORT"))

@@ -1,1 +1,1 @@
-web: python3 - m bedevere
+web: python3 -m bedevere

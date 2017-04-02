@@ -7,8 +7,8 @@ ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
 STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
 FAILURE_STATUS = STATUS_TEMPLATE.copy()
 FAILURE_STATUS["state"] = "failure"
-FAILURE_STATUS["target_url"] = "https://cpython-devguide.readthedocs.io/pullrequest.html?highlight=bpo-#submitting"
-FAILURE_STATUS["description"] = """No issue number of the form "bpo-NNNN" found in the pull request's title."""
+FAILURE_STATUS["target_url"] = "https://cpython-devguide.readthedocs.io/pullrequest.html#submitting"
+FAILURE_STATUS["description"] = """No issue number found in the PR title."""
 TRIVIAL_LABEL = "trivial"
 TRIVIAL_STATUS = STATUS_TEMPLATE.copy()
 TRIVIAL_STATUS["state"] = "success"

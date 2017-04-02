@@ -18,7 +18,7 @@ TRIVIAL_STATUS["description"] = "No issue number necessary."
 async def _post_status(gh, event, status):
     """Post a status in reaction to an event."""
     sha = event.data["pull_request"]["head"]["sha"]
-    await gh.post(f"/repos/python/cpython/status/{sha}", data=status)
+    await gh.post(f"/repos/brettcannon/bedevere/statuses/{sha}", data=status)
 
 
 @router.route("pull_request", "opened")

@@ -19,6 +19,8 @@ async def main(request):
         body = await request.read()
         secret = os.environ.get("GH_SECRET")
         event = sansio.Event.from_http(request.headers, body, secret=secret)
+        if event.event == "ping":
+            return web.Response(status=200)
         oauth_token = os.environ.get("GH_AUTH")
         with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere",

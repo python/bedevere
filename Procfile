@@ -1,1 +1,1 @@
-web: python3.6 - m bedevere
+web: python3 - m bedevere

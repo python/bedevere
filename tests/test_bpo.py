@@ -49,7 +49,7 @@ async def test_set_status_success():
         "pull_request":
             {
                 "head": {"sha": "git-sha"},
-                "title": "bpo-1234: an issue!",
+                "title": "[3.6] bpo-1234: an issue!",
             },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")

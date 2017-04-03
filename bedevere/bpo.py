@@ -25,8 +25,8 @@ async def _post_status(gh, event, status):
 @router.route("pull_request", "synchronize")
 async def set_status(gh, event):
     """Set the issue number status on the pull request."""
-    issue_number_match = ISSUE_RE.match(event.data["pull_request"]["title"])
-    if not issue_number_match:
+    issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
+    if not issue_number_found:
         issue_url = event.data["pull_request"]["issue_url"]
         data = await gh.getitem(issue_url)
         for label in data["labels"]:
@@ -38,7 +38,7 @@ async def set_status(gh, event):
     else:
         status = STATUS_TEMPLATE.copy()
         status["state"] = "success"
-        issue_number = issue_number_match.group("issue")
+        issue_number = issue_number_found.group("issue")
         status["description"] = f"Issue number {issue_number} found."
         status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
     await _post_status(gh, event, status)

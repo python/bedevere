@@ -1,5 +1,6 @@
 # bedevere
 [![Build Status](https://travis-ci.org/python/bedevere.svg?branch=master)](https://travis-ci.org/python/bedevere)
+[![codecov](https://codecov.io/gh/python/bedevere/branch/master/graph/badge.svg)](https://codecov.io/gh/python/bedevere)
 
 This bot is meant to help identify issues with a CPython pull request.
 

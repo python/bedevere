@@ -35,7 +35,7 @@ async def set_status(gh, event):
         else:
             status = FAILURE_STATUS
     else:
-        status = get_found_issue_number_status(issue_number_found)
+        status = create_success_status(issue_number_found)
     await _post_status(gh, event, status)
 
 
@@ -54,7 +54,7 @@ async def new_label(gh, event):
         issue_number_found = ISSUE_RE.search(
             event.data["pull_request"]["title"])
         if issue_number_found:
-            status = get_found_issue_number_status(issue_number_found)
+            status = create_success_status(issue_number_found)
         else:
             status = TRIVIAL_STATUS
         await _post_status(gh, event, status)
@@ -67,8 +67,8 @@ async def removed_label(gh, event):
         await set_status(gh, event)
 
 
-def get_found_issue_number_status(found_issue):
-    """Get the status for when an issue number was found in the title"""
+def create_success_status(found_issue):
+    """Create a success status for when an issue number was found in the title."""
     status = STATUS_TEMPLATE.copy()
     status["state"] = "success"
     issue_number = found_issue.group("issue")

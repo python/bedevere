@@ -12,6 +12,7 @@ from gidgethub import sansio
 from . import router
 # Import modules for router registration.
 importlib.import_module(".bpo", __package__)
+importlib.import_module(".revert_pr", __package__)
 
 
 async def main(request):

@@ -118,7 +118,7 @@ async def test_new_label_trivial_no_issue():
 
 
 @pytest.mark.asyncio
-async def test_new_label_trivial_no_issue():
+async def test_new_label_trivial_with_issue_number():
     data = {
         "action": "labeled",
         "label": {"name": "trivial"},
@@ -130,7 +130,11 @@ async def test_new_label_trivial_no_issue():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.new_label(gh, event)
-    assert gh.data["state"] == "success"
+    status = gh.data
+    assert status["state"] == "success"
+    assert status["target_url"].endswith("issue1234")
+    assert "1234" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
 
 
@@ -146,11 +150,6 @@ async def test_new_label_not_trivial():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.new_label(gh, event)
-    assert gh.data["state"] == "success"
-    assert "git-sha" in gh.url
-    assert gh.data["target_url"].endswith("issue1234")
-    assert "1234" in gh.data["description"]
-    assert gh.data["context"] == "bedevere/issue-number"
 
 
 @pytest.mark.asyncio

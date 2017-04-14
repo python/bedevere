@@ -150,6 +150,7 @@ async def test_new_label_not_trivial():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.new_label(gh, event)
+    assert not hasattr(gh, "data")
 
 
 @pytest.mark.asyncio

@@ -107,7 +107,7 @@ async def test_new_label_trivial_no_issue():
         "label": {"name": "trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
-            "title": "An easy fix"
+            "title": "An easy fix",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -124,7 +124,7 @@ async def test_new_label_trivial_no_issue():
         "label": {"name": "trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
-            "title": "Revert bpo-1234: revert an easy fix"
+            "title": "Revert bpo-1234: revert an easy fix",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")

@@ -73,6 +73,5 @@ def get_found_issue_number_status(found_issue):
     status["state"] = "success"
     issue_number = found_issue.group("issue")
     status["description"] = f"Issue number {issue_number} found."
-    status[
-        "target_url"] = f"https://bugs.python.org/issue{issue_number}"
+    status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
     return status

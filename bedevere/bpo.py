@@ -35,11 +35,7 @@ async def set_status(gh, event):
         else:
             status = FAILURE_STATUS
     else:
-        status = STATUS_TEMPLATE.copy()
-        status["state"] = "success"
-        issue_number = issue_number_found.group("issue")
-        status["description"] = f"Issue number {issue_number} found."
-        status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
+        status = create_success_status(issue_number_found)
     await _post_status(gh, event, status)
 
 
@@ -55,7 +51,13 @@ async def title_edited(gh, event):
 async def new_label(gh, event):
     """Update the status if the "trivial" label was added."""
     if event.data["label"]["name"] == TRIVIAL_LABEL:
-        await _post_status(gh, event, TRIVIAL_STATUS)
+        issue_number_found = ISSUE_RE.search(
+            event.data["pull_request"]["title"])
+        if issue_number_found:
+            status = create_success_status(issue_number_found)
+        else:
+            status = TRIVIAL_STATUS
+        await _post_status(gh, event, status)
 
 
 @router.route("pull_request", "unlabeled")
@@ -63,3 +65,13 @@ async def removed_label(gh, event):
     """Re-check the status if the "trivial" label is removed."""
     if event.data["label"]["name"] == TRIVIAL_LABEL:
         await set_status(gh, event)
+
+
+def create_success_status(found_issue):
+    """Create a success status for when an issue number was found in the title."""
+    status = STATUS_TEMPLATE.copy()
+    status["state"] = "success"
+    issue_number = found_issue.group("issue")
+    status["description"] = f"Issue number {issue_number} found."
+    status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
+    return status

@@ -101,18 +101,40 @@ async def test_edit_other_than_title():
 
 
 @pytest.mark.asyncio
-async def test_new_label_trivial():
+async def test_new_label_trivial_no_issue():
     data = {
         "action": "labeled",
         "label": {"name": "trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "An easy fix",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.new_label(gh, event)
     assert gh.data["state"] == "success"
+    assert "git-sha" in gh.url
+
+
+@pytest.mark.asyncio
+async def test_new_label_trivial_with_issue_number():
+    data = {
+        "action": "labeled",
+        "label": {"name": "trivial"},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "Revert bpo-1234: revert an easy fix",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.new_label(gh, event)
+    status = gh.data
+    assert status["state"] == "success"
+    assert status["target_url"].endswith("issue1234")
+    assert "1234" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
 
 

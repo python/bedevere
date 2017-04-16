@@ -22,9 +22,9 @@ class TestRoute(RouterReset):
 
     def test_nonoverlapping_events(self):
         @router.route("pull_request", "opened")
-        def func1(): pass
+        def func1(): pass  # pragma: no cover
         @router.route("issues", "opened")
-        def func2(): pass
+        def func2(): pass  # pragma: no cover
         assert "pull_request" in router.ROUTES
         actions = router.ROUTES["pull_request"]
         assert "opened" in actions
@@ -36,9 +36,9 @@ class TestRoute(RouterReset):
 
     def test_overlapping_events(self):
         @router.route("pull_request", "opened")
-        def func1(): pass
+        def func1(): pass  # pragma: no cover
         @router.route("pull_request", "closed")
-        def func2(): pass
+        def func2(): pass  # pragma: no cover
         actions = router.ROUTES["pull_request"]
         assert "opened" in actions
         assert "closed" in actions
@@ -48,16 +48,16 @@ class TestRoute(RouterReset):
 
     def test_overlapping_actions(self):
         @router.route("pull_request", "opened")
-        def func1(): pass
+        def func1(): pass  # pragma: no cover
         @router.route("pull_request", "opened")
-        def func2(): pass
+        def func2(): pass  # pragma: no cover
         handlers = router.ROUTES["pull_request"]["opened"]
         assert frozenset(handlers) == {func1, func2}
 
     def test_multiple_routes_on_a_single_function(self):
         @router.route("pull_request", "opened")
         @router.route("pull_request", "closed")
-        def func(): pass
+        def func(): pass  # pragma: no cover
         actions = router.ROUTES["pull_request"]
         assert "opened" in actions
         assert "closed" in actions

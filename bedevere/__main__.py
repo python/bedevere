@@ -34,7 +34,7 @@ async def main(request):
         return web.Response(status=500)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     app = web.Application()
     app.router.add_post("/", main)
     port = os.environ.get("PORT")

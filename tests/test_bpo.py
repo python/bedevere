@@ -85,6 +85,22 @@ async def test_set_status_success_via_trivial_label():
 
 
 @pytest.mark.asyncio
+async def test_edit_title():
+    data = {
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-1234: an issue!",
+        },
+        "action": "edited",
+        "changes": {"title": "thingy"},
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.title_edited(gh, event)
+    assert hasattr(gh, "data")
+
+
+@pytest.mark.asyncio
 async def test_edit_other_than_title():
     data = {
         "pull_request": {
@@ -157,6 +173,27 @@ async def test_new_label_not_trivial():
 async def test_removed_label_trivial():
     data = {
         "action": "unlabeled",
+        "label": {"name": "trivial"},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-1234: an issue!",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.removed_label(gh, event)
+    status = gh.data
+    assert status["state"] == "success"
+    assert status["target_url"].endswith("issue1234")
+    assert "1234" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
+    assert "git-sha" in gh.url
+
+
+@pytest.mark.asyncio
+async def test_removed_label_non_trivial():
+    data = {
+        "action": "unlabeled",
         "label": {"name": "non-trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -165,13 +202,8 @@ async def test_removed_label_trivial():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.set_status(gh, event)
-    status = gh.data
-    assert status["state"] == "success"
-    assert status["target_url"].endswith("issue1234")
-    assert "1234" in status["description"]
-    assert status["context"] == "bedevere/issue-number"
-    assert "git-sha" in gh.url
+    await bpo.removed_label(gh, event)
+    assert not hasattr(gh, "data")
 
 
 @pytest.mark.asyncio

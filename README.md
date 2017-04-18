@@ -6,11 +6,17 @@ This bot is meant to help identify issues with a CPython pull request.
 
 ## What the bot identifies
 ### bugs.python.org issue numbers in the title
-If no b.p.o issue number is found the the status fails and the
+If no b.p.o issue number is found the the status fails, then the
 "Details" link points to the relevant
 [section of the devguide](https://cpython-devguide.readthedocs.io/pullrequest.html?highlight=bpo-#submitting).
 If an issue number is found then the "Details" link points to the
 issue itself, making it easier to navigate from PR to issue.
+
+### Reason for reverting a commit
+If a PR starts with the word "Revert", then the bot will check if the PR body
+contains the word "Reason:".  If the reason is not found, then the "Details"
+link points to the relevant
+[section of the devguide](https://cpython-devguide.readthedocs.io/committing.html#reverting-a-commit).
 
 ## *Aside*: where does the name come from?
 Since this bot is about identifying pull requests that need changes,

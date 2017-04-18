@@ -197,6 +197,22 @@ async def test_removed_label_non_trivial():
         "label": {"name": "non-trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-1234: an issue!",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.removed_label(gh, event)
+    assert not hasattr(gh, "data")
+
+
+@pytest.mark.asyncio
+async def test_removed_label_non_trivial():
+    data = {
+        "action": "unlabeled",
+        "label": {"name": "non-trivial"},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")

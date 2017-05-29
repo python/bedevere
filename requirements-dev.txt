@@ -1,4 +1,4 @@
 -r requirements.txt
 pytest>=3.0.0
-pytest-asyncio
-pytest-aiohttp
+pytest-asyncio==0.5.0
+pytest-aiohttp==0.1.3

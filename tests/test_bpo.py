@@ -35,7 +35,7 @@ async def test_set_status_failure():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
-    await bpo.set_status(gh, event)
+    await bpo.set_status(event, gh)
     status = gh.data
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://cpython-devguide")
@@ -52,7 +52,7 @@ async def test_set_status_success():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.set_status(gh, event)
+    await bpo.set_status(event, gh)
     status = gh.data
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
@@ -77,7 +77,7 @@ async def test_set_status_success_via_trivial_label():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
-    await bpo.set_status(gh, event)
+    await bpo.set_status(event, gh)
     status = gh.data
     assert status["state"] == "success"
     assert status["context"] == "bedevere/issue-number"
@@ -96,7 +96,7 @@ async def test_edit_title():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.title_edited(gh, event)
+    await bpo.title_edited(event, gh)
     assert hasattr(gh, "data")
 
 
@@ -112,7 +112,7 @@ async def test_edit_other_than_title():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.title_edited(gh, event)
+    await bpo.title_edited(event, gh)
     assert not hasattr(gh, "data")
 
 
@@ -128,7 +128,7 @@ async def test_new_label_trivial_no_issue():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.new_label(gh, event)
+    await bpo.new_label(event, gh)
     assert gh.data["state"] == "success"
     assert "git-sha" in gh.url
 
@@ -145,7 +145,7 @@ async def test_new_label_trivial_with_issue_number():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.new_label(gh, event)
+    await bpo.new_label(event, gh)
     status = gh.data
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
@@ -165,7 +165,7 @@ async def test_new_label_not_trivial():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.new_label(gh, event)
+    await bpo.new_label(event, gh)
     assert not hasattr(gh, "data")
 
 
@@ -181,7 +181,7 @@ async def test_removed_label_trivial():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.removed_label(gh, event)
+    await bpo.removed_label(event, gh)
     status = gh.data
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
@@ -201,5 +201,5 @@ async def test_removed_label_non_trivial():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.removed_label(gh, event)
+    await bpo.removed_label(event, gh)
     assert not hasattr(gh, "data")

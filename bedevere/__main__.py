@@ -7,11 +7,13 @@ import traceback
 import aiohttp
 from aiohttp import web
 from gidgethub import aiohttp as gh_aiohttp
+from gidgethub import routing
 from gidgethub import sansio
 
-from . import router
-# Import modules for router registration.
-importlib.import_module(".bpo", __package__)
+from . import bpo
+
+
+router = routing.Router(bpo.router)
 
 
 async def main(request):
@@ -27,7 +29,7 @@ async def main(request):
                                       oauth_token=oauth_token)
             # Give GitHub some time to reach internal consistency.
             await asyncio.sleep(1)
-            await router.dispatch(gh, event)
+            await router.dispatch(event, gh)
         return web.Response(status=200)
     except Exception as exc:
         traceback.print_exc(file=sys.stderr)

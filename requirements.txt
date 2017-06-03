@@ -2,7 +2,7 @@ aiohttp==2.1.0
 appdirs==1.4.3
 async-timeout==1.2.1
 chardet==3.0.3
-gidgethub==2.3.0
+gidgethub==2.4.0
 multidict==2.1.6
 packaging==16.8
 py==1.4.33

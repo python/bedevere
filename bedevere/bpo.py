@@ -1,7 +1,9 @@
 import re
 
-from . import router
+from gidgethub import routing
 
+
+router = routing.Router()
 
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
 STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
@@ -15,14 +17,14 @@ TRIVIAL_STATUS["state"] = "success"
 TRIVIAL_STATUS["description"] = "No issue number necessary."
 
 
-async def _post_status(gh, event, status):
+async def _post_status(event, gh, status):
     """Post a status in reaction to an event."""
     await gh.post(event.data["pull_request"]["statuses_url"], data=status)
 
 
-@router.route("pull_request", "opened")
-@router.route("pull_request", "synchronize")
-async def set_status(gh, event):
+@router.register("pull_request", action="opened")
+@router.register("pull_request", action="synchronize")
+async def set_status(event, gh, *args, **kwargs):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
@@ -36,19 +38,19 @@ async def set_status(gh, event):
             status = FAILURE_STATUS
     else:
         status = create_success_status(issue_number_found)
-    await _post_status(gh, event, status)
+    await _post_status(event, gh, status)
 
 
-@router.route("pull_request", "edited")
-async def title_edited(gh, event):
+@router.register("pull_request", action="edited")
+async def title_edited(event, gh, *args, **kwargs):
     """Set the status on a pull request that has changed its title."""
     if "title" not in event.data["changes"]:
         return
-    await set_status(gh, event)
+    await set_status(event, gh)
 
 
-@router.route("pull_request", "labeled")
-async def new_label(gh, event):
+@router.register("pull_request", action="labeled")
+async def new_label(event, gh, *args, **kwargs):
     """Update the status if the "trivial" label was added."""
     if event.data["label"]["name"] == TRIVIAL_LABEL:
         issue_number_found = ISSUE_RE.search(
@@ -57,14 +59,14 @@ async def new_label(gh, event):
             status = create_success_status(issue_number_found)
         else:
             status = TRIVIAL_STATUS
-        await _post_status(gh, event, status)
+        await _post_status(event, gh, status)
 
 
-@router.route("pull_request", "unlabeled")
-async def removed_label(gh, event):
+@router.register("pull_request", action="unlabeled")
+async def removed_label(event, gh, *args, **kwargs):
     """Re-check the status if the "trivial" label is removed."""
     if event.data["label"]["name"] == TRIVIAL_LABEL:
-        await set_status(gh, event)
+        await set_status(event, gh)
 
 
 def create_success_status(found_issue):

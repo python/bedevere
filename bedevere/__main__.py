@@ -6,6 +6,7 @@ import traceback
 
 import aiohttp
 from aiohttp import web
+import cachetools
 from gidgethub import aiohttp as gh_aiohttp
 from gidgethub import routing
 from gidgethub import sansio
@@ -14,6 +15,7 @@ from . import bpo
 
 
 router = routing.Router(bpo.router)
+cache = cachetools.LRUCache(maxsize=500)
 
 
 async def main(request):
@@ -26,7 +28,8 @@ async def main(request):
         oauth_token = os.environ.get("GH_AUTH")
         with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere",
-                                      oauth_token=oauth_token)
+                                      oauth_token=oauth_token,
+                                      cache=cache)
             # Give GitHub some time to reach internal consistency.
             await asyncio.sleep(1)
             await router.dispatch(event, gh)

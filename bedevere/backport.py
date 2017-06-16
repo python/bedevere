@@ -1,3 +1,4 @@
+"""Automatically remove a backport label."""
 import re
 
 import gidgethub.routing

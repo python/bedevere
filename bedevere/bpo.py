@@ -1,3 +1,4 @@
+"""Check if a bugs.python.org issue number is specified in the pull request's title."""
 import re
 
 from gidgethub import routing

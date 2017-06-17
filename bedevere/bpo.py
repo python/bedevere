@@ -3,11 +3,14 @@ import re
 
 from gidgethub import routing
 
+from . import util
+
 
 router = routing.Router()
 
+STATUS_CONTEXT = "bedevere/issue-number"
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
-STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
+STATUS_TEMPLATE = {"context": STATUS_CONTEXT}
 FAILURE_STATUS = STATUS_TEMPLATE.copy()
 FAILURE_STATUS["state"] = "failure"
 FAILURE_STATUS["target_url"] = "https://cpython-devguide.readthedocs.io/pullrequest.html#submitting"
@@ -31,12 +34,7 @@ async def set_status(event, gh, *args, **kwargs):
     if not issue_number_found:
         issue_url = event.data["pull_request"]["issue_url"]
         data = await gh.getitem(issue_url)
-        for label in data["labels"]:
-            if label["name"] == TRIVIAL_LABEL:
-                status = TRIVIAL_STATUS
-                break
-        else:
-            status = FAILURE_STATUS
+        status = TRIVIAL_STATUS if util.is_trivial(data) else FAILURE_STATUS
     else:
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)
@@ -72,9 +70,8 @@ async def removed_label(event, gh, *args, **kwargs):
 
 def create_success_status(found_issue):
     """Create a success status for when an issue number was found in the title."""
-    status = STATUS_TEMPLATE.copy()
-    status["state"] = "success"
     issue_number = found_issue.group("issue")
-    status["description"] = f"Issue number {issue_number} found."
-    status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
-    return status
+    url = f"https://bugs.python.org/issue{issue_number}"
+    return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
+                              description=f"Issue number {issue_number} found",
+                              target_url=url)

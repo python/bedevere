@@ -86,6 +86,7 @@ async def test_missing_label():
 
 async def test_success():
     event_data = {
+        'action': 'opened',
         'number': 2248,
         'pull_request': {
             'title': '[3.6] Backport this …',
@@ -103,7 +104,7 @@ async def test_success():
         'comments_url': 'https://api.github.com/repos/python/cpython/issues/1234/comments',
     }
     gh = FakeGH(getitem=issue_data)
-    await backport.remove_backport_label(event, gh)
+    await backport.router.dispatch(event, gh)
     assert gh.getitem_url == sansio.format_url(event_data['repository']['issues_url'], {'number': '1234'})
     assert gh.delete_url == sansio.format_url(issue_data['labels_url'],
                                               {'name': 'needs backport to 3.6'})

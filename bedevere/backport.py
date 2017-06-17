@@ -21,7 +21,7 @@ def normalize_title(title, body):
         return title[:-1] + body[1:].partition('\r\n')[0]
 
 
-router.register('pull_request', action='opened')
+@router.register("pull_request", action="opened")
 async def remove_backport_label(event, gh, *args, **kwargs):
     title = normalize_title(event.data['pull_request']['title'], event.data['pull_request']['body'])
     title_match = TITLE_RE.match(title)

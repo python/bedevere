@@ -52,11 +52,12 @@ class TestFilenameRE:
 async def test_edited_misc_news():
     gh = FakeGH(getiter=[{'filename': 'README'}, {'filename': 'Misc/NEWS'}])
     event_data = {
+        'action': 'opened',
         'number': 1234,
         'pull_request': {'statuses_url': 'https://api.github.com/some/status'},
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.check_news(event, gh)
+    await news.router.dispatch(event, gh)
     assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'failure'
@@ -67,6 +68,7 @@ async def test_no_news_file():
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
+        'action': 'opened',
         'number': 1234,
         'pull_request': {
             'statuses_url': 'https://api.github.com/some/status',
@@ -74,7 +76,7 @@ async def test_no_news_file():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.check_news(event, gh)
+    await news.router.dispatch(event, gh)
     assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
@@ -86,6 +88,7 @@ async def test_trivial():
     issue = {'labels': [{'name': 'trivial'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
+        'action': 'opened',
         'number': 1234,
         'pull_request': {
             'statuses_url': 'https://api.github.com/some/status',
@@ -93,7 +96,7 @@ async def test_trivial():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.check_news(event, gh)
+    await news.router.dispatch(event, gh)
     assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
@@ -106,6 +109,7 @@ async def test_news_file():
     issue = {'labels': [{'name': 'CLA signed'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
+        'action': 'synchronize',
         'number': 1234,
         'pull_request': {
             'statuses_url': 'https://api.github.com/some/status',
@@ -113,7 +117,7 @@ async def test_news_file():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.check_news(event, gh)
+    await news.router.dispatch(event, gh)
     assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'

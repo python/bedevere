@@ -9,7 +9,7 @@ TITLE_RE = re.compile(r'\[(?P<branch>\d+\.\d+)\].+?(?P<pr>\d+)\)')
 BACKPORT_LABEL = 'needs backport to {branch}'
 MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
                     'a backport of this pull request to the '
-                    '[{branch} branch](https://github.com/python/cpython/tree/{branch})')
+                    '[{branch} branch](https://github.com/python/cpython/tree/{branch}).')
 
 
 def normalize_title(title, body):

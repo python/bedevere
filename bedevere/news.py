@@ -35,12 +35,7 @@ async def check_news(event, gh, *args, **kwargs):
     # but doing it this way potentially minimizes the number of API calls.
     async for file_data in gh.getiter(files_url):
         filename = file_data['filename']
-        if filename == 'Misc/NEWS':
-            description = 'Only release managers should edit Misc/NEWS'
-            status = create_status(util.StatusState.FAILURE,
-                                   description=description)
-            break
-        elif FILENAME_RE.match(filename):
+        if FILENAME_RE.match(filename):
             status = create_status(util.StatusState.SUCCESS,
                                    description='News entry found in Misc/NEWS.d')
             break

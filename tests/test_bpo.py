@@ -10,6 +10,8 @@ class FakeGH:
 
     def __init__(self, *, getitem=None):
         self._getitem_return = getitem
+        self.patchurl = None
+        self.patchdata = None
 
     async def getitem(self, url):
         return self._getitem_return
@@ -18,6 +20,9 @@ class FakeGH:
         self.url = url
         self.data = data
 
+    async def patch(self, url, data):
+        self.patchurl = url
+        self.patchdata = data
 
 @pytest.mark.asyncio
 async def test_set_status_failure():
@@ -205,3 +210,40 @@ async def test_removed_label_non_trivial():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert not hasattr(gh, "data")
+
+
+@pytest.mark.asyncio
+async def test_set_body_success():
+    data = {
+        "action": "opened",
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "url": "https://api.github.com/repos/blah/blah/pulls/1347",
+            "title": "[3.6] bpo-1234: an issue!",
+            "body": "This is the body of the PR.\nSecond line is here."
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    status = gh.patchdata
+    assert "https://bugs.python.org/issue1234" in status["body"]
+    assert "1347" in gh.patchurl
+
+
+@pytest.mark.asyncio
+async def test_set_body_failure():
+    data = {
+        "action": "opened",
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "url": "https://api.github.com/repos/blah/blah/pulls/1347",
+            "title": "[3.6] bpo-1234: an issue!",
+            "body": """The body.\n<!-- issue number -->\n"https://bugs.python.org/issue1234"\n<!-- /issue number -->"""
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    assert gh.patchdata is None
+    assert gh.patchurl is None

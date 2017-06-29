@@ -4,16 +4,9 @@ from gidgethub import routing
 
 
 router = routing.Router()
-re1='(<!--.*?-->)'	# HTML Comment 1
-re2='.*?'	# Non-greedy match on filler
-re3='((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s"]*))'	# HTTP URL 1
-re4='.*?'	# Non-greedy match on filler
-re5='(<!--.*?-->)'	# HTML Comment 2
-BPO_URL_RE = re.compile(re1+re2+re3+re4+re5,re.IGNORECASE|re.DOTALL)
-BPO_MSG = """{0}
-<!-- issue number -->
-{1}
-<!-- /issue number -->"""
+TAG_NAME = "issue-number"
+CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
+
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
 STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
 FAILURE_STATUS = STATUS_TEMPLATE.copy()
@@ -53,11 +46,14 @@ async def set_status(event, gh, *args, **kwargs):
     else:
         if "body" in event.data["pull_request"]:
             body = event.data["pull_request"]["body"]
-            bpo_url_found = BPO_URL_RE.search(body)
-            if not bpo_url_found:
-                issue_number = issue_number_found.group(1)
-                bpo_url = f"https://bugs.python.org/issue{issue_number}"
-                data = {"body": BPO_MSG.format(body, bpo_url)}
+            if CLOSING_TAG not in body:
+                issue_number = issue_number_found.group("issue")
+                BPO_MSG = f"""{body}\n
+<!-- {TAG_NAME}: bpo-{issue_number} -->
+https://bugs.python.org/issue{issue_number}
+{CLOSING_TAG}
+"""
+                data = {"body": BPO_MSG}
                 await _patch_body(event, gh, data)
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)

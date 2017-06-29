@@ -239,7 +239,7 @@ async def test_set_body_failure():
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "url": "https://api.github.com/repos/blah/blah/pulls/1347",
             "title": "[3.6] bpo-1234: an issue!",
-            "body": """The body.\n<!-- issue number -->\n"https://bugs.python.org/issue1234"\n<!-- /issue number -->"""
+            "body": """The body.\n<!-- issue-number: bpo-1234 -->\n"https://bugs.python.org/issue1234"\n<!-- /issue-number -->"""
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")

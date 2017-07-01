@@ -59,7 +59,7 @@ async def send_email(event, gh, *args, **kwargs):
     if branch_name not in ALLOWED_BRANCHES:
         return
     commit = event.data["commits"][0]
-    unified_diff = await gh.get(f"commit['url'].diff")
+    unified_diff = await gh.getitem(f"commit['url'].diff")
     diff_stat = get_diff_stat(commit)
     mail = build_message(commit, branch=branch_name, diff_stat=diff_stat,
                          unified_diff=unified_diff)

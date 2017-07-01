@@ -16,9 +16,6 @@ class FakeGH:
     async def getitem(self, url):
         return self._getitem_return
 
-    async def get(self, url):
-        return self._getitem_return
-
     async def post(self, url, data):
         self.url = url
         self.data = data

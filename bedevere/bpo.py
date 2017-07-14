@@ -1,4 +1,5 @@
 import re
+import textwrap
 
 from gidgethub import routing
 
@@ -48,11 +49,13 @@ async def set_status(event, gh, *args, **kwargs):
             body = event.data["pull_request"]["body"]
             if CLOSING_TAG not in body:
                 issue_number = issue_number_found.group("issue")
-                BPO_MSG = f"""{body}\n
-<!-- {TAG_NAME}: bpo-{issue_number} -->
-https://bugs.python.org/issue{issue_number}
-{CLOSING_TAG}
-"""
+                BPO_MSG = textwrap.dedent(f"""\
+                {body}
+
+                <!-- {TAG_NAME}: bpo-{issue_number} -->
+                https://bugs.python.org/issue{issue_number}
+                {CLOSING_TAG}
+                """)
                 data = {"body": BPO_MSG}
                 await _patch_body(event, gh, data)
         status = create_success_status(issue_number_found)

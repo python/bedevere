@@ -41,7 +41,7 @@ async def check_news(event, gh, *args, **kwargs):
             break
     else:
         issue = await gh.getitem(pull_request['issue_url'])
-        if util.is_trivial(issue):
+        if util.skip("news", issue):
             description = "Trivial pull requests don't need a news entry"
             status = create_status(util.StatusState.SUCCESS,
                                    description=description)

@@ -36,9 +36,9 @@ class TestCreateStatus:
         assert status == expected
 
 
-def test_is_trivial():
-    issue = {'labels': [{'name': 'CLA signed'}, {'name': 'trivial'}]}
-    assert util.is_trivial(issue)
+def test_skip():
+    issue = {'labels': [{'name': 'CLA signed'}, {'name': 'skip something'}]}
+    assert util.skip("something", issue)
 
     issue = {'labels': [{'name': 'CLA signed'}]}
-    assert not util.is_trivial(issue)
+    assert not util.skip("something", issue)

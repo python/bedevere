@@ -26,6 +26,6 @@ def create_status(context, state, *, description=None, target_url=None):
     return status
 
 
-def is_trivial(issue):
-    """See if an issue is labeled as trivial."""
-    return any(label_data['name'] == 'trivial' for label_data in issue['labels'])
+def skip(what, issue):
+    """See if an issue has a "skip {what}" label."""
+    return any(label_data['name'] == f'skip {what}' for label_data in issue['labels'])

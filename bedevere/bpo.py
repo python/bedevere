@@ -33,13 +33,8 @@ async def set_status(event, gh, *args, **kwargs):
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
         issue_url = event.data["pull_request"]["issue_url"]
-        data = await gh.getitem(issue_url)
-        for label in data["labels"]:
-            if label["name"] == SKIP_ISSUE_LABEL:
-                status = SKIP_ISSUE_STATUS
-                break
-        else:
-            status = FAILURE_STATUS
+        issue = await gh.getitem(issue_url)
+        status = SKIP_ISSUE_STATUS if util.skip("issue", issue) else FAILURE_STATUS
     else:
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)

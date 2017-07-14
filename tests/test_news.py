@@ -69,9 +69,9 @@ async def test_no_news_file():
     assert gh.post_data['state'] == 'failure'
 
 
-async def test_trivial():
+async def test_skip_news():
     files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/' + GOOD_BASENAME}]
-    issue = {'labels': [{'name': 'trivial'}]}
+    issue = {'labels': [{'name': 'skip news'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
         'action': 'opened',

@@ -10,8 +10,8 @@ class FakeGH:
 
     def __init__(self, *, getitem=None):
         self._getitem_return = getitem
-        self.patchurl = None
-        self.patchdata = None
+        self.patch_url = None
+        self.patch_data = None
 
     async def getitem(self, url):
         return self._getitem_return
@@ -21,8 +21,8 @@ class FakeGH:
         self.data = data
 
     async def patch(self, url, data):
-        self.patchurl = url
-        self.patchdata = data
+        self.patch_url = url
+        self.patch_data = data
 
 @pytest.mark.asyncio
 async def test_set_status_failure():
@@ -226,9 +226,9 @@ async def test_set_body_success():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    status = gh.patchdata
+    status = gh.patch_data
     assert "https://bugs.python.org/issue1234" in status["body"]
-    assert "1347" in gh.patchurl
+    assert "1347" in gh.patch_url
 
 
 @pytest.mark.asyncio
@@ -245,5 +245,5 @@ async def test_set_body_failure():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert gh.patchdata is None
-    assert gh.patchurl is None
+    assert gh.patch_data is None
+    assert gh.patch_url is None

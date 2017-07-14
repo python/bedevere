@@ -38,7 +38,7 @@ async def test_set_status_failure():
     await bpo.set_status(event, gh)
     status = gh.data
     assert status["state"] == "failure"
-    assert status["target_url"].startswith("https://cpython-devguide")
+    assert status["target_url"].startswith("https://devguide.python.org")
     assert status["context"] == "bedevere/issue-number"
 
 

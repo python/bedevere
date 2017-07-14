@@ -74,7 +74,7 @@ async def stage(gh, issue, blocked_on):
         return
     for label in issue["labels"]:
         stale_name = label["name"]
-        if name.startswith(LABEL_PREFIX + " "):
+        if stale_name.startswith(LABEL_PREFIX + " "):
             await gh.delete(issue["labels_url"], {"name": stale_name})
     await gh.post(issue["labels_url"], data=[label_name])
 

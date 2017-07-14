@@ -63,7 +63,7 @@ async def test_set_status_success():
 
 
 @pytest.mark.asyncio
-async def test_set_status_success_via_trivial_label():
+async def test_set_status_success_via_skip_issue_label():
     data = {
         "action": "opened",
         "pull_request": {
@@ -74,7 +74,7 @@ async def test_set_status_success_via_trivial_label():
     }
     issue_data = {
         "labels": [
-            {"name": "trivial"},
+            {"name": "skip issue"},
         ]
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -119,10 +119,10 @@ async def test_edit_other_than_title():
 
 
 @pytest.mark.asyncio
-async def test_new_label_trivial_no_issue():
+async def test_new_label_skip_issue_no_issue():
     data = {
         "action": "labeled",
-        "label": {"name": "trivial"},
+        "label": {"name": "skip issue"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "An easy fix",
@@ -136,10 +136,10 @@ async def test_new_label_trivial_no_issue():
 
 
 @pytest.mark.asyncio
-async def test_new_label_trivial_with_issue_number():
+async def test_new_label_skip_issue_with_issue_number():
     data = {
         "action": "labeled",
-        "label": {"name": "trivial"},
+        "label": {"name": "skip issue"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "Revert bpo-1234: revert an easy fix",
@@ -157,7 +157,7 @@ async def test_new_label_trivial_with_issue_number():
 
 
 @pytest.mark.asyncio
-async def test_new_label_not_trivial():
+async def test_new_label_not_skip_issue():
     data = {
         "action": "labeled",
         "label": {"name": "non-trivial"},
@@ -172,10 +172,10 @@ async def test_new_label_not_trivial():
 
 
 @pytest.mark.asyncio
-async def test_removed_label_trivial():
+async def test_removed_label_skip_issue():
     data = {
         "action": "unlabeled",
-        "label": {"name": "trivial"},
+        "label": {"name": "skip issue"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "bpo-1234: an issue!",
@@ -193,7 +193,7 @@ async def test_removed_label_trivial():
 
 
 @pytest.mark.asyncio
-async def test_removed_label_non_trivial():
+async def test_removed_label_non_skip_issue():
     data = {
         "action": "unlabeled",
         "label": {"name": "non-trivial"},

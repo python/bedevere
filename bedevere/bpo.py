@@ -10,11 +10,11 @@ STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
 FAILURE_STATUS = STATUS_TEMPLATE.copy()
 FAILURE_STATUS["state"] = "failure"
 FAILURE_STATUS["target_url"] = "https://cpython-devguide.readthedocs.io/pullrequest.html#submitting"
-FAILURE_STATUS["description"] = """No issue number prepended to the title or "trivial" label found."""
-TRIVIAL_LABEL = "trivial"
-TRIVIAL_STATUS = STATUS_TEMPLATE.copy()
-TRIVIAL_STATUS["state"] = "success"
-TRIVIAL_STATUS["description"] = "No issue number necessary."
+FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found."""
+SKIP_ISSUE_LABEL = "skip issue"
+SKIP_ISSUE_STATUS = STATUS_TEMPLATE.copy()
+SKIP_ISSUE_STATUS["state"] = "success"
+SKIP_ISSUE_STATUS["description"] = "No issue number necessary."
 
 
 async def _post_status(event, gh, status):
@@ -31,8 +31,8 @@ async def set_status(event, gh, *args, **kwargs):
         issue_url = event.data["pull_request"]["issue_url"]
         data = await gh.getitem(issue_url)
         for label in data["labels"]:
-            if label["name"] == TRIVIAL_LABEL:
-                status = TRIVIAL_STATUS
+            if label["name"] == SKIP_ISSUE_LABEL:
+                status = SKIP_ISSUE_STATUS
                 break
         else:
             status = FAILURE_STATUS
@@ -51,21 +51,21 @@ async def title_edited(event, gh, *args, **kwargs):
 
 @router.register("pull_request", action="labeled")
 async def new_label(event, gh, *args, **kwargs):
-    """Update the status if the "trivial" label was added."""
-    if event.data["label"]["name"] == TRIVIAL_LABEL:
+    """Update the status if the "skip issue" label was added."""
+    if event.data["label"]["name"] == SKIP_ISSUE_LABEL:
         issue_number_found = ISSUE_RE.search(
             event.data["pull_request"]["title"])
         if issue_number_found:
             status = create_success_status(issue_number_found)
         else:
-            status = TRIVIAL_STATUS
+            status = SKIP_ISSUE_STATUS
         await _post_status(event, gh, status)
 
 
 @router.register("pull_request", action="unlabeled")
 async def removed_label(event, gh, *args, **kwargs):
-    """Re-check the status if the "trivial" label is removed."""
-    if event.data["label"]["name"] == TRIVIAL_LABEL:
+    """Re-check the status if the "skip issue" label is removed."""
+    if event.data["label"]["name"] == SKIP_ISSUE_LABEL:
         await set_status(event, gh)
 
 

@@ -28,7 +28,24 @@ digraph "PR stages" {
 }
 """
 
+# XXX TODO
+# "Awaiting review" -> "Awaiting core review" [label="Non-core review", color=orange]
+# "Awaiting core review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
+# "Awaiting changes" -> "Awaiting change review" [label="PR creator addresses changes", color=blue]
+# "Awaiting change review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
+# "Awaiting change review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
+
+
+# "Awaiting review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
+# "Awaiting review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
+# "Awaiting core review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
+
+# review state:
+# changes_requested
+# approved
+import datetime
 import enum
+import operator
 
 import gidgethub.routing
 
@@ -41,6 +58,8 @@ LABEL_PREFIX = "awaiting"
 class Blocker(enum.Enum):
     """What is blocking a pull request from being committed."""
     review = f"{LABEL_PREFIX} review"
+    core_review = f"{LABEL_PREFIX} core review"
+    changes = f"{LABEL_PREFIX} changes"
     merge = f"{LABEL_PREFIX} merge"
 
 
@@ -67,11 +86,15 @@ async def is_core_dev(gh, username):
         return True
 
 
-async def stage(gh, issue, blocked_on):
+async def stage(gh, pull_request, blocked_on):
     """Remove any "awaiting" labels and apply the specified one."""
+    issue = await gh.getitem(pull_request["issue_url"])
     label_name = blocked_on.value
     if any(label_name == label["name"] for label in issue["labels"]):
         return
+    # There's no reason to expect there to be multiple "awaiting" labels on a
+    # single pull request, but just in case there are we might as well clean
+    # up the situation when we come across it.
     for label in issue["labels"]:
         stale_name = label["name"]
         if stale_name.startswith(LABEL_PREFIX + " "):
@@ -80,16 +103,71 @@ async def stage(gh, issue, blocked_on):
 
 
 @router.register("pull_request", action="opened")
-async def opened_pr(gh, event, *arg, **kwargs):
+async def opened_pr(event, gh, *arg, **kwargs):
     """Decide if a new pull request requires a review.
 
     If a pull request comes in from a core developer, then mark it
     as "awaiting merge". Otherwise the pull request is
     "awaiting review".
     """
-    username = event["pull_request"]["user"]["login"]
-    issue = await gh.getitem(event["pull_request"]["issue_url"])
-    if is_core_dev(username):
-        await stage(gh, issue, Blocker.merge)
+    pull_request = event.data["pull_request"]
+    username = pull_request["user"]["login"]
+    if await is_core_dev(gh, username):
+        await stage(gh, pull_request, Blocker.merge)
     else:
-        await stage(gh, issue, Blocker.review)
+        await stage(gh, pull_request, Blocker.review)
+
+
+async def has_core_dev_approval(gh, reviews):
+    """Figure out what the last core developer review was.
+
+    A true value is returned if the last review from a core developer
+    was approval. A false value is returned if the last core developer
+    review requested changes. And if no reviews from a core developer
+    were made, None is returned.
+    """
+    # Get the latest reviews for everyone upfront to minimize API calls to find
+    # out who is a core developer.
+    latest_reviews = {}
+    for review in reviews:
+        positive_review = review["state"].lower()
+        if positive_review == "approved":
+            positive_review = True
+        elif positive_review == "changes_requested":
+            positive_review = False
+        else:
+            continue
+        username = review["user"]["login"]
+        when = datetime.strptime(review["submitted_at"], "%Y-%m-%dT%H:%M:%SZ")
+        if username in latest_reviews:
+            _, other_when = latest_reviews[username]
+            if other_when > when:
+                continue
+        latest_reviews[username] = result, when
+    flattened_reviews = ((username, when, review)
+                         for username, (when, review) in latest_reviews.items())
+    sorted_reviews = sorted(flattened_reviews, key=operator.itemgetter(1),
+                             reversed=True)
+    for username, _, positive_review in sorted_reviews:
+        if await is_core_dev(gh, username):
+            return positive_review
+    else:
+        return None
+
+
+@router.register("pull_request_review", action="submitted")
+async def new_review(gh, event, *args, **kwargs):
+    """Update the stage based on the latest review."""
+    review = event["review"]
+    if not await is_core_dev(gh, review["user"]["login"]):
+        pull_request = event["pull_request"]
+        if await reviewed_by_core_dev(gh, pull_request):
+            return
+        else:
+            await stage(gh, pull_request, Blocker.core_review)
+    else:
+        state = review["state"].lower()
+        if state == "approved":
+            await stage(gh, pull_request, Blocker.merge)
+        elif state == "changes_requested":
+            await stage(gh, pull_request, Blocker.changes)

@@ -69,8 +69,10 @@ async def test_is_core_dev():
 
 async def test_stage():
     issue = {"labels": [{"name": "awaiting merge"}]}
-    gh = FakeGH()
-    await awaiting.stage(gh, issue, awaiting.Blocker.merge)
+    issue_url = "https://api.github.com/some/issue"
+    pull_request = {"issue_url": issue_url}
+    gh = FakeGH(getitem={issue_url: issue})
+    await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
     assert not gh.delete_url
     assert not gh.post_url
 
@@ -79,8 +81,59 @@ async def test_stage():
         "labels_url":
             "https://api.github.com/repos/python/cpython/issues/42/labels{/name}",
     }
-    gh = FakeGH()
-    await awaiting.stage(gh, issue, awaiting.Blocker.merge)
+    gh = FakeGH(getitem={issue_url: issue})
+    await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
     assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/42/labels/awaiting%20review"
     assert gh.post_url == "https://api.github.com/repos/python/cpython/issues/42/labels"
     assert gh.post_data == ["awaiting merge"]
+
+
+async def test_opened_pr():
+    username = "brettcannon"
+    issue_url = "https://api.github.com/issue/42"
+    data = {
+        "action": "opened",
+        "pull_request": {
+            "user": {
+                "login": username,
+            },
+            "issue_url": issue_url,
+        }
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": "OK",
+        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"}
+    }
+    gh = FakeGH(getiter=teams, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert gh.post_url == "https://api.github.com/labels"
+    assert gh.post_data == [awaiting.Blocker.merge.value]
+
+    username = "andreamcinnes"
+    issue_url = "https://api.github.com/issue/42"
+    data = {
+        "action": "opened",
+        "pull_request": {
+            "user": {
+                "login": username,
+            },
+            "issue_url": issue_url,
+        }
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"}
+    }
+    gh = FakeGH(getiter=teams, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert gh.post_url == "https://api.github.com/labels"
+    assert gh.post_data == [awaiting.Blocker.review.value]

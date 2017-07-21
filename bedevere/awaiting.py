@@ -29,20 +29,10 @@ digraph "PR stages" {
 """
 
 # XXX TODO
-# "Awaiting review" -> "Awaiting core review" [label="Non-core review", color=orange]
-# "Awaiting core review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
 # "Awaiting changes" -> "Awaiting change review" [label="PR creator addresses changes", color=blue]
 # "Awaiting change review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
 # "Awaiting change review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
 
-
-# "Awaiting review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
-# "Awaiting review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
-# "Awaiting core review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
-
-# review state:
-# changes_requested
-# approved
 import datetime
 import enum
 import operator
@@ -155,14 +145,25 @@ async def has_core_dev_approval(gh, reviews):
         return None
 
 
+async def reviewed_by_core_dev(gh, pull_request):
+    """Check if a pull request has received a review by a core developer."""
+    # GitHub doesn't provide the URL to the reviews for a PR.
+    async for review in gh.getiter(pull_request["url"] + "/reviews"):
+        if await is_core_dev(gh, review["user"]["login"]):
+            return True
+    else:
+        return False
+
+
 @router.register("pull_request_review", action="submitted")
-async def new_review(gh, event, *args, **kwargs):
+async def new_review(event, gh, *args, **kwargs):
     """Update the stage based on the latest review."""
-    review = event["review"]
+    pull_request = event.data["pull_request"]
+    review = event.data["review"]
     reviewer = review["user"]["login"]
     if not await is_core_dev(gh, reviewer):
-        pull_request = event["pull_request"]
         if await reviewed_by_core_dev(gh, pull_request):
+            # No need to update the stage.
             return
         else:
             await stage(gh, pull_request, Blocker.core_review)

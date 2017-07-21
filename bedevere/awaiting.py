@@ -30,8 +30,6 @@ digraph "PR stages" {
 
 # XXX TODO
 # "Awaiting changes" -> "Awaiting change review" [label="PR creator addresses changes", color=blue]
-# "Awaiting change review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
-# "Awaiting change review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
 
 import datetime
 import enum

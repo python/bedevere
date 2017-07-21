@@ -25,11 +25,6 @@ async def _post_status(event, gh, status):
     await gh.post(event.data["pull_request"]["statuses_url"], data=status)
 
 
-async def _patch_body(event, gh, data):
-    """Patch the body of the PR in reaction to an event."""
-    await gh.patch(event.data["pull_request"]["url"], data=data)
-
-
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 async def set_status(event, gh, *args, **kwargs):
@@ -56,8 +51,8 @@ async def set_status(event, gh, *args, **kwargs):
                 https://bugs.python.org/issue{issue_number}
                 {CLOSING_TAG}
                 """)
-                data = {"body": BPO_MSG}
-                await _patch_body(event, gh, data)
+                body_data = {"body": BPO_MSG}
+                await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)
 

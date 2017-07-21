@@ -5,26 +5,26 @@
 # http://www.webgraphviz.com/ to view the graph):
 """
 digraph "PR stages" {
-  "New PR" [color=blue]
-  "Awaiting review" [shape=box, color=orange]
+  "New PR" [color=orange]
+  "Awaiting review" [shape=box, color=blue]
   "Awaiting core review" [shape=box, color=green]
   "Awaiting changes" [shape=box, color=blue]
   "Awaiting change review" [shape=box, color=green]
   "Awaiting merge" [shape=box, color=green]
 
-  "New PR" -> "Awaiting review" [label="PR by non-core dev", color=blue]
-  "Awaiting review" -> "Awaiting core review" [label="Non-core review", color=orange]
-  "Awaiting core review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
-  "Awaiting changes" -> "Awaiting change review" [label="PR creator addresses changes", color=blue]
-  "Awaiting change review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
-  "Awaiting change review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
+  "New PR" -> "Awaiting review" [label="New PR", color=orange]
+  "Awaiting review" -> "Awaiting core review" [label="New review", color=blue]
+  "Awaiting core review" -> "Awaiting core review" [label="New review", color=blue]
+  "Awaiting core review" -> "Awaiting changes" [label="New review requests changes", color=green]
+  "Awaiting changes" -> "Awaiting change review" [label="(comment)", color=orange]
+  "Awaiting change review" -> "Awaiting changes" [label="New review requests changes", color=green]
+  "Awaiting change review" -> "Awaiting merge" [label="New review approves", color=green]
 
+  "Awaiting review" -> "Awaiting merge" [label="New review approves", color=green]
+  "Awaiting review" -> "Awaiting changes" [label="New review requests changes", color=green]
+  "Awaiting core review" -> "Awaiting merge" [label="New review approves", color=green]
 
-  "Awaiting review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
-  "Awaiting review" -> "Awaiting changes" [label="Core dev requests changes", color=green]
-  "Awaiting core review" -> "Awaiting merge" [label="Core dev approves PR", color=green]
-
-  "New PR" -> "Awaiting merge" [label="PR by core dev", color=green]
+  "New PR" -> "Awaiting merge" [label="New PR", color=green]
 }
 """
 

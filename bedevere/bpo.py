@@ -1,9 +1,12 @@
 import re
+import textwrap
 
 from gidgethub import routing
 
 
 router = routing.Router()
+TAG_NAME = "issue-number"
+CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
 
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
 STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
@@ -37,6 +40,19 @@ async def set_status(event, gh, *args, **kwargs):
         else:
             status = FAILURE_STATUS
     else:
+        if "body" in event.data["pull_request"]:
+            body = event.data["pull_request"]["body"]
+            if CLOSING_TAG not in body:
+                issue_number = issue_number_found.group("issue")
+                BPO_MSG = textwrap.dedent(f"""\
+                {body}
+
+                <!-- {TAG_NAME}: bpo-{issue_number} -->
+                https://bugs.python.org/issue{issue_number}
+                {CLOSING_TAG}
+                """)
+                body_data = {"body": BPO_MSG}
+                await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)
 

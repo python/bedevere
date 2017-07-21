@@ -63,6 +63,22 @@ class Blocker(enum.Enum):
     merge = f"{LABEL_PREFIX} merge"
 
 
+async def stage(gh, pull_request, blocked_on):
+    """Remove any "awaiting" labels and apply the specified one."""
+    issue = await gh.getitem(pull_request["issue_url"])
+    label_name = blocked_on.value
+    if any(label_name == label["name"] for label in issue["labels"]):
+        return
+    # There's no reason to expect there to be multiple "awaiting" labels on a
+    # single pull request, but just in case there are we might as well clean
+    # up the situation when we come across it.
+    for label in issue["labels"]:
+        stale_name = label["name"]
+        if stale_name.startswith(LABEL_PREFIX + " "):
+            await gh.delete(issue["labels_url"], {"name": stale_name})
+    await gh.post(issue["labels_url"], data=[label_name])
+
+
 async def is_core_dev(gh, username):
     """Check if the user is a CPython core developer."""
     org_teams = "/orgs/python/teams"
@@ -84,22 +100,6 @@ async def is_core_dev(gh, username):
         raise
     else:
         return True
-
-
-async def stage(gh, pull_request, blocked_on):
-    """Remove any "awaiting" labels and apply the specified one."""
-    issue = await gh.getitem(pull_request["issue_url"])
-    label_name = blocked_on.value
-    if any(label_name == label["name"] for label in issue["labels"]):
-        return
-    # There's no reason to expect there to be multiple "awaiting" labels on a
-    # single pull request, but just in case there are we might as well clean
-    # up the situation when we come across it.
-    for label in issue["labels"]:
-        stale_name = label["name"]
-        if stale_name.startswith(LABEL_PREFIX + " "):
-            await gh.delete(issue["labels_url"], {"name": stale_name})
-    await gh.post(issue["labels_url"], data=[label_name])
 
 
 @router.register("pull_request", action="opened")
@@ -159,7 +159,8 @@ async def has_core_dev_approval(gh, reviews):
 async def new_review(gh, event, *args, **kwargs):
     """Update the stage based on the latest review."""
     review = event["review"]
-    if not await is_core_dev(gh, review["user"]["login"]):
+    reviewer = review["user"]["login"]
+    if not await is_core_dev(gh, reviewer):
         pull_request = event["pull_request"]
         if await reviewed_by_core_dev(gh, pull_request):
             return

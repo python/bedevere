@@ -10,11 +10,11 @@ STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
 FAILURE_STATUS = STATUS_TEMPLATE.copy()
 FAILURE_STATUS["state"] = "failure"
 FAILURE_STATUS["target_url"] = "https://devguide.python.org/pullrequest/#submitting"
-FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found."""
+FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found"""
 SKIP_ISSUE_LABEL = "skip issue"
 SKIP_ISSUE_STATUS = STATUS_TEMPLATE.copy()
 SKIP_ISSUE_STATUS["state"] = "success"
-SKIP_ISSUE_STATUS["description"] = "No issue number necessary."
+SKIP_ISSUE_STATUS["description"] = "No issue number necessary"
 
 
 async def _post_status(event, gh, status):
@@ -74,6 +74,6 @@ def create_success_status(found_issue):
     status = STATUS_TEMPLATE.copy()
     status["state"] = "success"
     issue_number = found_issue.group("issue")
-    status["description"] = f"Issue number {issue_number} found."
+    status["description"] = f"Issue number {issue_number} found"
     status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
     return status

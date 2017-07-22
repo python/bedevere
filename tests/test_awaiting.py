@@ -265,3 +265,63 @@ async def test_new_review():
     message = gh.post_[1]
     assert message[0] == "https://api.github.com/comment/42"
     assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]
+
+
+async def test_new_comment():
+    # Comment not from PR author.
+    data = {
+        "issue": {"user": {"login": "andreamcinnes"}},
+        "comment": {
+            "user": {"login": "brettcannon"},
+            "body": awaiting.REQUEST_CHANGE_REVIEW,
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+
+    # Comment from PR author but missing trigger phrase.
+    data = {
+        "issue": {"user": {"login": "andreamcinnes"}},
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": "I DID expect the Spanish Inquisition",
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+
+    # Everything is right with the world.
+    data = {
+        "action": "created",
+        "issue": {
+            "user": {"login": "andreamcinnes"},
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+            "url": "https://api.github.com/issue/42",
+            "pull_request": {"url": "https://api.github.com/pr/42"},
+            "comments_url": "https://api.github.com/comments/42",
+        },
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": awaiting.REQUEST_CHANGE_REVIEW,
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    items = {
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
+        "https://api.github.com/teams/6/memberships/gvanrossum": True,
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams":
+            [{"name": "python core", "id": 6}],
+        "https://api.github.com/pr/42/reviews":
+            [{"user": {"login": "brettcannon"}},
+             {"user": {"login": "gvanrossum"}}],
+    }
+    gh = FakeGH(getitem=items, getiter=iterators)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 2

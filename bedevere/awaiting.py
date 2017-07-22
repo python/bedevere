@@ -5,10 +5,18 @@
 # http://www.webgraphviz.com/ to view the graph):
 """
 digraph "PR stages" {
+  /* Colours represent who can make a state change or who is currently
+     blocking the PR from moving forward.
+
+     Blue: Anyone
+     Orange: PR creator
+     Green: Core developer
+  */
+
   "New PR" [color=orange]
   "Awaiting review" [shape=box, color=blue]
   "Awaiting core review" [shape=box, color=green]
-  "Awaiting changes" [shape=box, color=blue]
+  "Awaiting changes" [shape=box, color=orange]
   "Awaiting change review" [shape=box, color=green]
   "Awaiting merge" [shape=box, color=green]
 
@@ -16,7 +24,7 @@ digraph "PR stages" {
   "Awaiting review" -> "Awaiting core review" [label="New review", color=blue]
   "Awaiting core review" -> "Awaiting core review" [label="New review", color=blue]
   "Awaiting core review" -> "Awaiting changes" [label="New review requests changes", color=green]
-  "Awaiting changes" -> "Awaiting change review" [label="(comment)", color=orange]
+  "Awaiting changes" -> "Awaiting change review" [label="Comments changes are done", color=orange]
   "Awaiting change review" -> "Awaiting changes" [label="New review requests changes", color=green]
   "Awaiting change review" -> "Awaiting merge" [label="New review approves", color=green]
 

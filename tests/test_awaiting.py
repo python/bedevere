@@ -316,14 +316,27 @@ async def test_new_comment():
     items = {
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/teams/6/memberships/gvanrossum": True,
+        "https://api.github.com/teams/6/memberships/not-core-dev":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
     }
     iterators = {
         "https://api.github.com/orgs/python/teams":
             [{"name": "python core", "id": 6}],
         "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}},
-             {"user": {"login": "gvanrossum"}}],
+            [
+                {"user": {"login": "brettcannon"}},
+                {"user": {"login": "gvanrossum"}},
+                {"user": {"login": "not-core-dev"}},
+            ],
     }
     gh = FakeGH(getitem=items, getiter=iterators)
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 2
+    labeling, comment = gh.post_
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.change_review.value]
+    assert comment[0] == "https://api.github.com/comments/42"
+    comment_body = comment[1]["body"]
+    assert "@brettcannon" in comment_body
+    assert "@gvanrossum" in comment_body
+    assert "not-core-dev" not in comment_body

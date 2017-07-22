@@ -80,7 +80,7 @@ And if you don't make the requested changes,
 CHANGE_REVIEW_REQUESTED = """\
 [Nobody expects the Spanish Inquisition!](https://youtu.be/Nf_Y4MbUCLY)
 
-{{core_devs}}: please review the changes made to this pull request.
+{core_devs}: please review the changes made to this pull request.
 """
 
 

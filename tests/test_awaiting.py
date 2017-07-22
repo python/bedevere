@@ -18,7 +18,7 @@ class FakeGH:
         self._post_return = post
         self.getitem_url = None
         self.delete_url = None
-        self.post_url = self.post_data = None
+        self.post_ = []
 
     async def getiter(self, url, url_vars={}):
         self.getiter_url = sansio.format_url(url, url_vars)
@@ -38,8 +38,8 @@ class FakeGH:
         self.delete_url = sansio.format_url(url, url_vars)
 
     async def post(self, url, url_vars={}, *, data):
-        self.post_url = sansio.format_url(url, url_vars)
-        self.post_data = data
+        post_url = sansio.format_url(url, url_vars)
+        self.post_.append((post_url, data))
 
 
 async def test_is_core_dev():
@@ -77,8 +77,7 @@ async def test_stage():
     pull_request = {"issue_url": issue_url}
     gh = FakeGH(getitem={issue_url: issue})
     await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
-    assert not gh.delete_url
-    assert not gh.post_url
+    assert not gh.post_
 
     issue = {
         "labels": [{"name": "awaiting review"}],
@@ -88,8 +87,10 @@ async def test_stage():
     gh = FakeGH(getitem={issue_url: issue})
     await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
     assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/42/labels/awaiting%20review"
-    assert gh.post_url == "https://api.github.com/repos/python/cpython/issues/42/labels"
-    assert gh.post_data == ["awaiting merge"]
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/repos/python/cpython/issues/42/labels"
+    assert post_[1] == [awaiting.Blocker.merge.value]
 
 
 async def test_opened_pr():
@@ -115,8 +116,10 @@ async def test_opened_pr():
     gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
                 getitem=items)
     await awaiting.router.dispatch(event, gh)
-    assert gh.post_url == "https://api.github.com/labels"
-    assert gh.post_data == [awaiting.Blocker.merge.value]
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels"
+    assert post_[1] == [awaiting.Blocker.merge.value]
 
     username = "andreamcinnes"
     issue_url = "https://api.github.com/issue/42"
@@ -141,8 +144,10 @@ async def test_opened_pr():
     gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
                 getitem=items)
     await awaiting.router.dispatch(event, gh)
-    assert gh.post_url == "https://api.github.com/labels"
-    assert gh.post_data == [awaiting.Blocker.review.value]
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels"
+    assert post_[1] == [awaiting.Blocker.review.value]
 
 
 async def test_new_review():
@@ -177,8 +182,10 @@ async def test_new_review():
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
-    assert gh.post_url == "https://api.github.com/labels/42"
-    assert gh.post_data == [awaiting.Blocker.core_review.value]
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels/42"
+    assert post_[1] == [awaiting.Blocker.core_review.value]
 
     items = {
         f"https://api.github.com/teams/6/memberships/{username}":
@@ -196,7 +203,7 @@ async def test_new_review():
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
-    assert not gh.post_url
+    assert not gh.post_
 
     username = "brettcannon"
     data = {
@@ -229,8 +236,10 @@ async def test_new_review():
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
-    assert gh.post_url == "https://api.github.com/labels/42"
-    assert gh.post_data == [awaiting.Blocker.merge.value]
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels/42"
+    assert post_[1] == [awaiting.Blocker.merge.value]
 
     data = {
         "action": "submitted",
@@ -243,10 +252,16 @@ async def test_new_review():
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
-    assert gh.post_url == "https://api.github.com/labels/42"
-    assert gh.post_data == [awaiting.Blocker.changes.value]
+    assert len(gh.post_) == 2
+    labeling = gh.post_[0]
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.changes.value]
+    message = gh.post_[1]
+    assert message[0] == "https://api.github.com/comment/42"
+    assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]

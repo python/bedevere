@@ -34,11 +34,41 @@ digraph "PR stages" {
 import datetime
 import enum
 import operator
+import random
 
 import gidgethub.routing
 
 
 router = gidgethub.routing.Router()
+
+REQUEST_CHANGE_REVIEW = "I didn't expect the Spanish Inquisition"
+TAG_NAME = "changes-requested"
+CHANGES_REQUESTED_MESSAGE = f"""\
+<!-- {TAG_NAME}: {{core_dev}} -->
+A Python core developer, {{core_dev}}, has requested some changes be
+made to your pull request. When you have made the requested changes,
+please leave a comment here containing the phrase
+`{REQUEST_CHANGE_REVIEW}!` and {{core_dev}} will be notified to review
+your changes.
+<!-- /{TAG_NAME} -->
+
+{{easter_egg}}
+"""
+
+EASTER_EGG_1 = """\
+If you don't make the requested changes,
+[you will be poked with soft cushions!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
+"""
+
+EASTER_EGG_2 = """\
+If you don't make the requested changes,
+[you will be put in the comfy chair!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
+"""
+
+CHANGE_REVIEW_REQUESTED = """\
+[Nobody expects the Spanish Inquisition](https://youtu.be/Nf_Y4MbUCLY)!
+({{core_devs}})
+"""
 
 LABEL_PREFIX = "awaiting"
 
@@ -48,6 +78,7 @@ class Blocker(enum.Enum):
     review = f"{LABEL_PREFIX} review"
     core_review = f"{LABEL_PREFIX} core review"
     changes = f"{LABEL_PREFIX} changes"
+    change_review = f"{LABEL_PREFIX} change review"
     merge = f"{LABEL_PREFIX} merge"
 
 
@@ -99,6 +130,7 @@ async def opened_pr(event, gh, *arg, **kwargs):
     "awaiting review".
     """
     pull_request = event.data["pull_request"]
+    print(pull_request)
     username = pull_request["user"]["login"]
     if await is_core_dev(gh, username):
         await stage(gh, pull_request, Blocker.merge)
@@ -170,4 +202,22 @@ async def new_review(event, gh, *args, **kwargs):
         if state == "approved":
             await stage(gh, pull_request, Blocker.merge)
         elif state == "changes_requested":
+            easter_egg = ""
+            if random.random() < 0.1:
+                easter_egg = random.choice([EASTER_EGG_1, EASTER_EGG_2])
+            comment = CHANGES_REQUESTED_MESSAGE.format(core_dev=reviewer,
+                                                       easter_egg=easter_egg)
             await stage(gh, pull_request, Blocker.changes)
+            await gh.post(pull_request["comments_url"], data={"body": comment})
+
+
+@router.register("issue_comment", action="created")
+async def new_comment(event, gh, *args, **kwargs):
+    issue = event.data["issue"]
+    comment = event.data["comment"]
+    if issue["user"]["login"] != comment["user"]["login"]:
+        # Only care about the PR creator leaving a comment.
+        return
+    # XXX check for comment
+    # XXX change label
+    # XXX leave comment (core_devs)

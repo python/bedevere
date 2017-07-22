@@ -72,13 +72,15 @@ async def test_is_core_dev():
 
 
 async def test_stage():
-    issue = {"labels": [{"name": "awaiting merge"}]}
+    # Test label removal.
+    issue = {"labels": [{"name": "awaiting merge"}, {"name": "skip issue"}]}
     issue_url = "https://api.github.com/some/issue"
     pull_request = {"issue_url": issue_url}
     gh = FakeGH(getitem={issue_url: issue})
     await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
     assert not gh.post_
 
+    # Test adding a label.
     issue = {
         "labels": [{"name": "awaiting review"}],
         "labels_url":

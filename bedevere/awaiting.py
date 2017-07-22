@@ -193,7 +193,7 @@ async def new_review(event, gh, *args, **kwargs):
             await stage(gh, pull_request, Blocker.merge)
         elif state == "changes_requested":
             easter_egg = ""
-            if random.random() < 0.1:
+            if random.random() < 0.1:  # pragma: no cover
                 easter_egg = random.choice([EASTER_EGG_1, EASTER_EGG_2])
             comment = CHANGES_REQUESTED_MESSAGE.format(core_dev=reviewer,
                                                        easter_egg=easter_egg)

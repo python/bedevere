@@ -272,6 +272,7 @@ async def test_new_review():
 async def test_new_comment():
     # Comment not from PR author.
     data = {
+        "action": "created",
         "issue": {"user": {"login": "andreamcinnes"}},
         "comment": {
             "user": {"login": "brettcannon"},
@@ -285,6 +286,7 @@ async def test_new_comment():
 
     # Comment from PR author but missing trigger phrase.
     data = {
+        "action": "created",
         "issue": {"user": {"login": "andreamcinnes"}},
         "comment": {
             "user": {"login": "andreamcinnes"},

@@ -51,7 +51,7 @@ async def set_status(event, gh, *args, **kwargs):
             if CLOSING_TAG not in body:
                 issue_number = issue_number_found.group("issue")
                 new_body = BODY.format(body=body, issue_number=issue_number)
-                body_data = {"body": new_body}
+                body_data = {"body": new_body, "maintainer_can_modify": true}
                 await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)

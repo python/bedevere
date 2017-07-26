@@ -267,6 +267,25 @@ async def test_new_review():
     message = gh.post_[1]
     assert message[0] == "https://api.github.com/comment/42"
     assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]
+    
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "comment".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
 
 
 async def test_new_comment():

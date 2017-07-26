@@ -199,6 +199,7 @@ async def new_review(event, gh, *args, **kwargs):
                                                        easter_egg=easter_egg)
             await stage(gh, pull_request, Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
+        # Don't care about "comment" reviews.
 
 
 @router.register("issue_comment", action="created")

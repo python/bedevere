@@ -72,16 +72,17 @@ async def test_is_core_dev():
 
 
 async def test_stage():
-    # Test label removal.
+    # Skip changing labels if the label is already set.
     issue = {"labels": [{"name": "awaiting merge"}, {"name": "skip issue"}]}
     issue_url = "https://api.github.com/some/issue"
     gh = FakeGH()
     await awaiting.stage(gh, issue, awaiting.Blocker.merge)
+    assert not gh.delete_url
     assert not gh.post_
 
-    # Test adding a label.
+    # Test deleting an old label and adding a new one.
     issue = {
-        "labels": [{"name": "awaiting review"}],
+        "labels": [{"name": "awaiting review"}, {"name": "skip issue"}],
         "labels_url":
             "https://api.github.com/repos/python/cpython/issues/42/labels{/name}",
     }
@@ -266,7 +267,7 @@ async def test_new_review():
     message = gh.post_[1]
     assert message[0] == "https://api.github.com/comment/42"
     assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]
-    
+
     data = {
         "action": "submitted",
         "review": {

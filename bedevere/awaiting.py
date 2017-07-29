@@ -100,12 +100,13 @@ def user_login(item):
     return item["user"]["login"]
 
 
-async def stage(gh, item, blocked_on):
+async def issue_for_PR(gh, pull_request):
+    """Get the issue data for a pull request."""
+    return await gh.getitem(pull_request["issue_url"])
+
+
+async def stage(gh, issue, blocked_on):
     """Remove any "awaiting" labels and apply the specified one."""
-    if "issue_url" in item:
-        issue = await gh.getitem(item["issue_url"])
-    else:
-        issue = item
     label_name = blocked_on.value
     if any(label_name == label["name"] for label in issue["labels"]):
         return
@@ -151,23 +152,18 @@ async def opened_pr(event, gh, *arg, **kwargs):
     "awaiting review".
     """
     pull_request = event.data["pull_request"]
-    print(pull_request)
+    issue = await issue_for_PR(gh, pull_request)
     username = user_login(pull_request)
     if await is_core_dev(gh, username):
-        await stage(gh, pull_request, Blocker.merge)
+        await stage(gh, issue, Blocker.merge)
     else:
-        await stage(gh, pull_request, Blocker.review)
+        await stage(gh, issue, Blocker.review)
 
 
-async def core_dev_reviewers(gh, item):
+async def core_dev_reviewers(gh, pull_request_url):
     """Find the reviewers who are core developers."""
-    # GitHub doesn't provide the URL to the reviews for a PR.
-    if "pull_request" in item:
-        pr_url = item["pull_request"]["url"]
-    else:
-        pr_url = item["url"]
     # Unfortunately the reviews URL is not contained in a pull request's data.
-    async for review in gh.getiter(pr_url + "/reviews"):
+    async for review in gh.getiter(pull_request_url + "/reviews"):
         reviewer = user_login(review)
         if await is_core_dev(gh, reviewer):
             yield reviewer
@@ -180,24 +176,26 @@ async def new_review(event, gh, *args, **kwargs):
     review = event.data["review"]
     reviewer = user_login(review)
     if not await is_core_dev(gh, reviewer):
-        async for _ in core_dev_reviewers(gh, pull_request):
+        async for _ in core_dev_reviewers(gh, pull_request["url"]):
             # No need to update the stage as a core developer has already
             # reviewed this PR.
             return
         else:
             # Waiting for a core developer to leave a review.
-            await stage(gh, pull_request, Blocker.core_review)
+            await stage(gh, await issue_for_PR(gh, pull_request),
+                        Blocker.core_review)
     else:
         state = review["state"].lower()
         if state == "approved":
-            await stage(gh, pull_request, Blocker.merge)
+            await stage(gh, await issue_for_PR(gh, pull_request), Blocker.merge)
         elif state == "changes_requested":
             easter_egg = ""
             if random.random() < 0.1:  # pragma: no cover
                 easter_egg = random.choice([EASTER_EGG_1, EASTER_EGG_2])
             comment = CHANGES_REQUESTED_MESSAGE.format(core_dev=reviewer,
                                                        easter_egg=easter_egg)
-            await stage(gh, pull_request, Blocker.changes)
+            await stage(gh, await issue_for_PR(gh, pull_request),
+                        Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
 
 
@@ -213,7 +211,8 @@ async def new_comment(event, gh, *args, **kwargs):
         return
     else:
         await stage(gh, issue, Blocker.change_review)
+        pr_url = issue["pull_request"]["url"]
         core_devs = ", ".join(["@" + core_dev
-                             async for core_dev in core_dev_reviewers(gh, issue)])
+                             async for core_dev in core_dev_reviewers(gh, pr_url)])
         comment = CHANGE_REVIEW_REQUESTED.format(core_devs=core_devs)
         await gh.post(issue["comments_url"], data={"body": comment})

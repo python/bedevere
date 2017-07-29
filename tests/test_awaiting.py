@@ -75,9 +75,8 @@ async def test_stage():
     # Test label removal.
     issue = {"labels": [{"name": "awaiting merge"}, {"name": "skip issue"}]}
     issue_url = "https://api.github.com/some/issue"
-    pull_request = {"issue_url": issue_url}
-    gh = FakeGH(getitem={issue_url: issue})
-    await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
+    gh = FakeGH()
+    await awaiting.stage(gh, issue, awaiting.Blocker.merge)
     assert not gh.post_
 
     # Test adding a label.
@@ -86,8 +85,8 @@ async def test_stage():
         "labels_url":
             "https://api.github.com/repos/python/cpython/issues/42/labels{/name}",
     }
-    gh = FakeGH(getitem={issue_url: issue})
-    await awaiting.stage(gh, pull_request, awaiting.Blocker.merge)
+    gh = FakeGH()
+    await awaiting.stage(gh, issue, awaiting.Blocker.merge)
     assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/42/labels/awaiting%20review"
     assert len(gh.post_) == 1
     post_ = gh.post_[0]

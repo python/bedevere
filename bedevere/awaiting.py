@@ -197,6 +197,7 @@ async def new_review(event, gh, *args, **kwargs):
             await stage(gh, await issue_for_PR(gh, pull_request),
                         Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
+        # Don't care about "comment" reviews.
 
 
 @router.register("issue_comment", action="created")

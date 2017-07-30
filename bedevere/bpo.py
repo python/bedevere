@@ -7,6 +7,15 @@ from . import util
 
 
 router = routing.Router()
+TAG_NAME = "issue-number"
+CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
+BODY = f"""\
+{{body}}
+
+<!-- {TAG_NAME}: bpo-{{issue_number}} -->
+https://bugs.python.org/issue{{issue_number}}
+{CLOSING_TAG}
+"""
 
 STATUS_CONTEXT = "bedevere/issue-number"
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
@@ -14,11 +23,11 @@ STATUS_TEMPLATE = {"context": STATUS_CONTEXT}
 FAILURE_STATUS = STATUS_TEMPLATE.copy()
 FAILURE_STATUS["state"] = "failure"
 FAILURE_STATUS["target_url"] = "https://devguide.python.org/pullrequest/#submitting"
-FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found."""
+FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found"""
 SKIP_ISSUE_LABEL = "skip issue"
 SKIP_ISSUE_STATUS = STATUS_TEMPLATE.copy()
 SKIP_ISSUE_STATUS["state"] = "success"
-SKIP_ISSUE_STATUS["description"] = "No issue number necessary."
+SKIP_ISSUE_STATUS["description"] = "No issue number necessary"
 
 
 async def _post_status(event, gh, status):
@@ -36,6 +45,13 @@ async def set_status(event, gh, *args, **kwargs):
         issue = await gh.getitem(issue_url)
         status = SKIP_ISSUE_STATUS if util.skip("issue", issue) else FAILURE_STATUS
     else:
+        if "body" in event.data["pull_request"]:
+            body = event.data["pull_request"]["body"]
+            if CLOSING_TAG not in body:
+                issue_number = issue_number_found.group("issue")
+                new_body = BODY.format(body=body, issue_number=issue_number)
+                body_data = {"body": new_body, "maintainer_can_modify": True}
+                await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
     await _post_status(event, gh, status)
 

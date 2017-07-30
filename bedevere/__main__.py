@@ -27,7 +27,7 @@ async def main(request):
         if event.event == "ping":
             return web.Response(status=200)
         oauth_token = os.environ.get("GH_AUTH")
-        with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere",
                                       oauth_token=oauth_token,
                                       cache=cache)

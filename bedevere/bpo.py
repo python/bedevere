@@ -17,17 +17,18 @@ https://bugs.python.org/issue{{issue_number}}
 {CLOSING_TAG}
 """
 
-STATUS_CONTEXT = "bedevere/issue-number"
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
-STATUS_TEMPLATE = {"context": STATUS_CONTEXT}
-FAILURE_STATUS = STATUS_TEMPLATE.copy()
-FAILURE_STATUS["state"] = "failure"
-FAILURE_STATUS["target_url"] = "https://devguide.python.org/pullrequest/#submitting"
-FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found"""
 SKIP_ISSUE_LABEL = "skip issue"
-SKIP_ISSUE_STATUS = STATUS_TEMPLATE.copy()
-SKIP_ISSUE_STATUS["state"] = "success"
-SKIP_ISSUE_STATUS["description"] = "No issue number necessary"
+STATUS_CONTEXT = "bedevere/issue-number"
+_FAILURE_DESCRIPTION = 'No issue number prepended to the title or "skip issue" label found'
+_FAILURE_URL = "https://devguide.python.org/pullrequest/#submitting"
+FAILURE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
+                                    description=_FAILURE_DESCRIPTION,
+                                    target_url=_FAILURE_URL)
+del _FAILURE_DESCRIPTION
+del _FAILURE_URL
+SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
+                                       description="Issue report skipped")
 
 
 async def _post_status(event, gh, status):

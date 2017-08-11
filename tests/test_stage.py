@@ -6,7 +6,7 @@ import gidgethub
 from gidgethub import sansio
 import pytest
 
-from bedevere import awaiting
+from bedevere import stage as awaiting
 
 
 class FakeGH:

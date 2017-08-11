@@ -12,6 +12,7 @@ class FakeGH:
         self._getitem_return = getitem
         self.patch_url = None
         self.patch_data = None
+        self.data = None
 
     async def getitem(self, url):
         return self._getitem_return
@@ -23,6 +24,7 @@ class FakeGH:
     async def patch(self, url, data):
         self.patch_url = url
         self.patch_data = data
+
 
 @pytest.mark.asyncio
 async def test_set_status_failure():
@@ -104,7 +106,7 @@ async def test_edit_title():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert hasattr(gh, "data")
+    assert gh.data is not None
 
 
 @pytest.mark.asyncio
@@ -120,7 +122,7 @@ async def test_edit_other_than_title():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert not hasattr(gh, "data")
+    assert gh.data is None
 
 
 @pytest.mark.asyncio
@@ -173,7 +175,25 @@ async def test_new_label_not_skip_issue():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert not hasattr(gh, "data")
+    assert gh.data is None
+
+
+@pytest.mark.asyncio
+async def test_removed_label_from_label_deletion():
+    """When a label is completely deleted from a repo, it triggers an 'unlabled'
+    event, but the payload has no details about the removed label."""
+    data = {
+        "action": "unlabeled",
+        # No "label" key.
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-1234: an issue!",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    assert gh.data is None
 
 
 @pytest.mark.asyncio
@@ -209,7 +229,7 @@ async def test_removed_label_non_skip_issue():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert not hasattr(gh, "data")
+    assert gh.data is None
 
 
 @pytest.mark.asyncio

@@ -13,9 +13,9 @@ router = gidgethub.routing.Router()
 
 create_status = functools.partial(util.create_status, 'bedevere/news')
 
-DEVGUIDE_URL = 'https://cpython-devguide.readthedocs.io/committing.html#what-s-new-and-news-entries'
+DEVGUIDE_URL = 'https://devguide.python.org/committing/#what-s-new-and-news-entries'
 
-FILENAME_RE = re.compile(r"""Misc/NEWS.d/.+/      # Directory
+FILENAME_RE = re.compile(r"""Misc/NEWS.d/[^/]+/   # Directory
                              \d{4}-\d{2}-\d{2}\.  # Date as YYY-MM-DD
                              bpo-\d+(?:,\d+)*\.   # Issue number(s)
                              .+\.                 # Nonce

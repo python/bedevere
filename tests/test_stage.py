@@ -42,35 +42,6 @@ class FakeGH:
         self.post_.append((post_url, data))
 
 
-async def test_is_core_dev():
-    teams = [{"name": "not Python core"}]
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams})
-    with pytest.raises(ValueError):
-        await awaiting.is_core_dev(gh, "brett")
-
-    teams = [{"name": "Python core", "id": 42}]
-    getitem = {"https://api.github.com/teams/42/memberships/brett": True}
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
-                getitem=getitem)
-    assert await awaiting.is_core_dev(gh, "brett")
-    assert gh.getiter_url == "https://api.github.com/orgs/python/teams"
-
-    teams = [{"name": "Python core", "id": 42}]
-    getitem = {"https://api.github.com/teams/42/memberships/andrea":
-                gidgethub.BadRequest(status_code=http.HTTPStatus(404))}
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
-                getitem=getitem)
-    assert not await awaiting.is_core_dev(gh, "andrea")
-
-    teams = [{"name": "Python core", "id": 42}]
-    getitem = {"https://api.github.com/teams/42/memberships/andrea":
-                gidgethub.BadRequest(status_code=http.HTTPStatus(400))}
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
-                getitem=getitem)
-    with pytest.raises(gidgethub.BadRequest):
-        await awaiting.is_core_dev(gh, "andrea")
-
-
 async def test_stage():
     # Skip changing labels if the label is already set.
     issue = {"labels": [{"name": "awaiting merge"}, {"name": "skip issue"}]}

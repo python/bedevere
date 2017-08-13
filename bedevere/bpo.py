@@ -43,8 +43,7 @@ async def set_status(event, gh, *args, **kwargs):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
-        issue_url = event.data["pull_request"]["issue_url"]
-        issue = await gh.getitem(issue_url)
+        issue = await util.issue_for_PR(gh, event.data["pull_request"])
         status = SKIP_ISSUE_STATUS if util.skip("issue", issue) else FAILURE_STATUS
     else:
         if "body" in event.data["pull_request"]:

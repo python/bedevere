@@ -40,7 +40,7 @@ async def check_news(event, gh, *args, **kwargs):
                                    description='News entry found in Misc/NEWS.d')
             break
     else:
-        issue = await gh.getitem(pull_request['issue_url'])
+        issue = await util.issue_for_PR(gh, pull_request)
         if util.skip("news", issue):
             description = "Trivial pull requests don't need a news entry"
             status = create_status(util.StatusState.SUCCESS,

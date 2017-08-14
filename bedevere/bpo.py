@@ -31,11 +31,6 @@ SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                                        description="Issue report skipped")
 
 
-async def _post_status(event, gh, status):
-    """Post a status in reaction to an event."""
-    await gh.post(event.data["pull_request"]["statuses_url"], data=status)
-
-
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 async def set_status(event, gh, *args, **kwargs):
@@ -53,7 +48,7 @@ async def set_status(event, gh, *args, **kwargs):
                 body_data = {"body": new_body, "maintainer_can_modify": True}
                 await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
-    await _post_status(event, gh, status)
+    await util.post_status(gh, event, status)
 
 
 @router.register("pull_request", action="edited")
@@ -74,7 +69,7 @@ async def new_label(event, gh, *args, **kwargs):
             status = create_success_status(issue_number_found)
         else:
             status = SKIP_ISSUE_STATUS
-        await _post_status(event, gh, status)
+        await util.post_status(gh, event, status)
 
 
 @router.register("pull_request", action="unlabeled")

@@ -29,6 +29,11 @@ def create_status(context, state, *, description=None, target_url=None):
     return status
 
 
+async def post_status(gh, event, status):
+    """Post a status in reaction to an event."""
+    await gh.post(event.data["pull_request"]["statuses_url"], data=status)
+
+
 def skip_label(what):
     """Generate a "skip" label name."""
     return f"skip {what}"

@@ -184,7 +184,8 @@ async def new_comment(event, gh, *args, **kwargs):
     else:
         await stage(gh, issue, Blocker.change_review)
         pr_url = issue["pull_request"]["url"]
-        core_devs = ", ".join(["@" + core_dev
-                             async for core_dev in core_dev_reviewers(gh, pr_url)])
+        # Using a set comprehension to remove duplicates.
+        core_devs = ", ".join({"@" + core_dev
+                             async for core_dev in core_dev_reviewers(gh, pr_url)})
         comment = CHANGE_REVIEW_REQUESTED.format(core_devs=core_devs)
         await gh.post(issue["comments_url"], data={"body": comment})

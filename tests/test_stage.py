@@ -144,6 +144,7 @@ async def test_new_review():
     items = {
         f"https://api.github.com/teams/6/memberships/{username}":
             gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
@@ -151,7 +152,8 @@ async def test_new_review():
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews": [],
+        "https://api.github.com/pr/42/reviews":
+            [{"user": {"login": "brettcannon"}, "state": "comment"}],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -172,7 +174,7 @@ async def test_new_review():
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
         "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}}],
+            [{"user": {"login": "brettcannon"}, "state": "approved"}],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -316,9 +318,9 @@ async def test_new_comment():
             [{"name": "python core", "id": 6}],
         "https://api.github.com/pr/42/reviews":
             [
-                {"user": {"login": "brettcannon"}},
-                {"user": {"login": "gvanrossum"}},
-                {"user": {"login": "not-core-dev"}},
+                {"user": {"login": "brettcannon"}, "state": "approved"},
+                {"user": {"login": "gvanrossum"}, "state": "changes_requested"},
+                {"user": {"login": "not-core-dev"}, "state": "approved"},
             ],
     }
     gh = FakeGH(getitem=items, getiter=iterators)

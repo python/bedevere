@@ -1,4 +1,5 @@
 import enum
+import sys
 
 import gidgethub
 
@@ -72,3 +73,13 @@ def normalize_title(title, body):
     else:
         # Being paranoid in case \r\n is used.
         return title[:-1] + body[1:].partition('\r\n')[0]
+
+
+def no_labels(event_data):
+    if "label" not in event_data:
+        print("no 'label' key in payload; "
+              "'unlabeled' event triggered by label deletion?",
+              file=sys.stderr)
+        return True
+    else:
+        return False

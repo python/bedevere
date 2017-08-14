@@ -28,7 +28,7 @@ class FakeGH:
         return self._post_return
 
 
-GOOD_BASENAME = '2017-06-16.bpo-1234.nonce.rst'
+GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 class TestFilenameRE:
 
@@ -46,6 +46,10 @@ class TestFilenameRE:
 
     def test_multiple_issue_numbers(self):
         basename = '2018-01-01.bpo-1234,5678,9012.nonce.rst'
+        assert news.FILENAME_RE.match('Misc/NEWS.d/Security/' + basename)
+
+    def test_date_only(self):
+        basename = '2017-08-14.bpo-1234.nonce.rst'
         assert news.FILENAME_RE.match('Misc/NEWS.d/Security/' + basename)
 
 

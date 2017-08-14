@@ -15,12 +15,12 @@ create_status = functools.partial(util.create_status, 'bedevere/news')
 
 DEVGUIDE_URL = 'https://devguide.python.org/committing/#what-s-new-and-news-entries'
 
-FILENAME_RE = re.compile(r"""Misc/NEWS.d/[^/]+/   # Directory
+FILENAME_RE = re.compile(r"""Misc/NEWS.d/next/[^/]+/  # Directory
                              # YYYY-mm-dd or YYYY-mm-dd-HH-MM-SS
                              \d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\.
-                             bpo-\d+(?:,\d+)*\.   # Issue number(s)
-                             [A-Za-z0-9_=-]+\.    # Nonce (URL-safe base64)
-                             rst                  # File extension""",
+                             bpo-\d+(?:,\d+)*\.       # Issue number(s)
+                             [A-Za-z0-9_=-]+\.        # Nonce (URL-safe base64)
+                             rst                      # File extension""",
                          re.VERBOSE)
 
 SKIP_NEWS_LABEL = util.skip_label("news")

@@ -36,25 +36,27 @@ class TestFilenameRE:
         assert news.FILENAME_RE.match('some/other/dir/' + GOOD_BASENAME) is None
 
     def test_not_in_subdirectory(self):
-        assert news.FILENAME_RE.match('Misc/NEWS.d/' + GOOD_BASENAME) is None
+        assert news.FILENAME_RE.match('Misc/NEWS.d/next/' + GOOD_BASENAME) is None
 
     def test_malformed_basename(self):
-        assert news.FILENAME_RE.match('Misc/NEWS.d/Library/2017-06-16.bpo-1234.rst') is None
+        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst') is None
 
     def test_success(self):
-        assert news.FILENAME_RE.match('Misc/NEWS.d/Library/' + GOOD_BASENAME)
+        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Library/' + GOOD_BASENAME)
+        live_result = 'Misc/NEWS.d/next/IDLE/2017-08-14-15-13-50.bpo-1612262.-x_Oyq.rst'
+        assert news.FILENAME_RE.match(live_result)
 
     def test_multiple_issue_numbers(self):
         basename = '2018-01-01.bpo-1234,5678,9012.nonce.rst'
-        assert news.FILENAME_RE.match('Misc/NEWS.d/Security/' + basename)
+        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Security/' + basename)
 
     def test_date_only(self):
         basename = '2017-08-14.bpo-1234.nonce.rst'
-        assert news.FILENAME_RE.match('Misc/NEWS.d/Security/' + basename)
+        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Security/' + basename)
 
 
 async def test_no_news_file():
-    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/' + GOOD_BASENAME}]
+    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -74,7 +76,7 @@ async def test_no_news_file():
 
 
 async def test_skip_news():
-    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/' + GOOD_BASENAME}]
+    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
     issue = {'labels': [{'name': 'skip news'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -95,7 +97,7 @@ async def test_skip_news():
 
 async def test_news_file():
     files = [{'filename': 'README'},
-             {'filename': 'Misc/NEWS.d/Library/' + GOOD_BASENAME}]
+             {'filename': 'Misc/NEWS.d/next/Library/' + GOOD_BASENAME}]
     issue = {'labels': [{'name': 'CLA signed'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -158,7 +160,7 @@ async def test_deleting_label():
 
 
 async def test_removing_skip_news_label():
-    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/' + GOOD_BASENAME}]
+    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {

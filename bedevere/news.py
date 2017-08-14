@@ -46,7 +46,7 @@ async def check_news(event, gh, *args, **kwargs):
             status = create_status(util.StatusState.SUCCESS,
                                    description=description)
         else:
-            description = 'No news entry found in Misc/NEWS.d'
+            description = 'No news entry in Misc/NEWS.d or "skip news" label found'
             status = create_status(util.StatusState.FAILURE,
                                    description=description,
                                    target_url=DEVGUIDE_URL)

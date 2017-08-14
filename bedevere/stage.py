@@ -146,6 +146,7 @@ async def new_review(event, gh, *args, **kwargs):
     review = event.data["review"]
     reviewer = util.user_login(review)
     if not await util.is_core_dev(gh, reviewer):
+        # Poor-man's async any().
         async for _ in core_dev_reviewers(gh, pull_request["url"]):
             # No need to update the stage as a core developer has already
             # reviewed this PR.

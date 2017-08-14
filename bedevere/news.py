@@ -22,6 +22,10 @@ FILENAME_RE = re.compile(r"""Misc/NEWS.d/[^/]+/   # Directory
                              rst                  # File extension""",
                          re.VERBOSE)
 
+SKIP_NEWS_LABEL = util.skip_label("news")
+SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
+                                  description='"skip news" label found')
+
 
 @router.register('pull_request', action='opened')
 @router.register('pull_request', action='synchronize')
@@ -42,9 +46,7 @@ async def check_news(event, gh, *args, **kwargs):
     else:
         issue = await util.issue_for_PR(gh, pull_request)
         if util.skip("news", issue):
-            description = "Trivial pull requests don't need a news entry"
-            status = create_status(util.StatusState.SUCCESS,
-                                   description=description)
+            status = SKIP_LABEL_STATUS
         else:
             description = 'No news entry in Misc/NEWS.d or "skip news" label found'
             status = create_status(util.StatusState.FAILURE,
@@ -52,3 +54,17 @@ async def check_news(event, gh, *args, **kwargs):
                                    target_url=DEVGUIDE_URL)
 
     await gh.post(pull_request['statuses_url'], data=status)
+
+
+@router.register('pull_request', action="labeled")
+async def label_added(event, gh, *args, **kwargs):
+    if util.label_name(event.data) == SKIP_NEWS_LABEL:
+        await util.post_status(gh, event, SKIP_LABEL_STATUS)
+
+
+@router.register("pull_request", action="unlabeled")
+async def label_removed(event, gh, *args, **kwargs):
+    if util.no_labels(event.data):
+        return
+    elif util.label_name(event.data) == SKIP_NEWS_LABEL:
+        await check_news(event, gh)

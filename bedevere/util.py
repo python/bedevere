@@ -1,4 +1,5 @@
 import enum
+import sys
 
 import gidgethub
 
@@ -28,9 +29,25 @@ def create_status(context, state, *, description=None, target_url=None):
     return status
 
 
+async def post_status(gh, event, status):
+    """Post a status in reaction to an event."""
+    await gh.post(event.data["pull_request"]["statuses_url"], data=status)
+
+
+def skip_label(what):
+    """Generate a "skip" label name."""
+    return f"skip {what}"
+
+
 def skip(what, issue):
     """See if an issue has a "skip {what}" label."""
-    return any(label_data['name'] == f'skip {what}' for label_data in issue['labels'])
+    return any(label_data['name'] == skip_label(what)
+               for label_data in issue['labels'])
+
+
+def label_name(event_data):
+    """Get the label name from a label-related webhook event."""
+    return event_data["label"]["name"]
 
 
 def user_login(item):
@@ -72,3 +89,13 @@ def normalize_title(title, body):
     else:
         # Being paranoid in case \r\n is used.
         return title[:-1] + body[1:].partition('\r\n')[0]
+
+
+def no_labels(event_data):
+    if "label" not in event_data:
+        print("no 'label' key in payload; "
+              "'unlabeled' event triggered by label deletion?",
+              file=sys.stderr)
+        return True
+    else:
+        return False

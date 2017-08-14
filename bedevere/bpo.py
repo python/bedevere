@@ -1,6 +1,5 @@
 """Check if a bugs.python.org issue number is specified in the pull request's title."""
 import re
-import sys
 
 from gidgethub import routing
 
@@ -19,7 +18,7 @@ https://bugs.python.org/issue{{issue_number}}
 """
 
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
-SKIP_ISSUE_LABEL = "skip issue"
+SKIP_ISSUE_LABEL = util.skip_label("issue")
 STATUS_CONTEXT = "bedevere/issue-number"
 _FAILURE_DESCRIPTION = 'No issue number prepended to the title or "skip issue" label found'
 _FAILURE_URL = "https://devguide.python.org/pullrequest/#submitting"
@@ -30,11 +29,6 @@ del _FAILURE_DESCRIPTION
 del _FAILURE_URL
 SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                                        description="Issue report skipped")
-
-
-async def _post_status(event, gh, status):
-    """Post a status in reaction to an event."""
-    await gh.post(event.data["pull_request"]["statuses_url"], data=status)
 
 
 @router.register("pull_request", action="opened")
@@ -54,7 +48,7 @@ async def set_status(event, gh, *args, **kwargs):
                 body_data = {"body": new_body, "maintainer_can_modify": True}
                 await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
-    await _post_status(event, gh, status)
+    await util.post_status(gh, event, status)
 
 
 @router.register("pull_request", action="edited")
@@ -68,24 +62,22 @@ async def title_edited(event, gh, *args, **kwargs):
 @router.register("pull_request", action="labeled")
 async def new_label(event, gh, *args, **kwargs):
     """Update the status if the "skip issue" label was added."""
-    if event.data["label"]["name"] == SKIP_ISSUE_LABEL:
+    if util.label_name(event.data) == SKIP_ISSUE_LABEL:
         issue_number_found = ISSUE_RE.search(
             event.data["pull_request"]["title"])
         if issue_number_found:
             status = create_success_status(issue_number_found)
         else:
             status = SKIP_ISSUE_STATUS
-        await _post_status(event, gh, status)
+        await util.post_status(gh, event, status)
 
 
 @router.register("pull_request", action="unlabeled")
 async def removed_label(event, gh, *args, **kwargs):
     """Re-check the status if the "skip issue" label is removed."""
-    if "label" not in event.data:
-        print("no 'label' key in payload; "
-              "'unlabeled' event triggered by label deletion?",
-              file=sys.stderr)
-    elif event.data["label"]["name"] == SKIP_ISSUE_LABEL:
+    if util.no_labels(event.data):
+        return
+    elif util.label_name(event.data) == SKIP_ISSUE_LABEL:
         await set_status(event, gh)
 
 

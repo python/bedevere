@@ -135,7 +135,9 @@ async def core_dev_reviewers(gh, pull_request_url):
     # Unfortunately the reviews URL is not contained in a pull request's data.
     async for review in gh.getiter(pull_request_url + "/reviews"):
         reviewer = util.user_login(review)
-        if await util.is_core_dev(gh, reviewer):
+        # Ignoring "comment" reviews.
+        actual_review = review["state"].lower() in {"approved", "changes_requested"}
+        if actual_review and await util.is_core_dev(gh, reviewer):
             yield reviewer
 
 

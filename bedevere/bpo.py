@@ -1,7 +1,10 @@
+"""Check if a bugs.python.org issue number is specified in the pull request's title."""
 import re
 import sys
 
 from gidgethub import routing
+
+from . import util
 
 
 router = routing.Router()
@@ -16,15 +19,17 @@ https://bugs.python.org/issue{{issue_number}}
 """
 
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
-STATUS_TEMPLATE = {"context": "bedevere/issue-number"}
-FAILURE_STATUS = STATUS_TEMPLATE.copy()
-FAILURE_STATUS["state"] = "failure"
-FAILURE_STATUS["target_url"] = "https://devguide.python.org/pullrequest/#submitting"
-FAILURE_STATUS["description"] = """No issue number prepended to the title or "skip issue" label found"""
 SKIP_ISSUE_LABEL = "skip issue"
-SKIP_ISSUE_STATUS = STATUS_TEMPLATE.copy()
-SKIP_ISSUE_STATUS["state"] = "success"
-SKIP_ISSUE_STATUS["description"] = "No issue number necessary"
+STATUS_CONTEXT = "bedevere/issue-number"
+_FAILURE_DESCRIPTION = 'No issue number prepended to the title or "skip issue" label found'
+_FAILURE_URL = "https://devguide.python.org/pullrequest/#submitting"
+FAILURE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
+                                    description=_FAILURE_DESCRIPTION,
+                                    target_url=_FAILURE_URL)
+del _FAILURE_DESCRIPTION
+del _FAILURE_URL
+SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
+                                       description="Issue report skipped")
 
 
 async def _post_status(event, gh, status):
@@ -38,14 +43,8 @@ async def set_status(event, gh, *args, **kwargs):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
-        issue_url = event.data["pull_request"]["issue_url"]
-        data = await gh.getitem(issue_url)
-        for label in data["labels"]:
-            if label["name"] == SKIP_ISSUE_LABEL:
-                status = SKIP_ISSUE_STATUS
-                break
-        else:
-            status = FAILURE_STATUS
+        issue = await util.issue_for_PR(gh, event.data["pull_request"])
+        status = SKIP_ISSUE_STATUS if util.skip("issue", issue) else FAILURE_STATUS
     else:
         if "body" in event.data["pull_request"]:
             body = event.data["pull_request"]["body"]
@@ -92,9 +91,8 @@ async def removed_label(event, gh, *args, **kwargs):
 
 def create_success_status(found_issue):
     """Create a success status for when an issue number was found in the title."""
-    status = STATUS_TEMPLATE.copy()
-    status["state"] = "success"
     issue_number = found_issue.group("issue")
-    status["description"] = f"Issue number {issue_number} found"
-    status["target_url"] = f"https://bugs.python.org/issue{issue_number}"
-    return status
+    url = f"https://bugs.python.org/issue{issue_number}"
+    return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
+                              description=f"Issue number {issue_number} found",
+                              target_url=url)

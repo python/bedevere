@@ -25,25 +25,6 @@ class FakeGH:
         self.post_data = data
 
 
-def test_title_normalization():
-    title = "abcd"
-    body = "1234"
-    assert backport.normalize_title(title, body) == title
-
-    title = "[2.7] bpo-29243: Fix Makefile with respect to --enable-optimizations …"
-    body = "…(GH-1478)\r\n\r\nstuff"
-    expected = '[2.7] bpo-29243: Fix Makefile with respect to --enable-optimizations (GH-1478)'
-    assert backport.normalize_title(title, body) == expected
-
-    title = "[2.7] bpo-29243: Fix Makefile with respect to --enable-optimizations …"
-    body = "…(GH-1478)"
-    assert backport.normalize_title(title, body) == expected
-
-    title = "[2.7] bpo-29243: Fix Makefile with respect to --enable-optimizations (GH-14…"
-    body = "…78)"
-    assert backport.normalize_title(title, body) == expected
-
-
 async def test_missing_branch_in_title():
     data = {
         'pull_request': {'title': 'Backport this (GH-1234)', 'body': ''},

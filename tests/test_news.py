@@ -107,3 +107,81 @@ async def test_news_file():
     assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'
+
+
+async def test_adding_skip_news_label():
+    gh = FakeGH()
+    event_data = {
+        "action": "labeled",
+        "label": {"name": news.SKIP_NEWS_LABEL},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "An easy fix",
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    await news.router.dispatch(event, gh)
+    assert gh.post_data['state'] == 'success'
+
+
+async def test_adding_benign_label():
+    gh = FakeGH()
+    event_data = {
+        "action": "labeled",
+        "label": {"name": "unimportant"},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "An easy fix",
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    await news.router.dispatch(event, gh)
+    assert gh.post_data is None
+
+
+async def test_deleting_label():
+    gh = FakeGH()
+    event_data = {
+        "action": "unlabeled",
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "An easy fix",
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    await news.router.dispatch(event, gh)
+    assert gh.post_data is None
+
+
+async def test_removing_skip_news_label():
+    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/' + GOOD_BASENAME}]
+    issue = {'labels': []}
+    gh = FakeGH(getiter=files, getitem=issue)
+    event_data = {
+        "action": "unlabeled",
+        "label": {"name": news.SKIP_NEWS_LABEL},
+        "number": 1234,
+        "pull_request": {
+            "title": "An easy fix",
+            'statuses_url': 'https://api.github.com/some/status',
+            'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    await news.router.dispatch(event, gh)
+    assert gh.post_data["state"] == "failure"
+
+
+async def test_removing_benign_label():
+    gh = FakeGH()
+    event_data = {
+        "action": "unlabeled",
+        "label": {"name": "unimportant"},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "An easy fix",
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    await news.router.dispatch(event, gh)
+    assert gh.post_data is None

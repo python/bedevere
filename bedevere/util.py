@@ -29,9 +29,20 @@ def create_status(context, state, *, description=None, target_url=None):
     return status
 
 
+def skip_label(what):
+    """Generate a "skip" label name."""
+    return f"skip {what}"
+
+
 def skip(what, issue):
     """See if an issue has a "skip {what}" label."""
-    return any(label_data['name'] == f'skip {what}' for label_data in issue['labels'])
+    return any(label_data['name'] == skip_label(what)
+               for label_data in issue['labels'])
+
+
+def label_name(event_data):
+    """Get the label name from a label-related webhook event."""
+    return event_data["label"]["name"]
 
 
 def user_login(item):

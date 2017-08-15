@@ -20,7 +20,8 @@ https://bugs.python.org/issue{{issue_number}}
 ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
 SKIP_ISSUE_LABEL = util.skip_label("issue")
 STATUS_CONTEXT = "bedevere/issue-number"
-_FAILURE_DESCRIPTION = 'No issue number prepended to the title or "skip issue" label found'
+# Try to keep descriptions at or below 50 characters, else GitHub's CSS will truncate it.
+_FAILURE_DESCRIPTION = 'No issue # in title or "skip issue" label found'
 _FAILURE_URL = "https://devguide.python.org/pullrequest/#submitting"
 FAILURE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
                                     description=_FAILURE_DESCRIPTION,

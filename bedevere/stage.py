@@ -146,11 +146,7 @@ async def new_review(event, gh, *args, **kwargs):
     pull_request = event.data["pull_request"]
     review = event.data["review"]
     reviewer = util.user_login(review)
-    issue = await util.issue_for_PR(gh, pull_request)
-    if Blocker.changes.value in util.labels(issue):
-        # Contributor already knows what to do for this round of reviews.
-        return
-    elif not await util.is_core_dev(gh, reviewer):
+    if not await util.is_core_dev(gh, reviewer):
         # Poor-man's asynchronous any().
         async for _ in core_dev_reviewers(gh, pull_request["url"]):
             # No need to update the stage as a core developer has already
@@ -165,12 +161,15 @@ async def new_review(event, gh, *args, **kwargs):
         if state == "approved":
             await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.merge)
         elif state == "changes_requested":
+            issue = await util.issue_for_PR(gh, pull_request)
+            if Blocker.changes.value in util.labels(issue):
+                # Contributor already knows what to do for this round of reviews.
+                return
             easter_egg = ""
             if random.random() < 0.1:  # pragma: no cover
                 easter_egg = random.choice([EASTER_EGG_1, EASTER_EGG_2])
             comment = CHANGES_REQUESTED_MESSAGE.format(easter_egg=easter_egg)
-            await stage(gh, await util.issue_for_PR(gh, pull_request),
-                        Blocker.changes)
+            await stage(gh, issue, Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
         # Don't care about "comment" reviews.
 

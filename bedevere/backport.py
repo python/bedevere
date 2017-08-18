@@ -29,7 +29,7 @@ async def remove_backport_label(event, gh, *args, **kwargs):
 
     issue_to_backport = await gh.getitem(event.data['repository']['issues_url'],
                                          {'number': pr_to_backport})
-    if not any(backport_label == label['name'] for label in issue_to_backport['labels']):
+    if backport_label not in util.labels(issue_to_backport):
         return
     await gh.delete(issue_to_backport['labels_url'], {'name': backport_label})
     message = MESSAGE_TEMPLATE.format(branch=branch, pr=backported_pr)

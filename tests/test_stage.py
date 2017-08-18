@@ -124,6 +124,7 @@ async def test_opened_pr():
 
 
 async def test_new_review():
+    # First review from a non-core dev.
     username = "andreamcinnes"
     data = {
         "action": "submitted",
@@ -162,6 +163,7 @@ async def test_new_review():
     assert post_[0] == "https://api.github.com/labels/42"
     assert post_[1] == [awaiting.Blocker.core_review.value]
 
+    # First and second review from a non-core dev.
     items = {
         f"https://api.github.com/teams/6/memberships/{username}":
             gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
@@ -180,6 +182,7 @@ async def test_new_review():
     await awaiting.router.dispatch(event, gh)
     assert not gh.post_
 
+    # Core dev submits an approving review.
     username = "brettcannon"
     data = {
         "action": "submitted",
@@ -201,7 +204,7 @@ async def test_new_review():
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
         "https://api.github.com/issue/42": {
-            "labels": [],
+            "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
         }
     }
@@ -216,6 +219,7 @@ async def test_new_review():
     assert post_[0] == "https://api.github.com/labels/42"
     assert post_[1] == [awaiting.Blocker.merge.value]
 
+    # Core dev requests changes.
     data = {
         "action": "submitted",
         "review": {
@@ -231,6 +235,13 @@ async def test_new_review():
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 2
@@ -241,6 +252,7 @@ async def test_new_review():
     assert message[0] == "https://api.github.com/comment/42"
     assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]
 
+    # Comment reviews do nothing.
     data = {
         "action": "submitted",
         "review": {
@@ -256,6 +268,33 @@ async def test_new_review():
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+
+    # Skip commenting if "awaiting changes" is already set.
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "changes_requested".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.changes.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
     assert not len(gh.post_)

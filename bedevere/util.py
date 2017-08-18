@@ -39,10 +39,13 @@ def skip_label(what):
     return f"skip {what}"
 
 
+def labels(issue):
+    return {label_data["name"] for label_data in issue["labels"]}
+
+
 def skip(what, issue):
     """See if an issue has a "skip {what}" label."""
-    return any(label_data['name'] == skip_label(what)
-               for label_data in issue['labels'])
+    return skip_label(what) in labels(issue)
 
 
 def label_name(event_data):

@@ -260,6 +260,33 @@ async def test_new_review():
     await awaiting.router.dispatch(event, gh)
     assert not len(gh.post_)
 
+    # Skip commenting if "awaiting changes" is already set.
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "changes_requested".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.changes.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+
 
 async def test_new_comment():
     # Comment not from PR author.

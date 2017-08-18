@@ -53,29 +53,28 @@ REQUEST_CHANGE_REVIEW = "I didn't expect the Spanish Inquisition"
 TAG_NAME = "changes-requested"
 
 CHANGES_REQUESTED_MESSAGE = f"""\
-<!-- {TAG_NAME}: {{core_dev}} -->
-A Python core developer, {{core_dev}}, has requested some changes be
-made to your pull request before we can consider merging it. If you
-could please address their requests along with any other requests in
-other reviews from core developers that would be appreciated.
+<!-- {TAG_NAME} -->
+A Python core developer has requested some changes be made to your \
+pull request before we can consider merging it. If you could please \
+address their requests along with any other requests in other \
+reviews from core developers that would be appreciated.
 
-Once you have made the requested changes, please leave a comment
-on this pull request containing the phrase `{REQUEST_CHANGE_REVIEW}!`
-I will then notify {{core_dev}} along with any other core developers
-who have left a review that you're ready for them to take another look
-at this pull request.
+Once you have made the requested changes, please leave a comment \
+on this pull request containing the phrase `{REQUEST_CHANGE_REVIEW}!`. \
+I will then notify any core developers who have left a review that \
+you're ready for them to take another look at this pull request.
 <!-- /{TAG_NAME} -->
 
 {{easter_egg}}
 """
 
 EASTER_EGG_1 = """\
-And if you don't make the requested changes,
+And if you don't make the requested changes, \
 [you will be poked with soft cushions!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
 """
 
 EASTER_EGG_2 = """\
-And if you don't make the requested changes,
+And if you don't make the requested changes, \
 [you will be put in the comfy chair!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
 """
 
@@ -165,8 +164,7 @@ async def new_review(event, gh, *args, **kwargs):
             easter_egg = ""
             if random.random() < 0.1:  # pragma: no cover
                 easter_egg = random.choice([EASTER_EGG_1, EASTER_EGG_2])
-            comment = CHANGES_REQUESTED_MESSAGE.format(core_dev=reviewer,
-                                                       easter_egg=easter_egg)
+            comment = CHANGES_REQUESTED_MESSAGE.format(easter_egg=easter_egg)
             await stage(gh, await util.issue_for_PR(gh, pull_request),
                         Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})

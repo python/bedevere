@@ -196,3 +196,13 @@ async def new_comment(event, gh, *args, **kwargs):
                              async for core_dev in core_dev_reviewers(gh, pr_url)})
         comment = CHANGE_REVIEW_REQUESTED.format(core_devs=core_devs)
         await gh.post(issue["comments_url"], data={"body": comment})
+
+
+@router.register("pull_request", action="closed")
+async def closed_pr(event, gh, *args, **kwargs):
+    """Remove all `awaiting ... ` label when PR was merged"""
+    if event.data["pull_request"]["merged"]:
+        issue = await util.issue_for_PR(gh, event.data["pull_request"])
+        for label_data in issue["labels"]:
+            if LABEL_PREFIX in label_data['name']:
+                await gh.delete(label_data["url"])

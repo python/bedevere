@@ -16,6 +16,7 @@ MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
 
 
 @router.register("pull_request", action="opened")
+@router.register("pull_request", action="edited")
 async def remove_backport_label(event, gh, *args, **kwargs):
     title = util.normalize_title(event.data['pull_request']['title'],
                                  event.data['pull_request']['body'])

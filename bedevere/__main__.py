@@ -11,10 +11,11 @@ from gidgethub import aiohttp as gh_aiohttp
 from gidgethub import routing
 from gidgethub import sansio
 
-from . import backport, bpo, news, stage
+from . import backport, bpo, news, stage, close_pr
 
 
-router = routing.Router(backport.router, bpo.router, news.router, stage.router)
+router = routing.Router(backport.router, bpo.router, news.router, stage.router,
+                        close_pr.router)
 cache = cachetools.LRUCache(maxsize=500)
 
 

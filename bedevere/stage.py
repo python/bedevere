@@ -200,7 +200,7 @@ async def new_comment(event, gh, *args, **kwargs):
 
 @router.register("pull_request", action="closed")
 async def closed_pr(event, gh, *args, **kwargs):
-    """Remove all `awaiting ... ` label when PR was merged"""
+    """Remove all `awaiting ... ` label when PR was merged."""
     if event.data["pull_request"]["merged"]:
         issue = await util.issue_for_PR(gh, event.data["pull_request"])
         for label_data in issue["labels"]:

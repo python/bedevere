@@ -19,20 +19,12 @@ async def test_success(test_client):
     app = web.Application()
     app.router.add_post("/", main.main)
     client = await test_client(app)
-    headers = {"x-github-event": "pull_request",
+    headers = {"x-github-event": "project",
                "x-github-delivery": "1234"}
     # Sending a payload that shouldn't trigger any networking, but no errors
     # either.
     data = {
-        "action": "closed",
-        "number": 10,
-        "pull_request": {
-            "url": "https://api.github.com/repos/python/cpython/pulls/10",
-            "issue_url": "https://api.github.com/repos/python/cpython/issues/10",
-            "number": 10,
-            "state": "closed",
-            "merged": True
-        }
+        "action": "created",
     }
     response = await client.post("/", headers=headers, json=data)
     assert response.status == 200

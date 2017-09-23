@@ -13,13 +13,6 @@ class FakeGH:
         self.patch_data = None
         self.data = None
 
-    async def getitem(self, url):
-        return self._getitem_return
-
-    async def post(self, url, data):
-        self.url = url
-        self.data = data
-
     async def patch(self, url, data):
         self.patch_url = url
         self.patch_data = data

@@ -21,6 +21,7 @@ class FakeGH:
 @pytest.mark.asyncio
 async def test_close_invalid_pr():
     data = {
+        "action": "opened",
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",
@@ -41,7 +42,7 @@ async def test_close_invalid_pr():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=pr_data)
-    await close_pr.close_invalid_pr(event, gh)
+    await close_pr.router.dispatch(event, gh)
     patch_data = gh.patch_data
     assert patch_data["state"] == "closed"
 
@@ -69,6 +70,6 @@ async def test_valid_pr_not_closed():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=pr_data)
-    await close_pr.close_invalid_pr(event, gh)
+    await close_pr.router.dispatch(event, gh)
     patch_data = gh.patch_data
     assert patch_data is None

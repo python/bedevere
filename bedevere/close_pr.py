@@ -12,9 +12,10 @@ router = gidgethub.routing.Router()
 @router.register("pull_request", action="synchronize")
 async def close_invalid_pr(event, gh, *args, **kwargs):
     """Close the invalid PR.
+
     PR is considered invalid if:
-    base_label is 'python:master', and
-    head_label is 'python:<maint_branch>'
+    * base_label is 'python:master'
+    * head_label is 'python:<maint_branch>'
     """
     head_label = event.data["pull_request"]["head"]["label"]
     base_label = event.data["pull_request"]["base"]["label"]

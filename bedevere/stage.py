@@ -174,6 +174,8 @@ async def new_review(event, gh, *args, **kwargs):
             comment = CHANGES_REQUESTED_MESSAGE.format(easter_egg=easter_egg)
             await stage(gh, issue, Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
+        else: # pragma: no cover
+            raise ValueError(f"unexpected review state: {state!r}")
 
 
 @router.register("issue_comment", action="created")

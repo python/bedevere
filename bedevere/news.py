@@ -60,7 +60,7 @@ async def check_news(event, gh, *args, **kwargs):
             if not in_next_dir:
                 description = f'No news entry in {NEWS_NEXT_DIR} or "skip news" label found'
             elif not file_found:
-                description = f"News entry not in a subdirectory of {NEWS_NEXT_DIR}"
+                description = "News entry not in an appropriate directory"
             else:
                 description = "News entry file name incorrectly formatted"
             status = create_status(util.StatusState.FAILURE,

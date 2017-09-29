@@ -32,31 +32,25 @@ GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 class TestFilenameRE:
 
-    def test_not_in_directory(self):
-        assert news.FILENAME_RE.match('some/other/dir/' + GOOD_BASENAME) is None
-
-    def test_not_in_subdirectory(self):
-        assert news.FILENAME_RE.match('Misc/NEWS.d/next/' + GOOD_BASENAME) is None
-
     def test_malformed_basename(self):
-        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst') is None
+        assert news.FILENAME_RE.match('2017-06-16.bpo-1234.rst') is None
 
     def test_success(self):
-        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Library/' + GOOD_BASENAME)
-        live_result = 'Misc/NEWS.d/next/IDLE/2017-08-14-15-13-50.bpo-1612262.-x_Oyq.rst'
+        assert news.FILENAME_RE.match(GOOD_BASENAME)
+        live_result = '2017-08-14-15-13-50.bpo-1612262.-x_Oyq.rst'
         assert news.FILENAME_RE.match(live_result)
 
     def test_multiple_issue_numbers(self):
         basename = '2018-01-01.bpo-1234,5678,9012.nonce.rst'
-        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Security/' + basename)
+        assert news.FILENAME_RE.match(basename)
 
     def test_date_only(self):
         basename = '2017-08-14.bpo-1234.nonce.rst'
-        assert news.FILENAME_RE.match('Misc/NEWS.d/next/Security/' + basename)
+        assert news.FILENAME_RE.match(basename)
 
 
-async def test_no_news_file():
-    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
+async def failure_testing(path):
+    files = [{'filename': 'README'}, {'filename': path}]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -73,6 +67,17 @@ async def test_no_news_file():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'failure'
+
+
+async def test_bad_news_entry():
+    # Not in Misc/NEWS.d.
+    await failure_testing('some/other/dir/' + GOOD_BASENAME)
+    # Not in next/.
+    await failure_testing('Misc/NEWS.d/' + GOOD_BASENAME)
+    # Not in a classifying subdirectory.
+    await failure_testing('Misc/NEWS.d/next/' + GOOD_BASENAME)
+    # Missing the nonce.
+    await failure_testing('Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst')
 
 
 async def test_skip_news():

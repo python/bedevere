@@ -79,6 +79,7 @@ async def test_close_invalid_pr_on_synchronize():
 @pytest.mark.asyncio
 async def test_valid_pr_not_closed():
     data = {
+        "action": "opened",
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",

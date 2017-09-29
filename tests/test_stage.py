@@ -124,11 +124,12 @@ async def test_opened_pr():
 
 
 async def test_new_review():
-    # First review from a non-core dev.
+    # First non-comment review from a non-core dev.
     username = "andreamcinnes"
     data = {
         "action": "submitted",
         "review": {
+            "state": "approved",
             "user": {
                 "login": username,
             },
@@ -164,6 +165,39 @@ async def test_new_review():
     assert post_[1] == [awaiting.Blocker.core_review.value]
 
     # First and second review from a non-core dev.
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [{"user": {"login": "brettcannon"}, "state": "approved"}],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert not gh.post_
+
+    # First comment review from a non-core dev.
+    data = {
+        "action": "submitted",
+        "review": {
+            "state": "comment",
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     items = {
         f"https://api.github.com/teams/6/memberships/{username}":
             gidgethub.BadRequest(status_code=http.HTTPStatus(404)),

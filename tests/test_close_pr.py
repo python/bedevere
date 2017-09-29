@@ -48,7 +48,7 @@ async def test_close_invalid_pr_on_open():
 
 
 @pytest.mark.asyncio
-async def test_close_invalid_pr_on_open():
+async def test_close_invalid_pr_on_synchronize():
     data = {
         "action": "synchronize",
         "pull_request": {

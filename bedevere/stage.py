@@ -146,6 +146,10 @@ async def new_review(event, gh, *args, **kwargs):
     pull_request = event.data["pull_request"]
     review = event.data["review"]
     reviewer = util.user_login(review)
+    state = review["state"].lower()
+    if state == "comment":
+        # Don't care about comment reviews.
+        return
     if not await util.is_core_dev(gh, reviewer):
         # Poor-man's asynchronous any().
         async for _ in core_dev_reviewers(gh, pull_request["url"]):
@@ -157,7 +161,6 @@ async def new_review(event, gh, *args, **kwargs):
             await stage(gh, await util.issue_for_PR(gh, pull_request),
                         Blocker.core_review)
     else:
-        state = review["state"].lower()
         if state == "approved":
             await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.merge)
         elif state == "changes_requested":
@@ -171,7 +174,6 @@ async def new_review(event, gh, *args, **kwargs):
             comment = CHANGES_REQUESTED_MESSAGE.format(easter_egg=easter_egg)
             await stage(gh, issue, Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
-        # Don't care about "comment" reviews.
 
 
 @router.register("issue_comment", action="created")

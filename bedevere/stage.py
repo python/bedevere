@@ -150,7 +150,7 @@ async def new_review(event, gh, *args, **kwargs):
     if state == "comment":
         # Don't care about comment reviews.
         return
-    if not await util.is_core_dev(gh, reviewer):
+    elif not await util.is_core_dev(gh, reviewer):
         # Poor-man's asynchronous any().
         async for _ in core_dev_reviewers(gh, pull_request["url"]):
             # No need to update the stage as a core developer has already

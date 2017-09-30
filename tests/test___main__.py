@@ -23,9 +23,7 @@ async def test_success(test_client):
                "x-github-delivery": "1234"}
     # Sending a payload that shouldn't trigger any networking, but no errors
     # either.
-    data = {
-        "action": "created",
-    }
+    data = {"action": "created"}
     response = await client.post("/", headers=headers, json=data)
     assert response.status == 200
 

@@ -439,3 +439,35 @@ async def test_awaiting_labels_removed_when_pr_merged():
 
     await awaiting.router.dispatch(event, gh)
     assert gh.delete_url == "https://api.github.com/repos/python/cpython/labels/awaiting%20merge"
+
+
+async def test_awaiting_labels_not_removed_when_pr_not_merged():
+    issue_url = "https://api.github.com/repos/org/proj/issues/3749"
+    data = {
+        "action": "closed",
+        "pull_request": {
+            "merged": False,
+            "issue_url": issue_url,
+        }
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+
+    issue_data = {
+        issue_url: {
+            "labels":
+                [
+                    {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
+                     "name": "awaiting merge",
+                     },
+                    {
+                      "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
+                      "name": "CLA signed",
+                    },
+                ],
+        },
+    }
+
+    gh = FakeGH(getitem=issue_data)
+
+    await awaiting.router.dispatch(event, gh)
+    assert gh.delete_url is None

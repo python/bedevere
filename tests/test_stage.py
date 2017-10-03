@@ -422,23 +422,23 @@ async def test_awaiting_labels_removed_when_pr_merged():
 
     issue_data = {
         issue_url: {
-            "labels":
-                [
-                    {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
-                     "name": "awaiting merge",
-                     },
-                    {
-                      "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
-                      "name": "CLA signed",
-                    },
-                ],
+            "labels": [
+                {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
+                 "name": "awaiting merge",
+                 },
+                {
+                  "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
+                  "name": "CLA signed",
+                },
+            ],
+            "labels_url": "https://api.github.com/repos/python/cpython/issues/12345/labels{/name}",
         },
     }
 
     gh = FakeGH(getitem=issue_data)
 
     await awaiting.router.dispatch(event, gh)
-    assert gh.delete_url == "https://api.github.com/repos/python/cpython/labels/awaiting%20merge"
+    assert gh.delete_url == "https://api.github.com/repos/python/cpython/12345/labels/awaiting%20merge"
 
 
 async def test_awaiting_labels_not_removed_when_pr_not_merged():
@@ -454,16 +454,16 @@ async def test_awaiting_labels_not_removed_when_pr_not_merged():
 
     issue_data = {
         issue_url: {
-            "labels":
-                [
-                    {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
-                     "name": "awaiting merge",
-                     },
-                    {
-                      "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
-                      "name": "CLA signed",
-                    },
-                ],
+            "labels": [
+                {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
+                 "name": "awaiting merge",
+                 },
+                {
+                  "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
+                  "name": "CLA signed",
+                },
+            ],
+            "labels_url": "https://api.github.com/repos/python/cpython/issues/12345/labels{/name}",
         },
     }
 

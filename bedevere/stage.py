@@ -95,13 +95,10 @@ class Blocker(enum.Enum):
     changes = f"{LABEL_PREFIX} changes"
     change_review = f"{LABEL_PREFIX} change review"
     merge = f"{LABEL_PREFIX} merge"
-
-
-async def stage(gh, issue, blocked_on):
-    """Remove any "awaiting" labels and apply the specified one."""
-    label_name = blocked_on.value
-    if any(label_name == label["name"] for label in issue["labels"]):
-        return
+    
+    
+async def _remove_stage_labels(gh, issue):
+    """Remove all "awaiting" labels."""
     # There's no reason to expect there to be multiple "awaiting" labels on a
     # single pull request, but just in case there are we might as well clean
     # up the situation when we come across it.
@@ -109,6 +106,14 @@ async def stage(gh, issue, blocked_on):
         stale_name = label["name"]
         if stale_name.startswith(LABEL_PREFIX + " "):
             await gh.delete(issue["labels_url"], {"name": stale_name})
+
+
+async def stage(gh, issue, blocked_on):
+    """Remove any "awaiting" labels and apply the specified one."""
+    label_name = blocked_on.value
+    if any(label_name == label["name"] for label in issue["labels"]):
+        return
+    await _remove_stage_labels(gh, issue)
     await gh.post(issue["labels_url"], data=[label_name])
 
 
@@ -196,3 +201,11 @@ async def new_comment(event, gh, *args, **kwargs):
                              async for core_dev in core_dev_reviewers(gh, pr_url)})
         comment = CHANGE_REVIEW_REQUESTED.format(core_devs=core_devs)
         await gh.post(issue["comments_url"], data={"body": comment})
+
+
+@router.register("pull_request", action="closed")
+async def closed_pr(event, gh, *args, **kwargs):
+    """Remove all `awaiting ... ` labels when a PR is merged."""
+    if event.data["pull_request"]["merged"]:
+        issue = await util.issue_for_PR(gh, event.data["pull_request"])
+        await _remove_stage_labels(gh, issue)

@@ -98,14 +98,14 @@ class Blocker(enum.Enum):
     
     
 async def _remove_stage_labels(gh, issue):
-  """Remove all "awaiting" labels."""
-  # There's no reason to expect there to be multiple "awaiting" labels on a
-  # single pull request, but just in case there are we might as well clean
-  # up the situation when we come across it.
-  for label in issue["labels"]:
-      stale_name = label["name"]
-      if stale_name.startswith(LABEL_PREFIX + " "):
-          await gh.delete(issue["labels_url"], {"name": stale_name})
+    """Remove all "awaiting" labels."""
+    # There's no reason to expect there to be multiple "awaiting" labels on a
+    # single pull request, but just in case there are we might as well clean
+    # up the situation when we come across it.
+    for label in issue["labels"]:
+        stale_name = label["name"]
+        if stale_name.startswith(LABEL_PREFIX + " "):
+            await gh.delete(issue["labels_url"], {"name": stale_name})
 
 
 async def stage(gh, issue, blocked_on):

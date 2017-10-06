@@ -25,6 +25,19 @@ class FakeGH:
         self.post_data = data
 
 
+async def test_edit_not_title():
+    data = {
+        'action': 'edited',
+        'pull_request': {'title': 'Backport this (GH-1234)', 'body': ''},
+        'changes': {},
+    }
+    event = sansio.Event(data, event='pull_request',
+                         delivery_id='1')
+    gh = FakeGH()
+    await backport.router.dispatch(event, gh)
+    assert gh.getitem_url is None
+
+
 async def test_missing_branch_in_title():
     data = {
         'action': 'opened',

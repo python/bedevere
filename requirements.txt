@@ -1,5 +1,6 @@
 aiohttp==2.1.0
 appdirs==1.4.3
+APScheduler==3.3.1
 async-timeout==1.2.1
 cachetools==2.0.0
 chardet==3.0.4
@@ -8,6 +9,8 @@ multidict==2.1.6
 packaging==16.8
 py==1.4.33
 pyparsing==2.2.0
+pytz==2017.2
 six==1.10.0
+tzlocal==1.4
 uritemplate==3.0.0
 yarl==0.10.3

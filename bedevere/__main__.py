@@ -10,14 +10,13 @@ import cachetools
 from gidgethub import aiohttp as gh_aiohttp
 from gidgethub import routing
 from gidgethub import sansio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from . import backport, bpo, close_pr, news, stage
-
+from . import backport, bpo, close_pr, news, stage, stale_pr
 
 router = routing.Router(backport.router, bpo.router, close_pr.router,
                         news.router, stage.router)
 cache = cachetools.LRUCache(maxsize=500)
-
 
 async def main(request):
     try:
@@ -44,8 +43,12 @@ async def main(request):
         traceback.print_exc(file=sys.stderr)
         return web.Response(status=500)
 
-
 if __name__ == "__main__":  # pragma: no cover
+
+    scheduler = AsyncIOScheduler()
+    scheduler.start()
+    scheduler.add_job(stale_pr.invoke, 'cron', hour='0')
+
     app = web.Application()
     app.router.add_post("/", main)
     port = os.environ.get("PORT")

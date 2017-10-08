@@ -284,7 +284,7 @@ async def test_new_review():
     assert labeling[1] == [awaiting.Blocker.changes.value]
     message = gh.post_[1]
     assert message[0] == "https://api.github.com/comment/42"
-    assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]
+    assert awaiting.BORING_TRIGGER_PHRASE in message[1]["body"]
 
     # Comment reviews do nothing.
     data = {
@@ -341,7 +341,7 @@ async def test_new_comment():
         "issue": {"user": {"login": "andreamcinnes"}},
         "comment": {
             "user": {"login": "brettcannon"},
-            "body": awaiting.REQUEST_CHANGE_REVIEW,
+            "body": awaiting.BORING_TRIGGER_PHRASE,
         },
     }
     event = sansio.Event(data, event="issue_comment", delivery_id="12345")
@@ -376,7 +376,7 @@ async def test_new_comment():
         },
         "comment": {
             "user": {"login": "andreamcinnes"},
-            "body": awaiting.REQUEST_CHANGE_REVIEW,
+            "body": awaiting.BORING_TRIGGER_PHRASE,
         },
     }
     event = sansio.Event(data, event="issue_comment", delivery_id="12345")

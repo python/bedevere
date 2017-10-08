@@ -408,6 +408,35 @@ async def test_new_comment():
     assert "@gvanrossum" in comment_body
     assert "not-core-dev" not in comment_body
 
+    # All is right with the Monty Python world.
+    data = {
+        "action": "created",
+        "issue": {
+            "user": {"login": "andreamcinnes"},
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+            "url": "https://api.github.com/issue/42",
+            "pull_request": {"url": "https://api.github.com/pr/42"},
+            "comments_url": "https://api.github.com/comments/42",
+        },
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": awaiting.FUN_TRIGGER_PHRASE,
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    gh = FakeGH(getitem=items, getiter=iterators)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 2
+    labeling, comment = gh.post_
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.change_review.value]
+    assert comment[0] == "https://api.github.com/comments/42"
+    comment_body = comment[1]["body"]
+    assert "@brettcannon" in comment_body
+    assert "@gvanrossum" in comment_body
+    assert "not-core-dev" not in comment_body
+
 
 async def test_awaiting_labels_removed_when_pr_merged():
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"

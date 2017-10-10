@@ -48,7 +48,7 @@ from . import util
 
 router = gidgethub.routing.Router()
 
-BORING_TRIGGER_PHRASE = "Please review again"
+BORING_TRIGGER_PHRASE = "I have made the requested changes; please review again"
 FUN_TRIGGER_PHRASE = "I didn't expect the Spanish Inquisition"
 TRIGGERS = frozenset([BORING_TRIGGER_PHRASE, FUN_TRIGGER_PHRASE])
 

@@ -284,7 +284,7 @@ async def test_new_review():
     assert labeling[1] == [awaiting.Blocker.changes.value]
     message = gh.post_[1]
     assert message[0] == "https://api.github.com/comment/42"
-    assert awaiting.REQUEST_CHANGE_REVIEW in message[1]["body"]
+    assert awaiting.BORING_TRIGGER_PHRASE in message[1]["body"]
 
     # Comment reviews do nothing.
     data = {
@@ -341,7 +341,7 @@ async def test_new_comment():
         "issue": {"user": {"login": "andreamcinnes"}},
         "comment": {
             "user": {"login": "brettcannon"},
-            "body": awaiting.REQUEST_CHANGE_REVIEW,
+            "body": awaiting.BORING_TRIGGER_PHRASE,
         },
     }
     event = sansio.Event(data, event="issue_comment", delivery_id="12345")
@@ -376,7 +376,7 @@ async def test_new_comment():
         },
         "comment": {
             "user": {"login": "andreamcinnes"},
-            "body": awaiting.REQUEST_CHANGE_REVIEW,
+            "body": awaiting.BORING_TRIGGER_PHRASE,
         },
     }
     event = sansio.Event(data, event="issue_comment", delivery_id="12345")
@@ -396,6 +396,35 @@ async def test_new_comment():
                 {"user": {"login": "not-core-dev"}, "state": "approved"},
             ],
     }
+    gh = FakeGH(getitem=items, getiter=iterators)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 2
+    labeling, comment = gh.post_
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.change_review.value]
+    assert comment[0] == "https://api.github.com/comments/42"
+    comment_body = comment[1]["body"]
+    assert "@brettcannon" in comment_body
+    assert "@gvanrossum" in comment_body
+    assert "not-core-dev" not in comment_body
+
+    # All is right with the Monty Python world.
+    data = {
+        "action": "created",
+        "issue": {
+            "user": {"login": "andreamcinnes"},
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+            "url": "https://api.github.com/issue/42",
+            "pull_request": {"url": "https://api.github.com/pr/42"},
+            "comments_url": "https://api.github.com/comments/42",
+        },
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": awaiting.FUN_TRIGGER_PHRASE,
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
     gh = FakeGH(getitem=items, getiter=iterators)
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 2

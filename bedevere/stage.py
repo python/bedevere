@@ -48,7 +48,9 @@ from . import util
 
 router = gidgethub.routing.Router()
 
-REQUEST_CHANGE_REVIEW = "I didn't expect the Spanish Inquisition"
+BORING_TRIGGER_PHRASE = "I have made the requested changes; please review again"
+FUN_TRIGGER_PHRASE = "I didn't expect the Spanish Inquisition"
+TRIGGERS = frozenset([BORING_TRIGGER_PHRASE, FUN_TRIGGER_PHRASE])
 
 TAG_NAME = "changes-requested"
 
@@ -60,7 +62,7 @@ address their requests along with any other requests in other \
 reviews from core developers that would be appreciated.
 
 Once you have made the requested changes, please leave a comment \
-on this pull request containing the phrase `{REQUEST_CHANGE_REVIEW}!`. \
+on this pull request containing the phrase `{BORING_TRIGGER_PHRASE}`. \
 I will then notify any core developers who have left a review that \
 you're ready for them to take another look at this pull request.
 <!-- /{TAG_NAME} -->
@@ -78,11 +80,13 @@ And if you don't make the requested changes, \
 [you will be put in the comfy chair!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
 """
 
-CHANGE_REVIEW_REQUESTED = """\
-[Nobody expects the Spanish Inquisition!](https://youtu.be/Nf_Y4MbUCLY)
+ACK = """\
+{greeting}
 
 {core_devs}: please review the changes made to this pull request.
 """
+BORING_THANKS = "Thanks for making the requested changes!"
+FUN_THANKS = "[Nobody expects the Spanish Inquisition!](https://youtu.be/Nf_Y4MbUCLY)"
 
 
 LABEL_PREFIX = "awaiting"
@@ -95,8 +99,8 @@ class Blocker(enum.Enum):
     changes = f"{LABEL_PREFIX} changes"
     change_review = f"{LABEL_PREFIX} change review"
     merge = f"{LABEL_PREFIX} merge"
-    
-    
+
+
 async def _remove_stage_labels(gh, issue):
     """Remove all "awaiting" labels."""
     # There's no reason to expect there to be multiple "awaiting" labels on a
@@ -187,10 +191,11 @@ async def new_review(event, gh, *args, **kwargs):
 async def new_comment(event, gh, *args, **kwargs):
     issue = event.data["issue"]
     comment = event.data["comment"]
+    comment_body = comment["body"].lower()
     if util.user_login(issue) != util.user_login(comment):
         # Only care about the PR creator leaving a comment.
         return
-    elif REQUEST_CHANGE_REVIEW.lower() not in comment["body"].lower():
+    elif not any(trigger.lower() in comment_body for trigger in TRIGGERS):
         # PR creator didn't request another review.
         return
     else:
@@ -199,7 +204,11 @@ async def new_comment(event, gh, *args, **kwargs):
         # Using a set comprehension to remove duplicates.
         core_devs = ", ".join({"@" + core_dev
                              async for core_dev in core_dev_reviewers(gh, pr_url)})
-        comment = CHANGE_REVIEW_REQUESTED.format(core_devs=core_devs)
+        if FUN_TRIGGER_PHRASE.lower() in comment_body:
+            thanks = FUN_THANKS
+        else:
+            thanks = BORING_THANKS
+        comment = ACK.format(greeting=thanks, core_devs=core_devs)
         await gh.post(issue["comments_url"], data={"body": comment})
 
 

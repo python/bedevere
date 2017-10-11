@@ -16,7 +16,7 @@ MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
 
 
 async def _copy_over_labels(gh, original_issue, backport_issue):
-    """Copy over relevent labels from the origial PR to the backport PR."""
+    """Copy over relevent labels from the original PR to the backport PR."""
     label_prefixes = "skip", "type", "sprint"
     labels = list(filter(lambda x: x.startswith(label_prefixes),
                     util.labels(original_issue)))
@@ -52,7 +52,7 @@ async def manage_labels(event, gh, *args, **kwargs):
     original_pr_number = title_match.group('pr')
 
     original_issue = await gh.getitem(event.data['repository']['issues_url'],
-                                         {'number': original_pr_number})
+                                      {'number': original_pr_number})
     await _remove_backport_label(gh, original_issue, branch,
                                  event.data["number"])
 

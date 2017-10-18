@@ -156,7 +156,7 @@ async def new_review(event, gh, *args, **kwargs):
     review = event.data["review"]
     reviewer = util.user_login(review)
     state = review["state"].lower()
-    if state == "comment":
+    if state == "commented":
         # Don't care about comment reviews.
         return
     elif not await util.is_core_dev(gh, reviewer):

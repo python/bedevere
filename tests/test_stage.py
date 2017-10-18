@@ -155,7 +155,7 @@ async def test_new_review():
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
         "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}, "state": "comment"}],
+            [{"user": {"login": "brettcannon"}, "state": "commented"}],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -293,7 +293,7 @@ async def test_new_review():
             "user": {
                 "login": username,
             },
-            "state": "comment".upper(),
+            "state": "commented".upper(),
         },
         "pull_request": {
             "url": "https://api.github.com/pr/42",

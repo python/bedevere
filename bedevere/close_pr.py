@@ -11,7 +11,7 @@ router = gidgethub.routing.Router()
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 async def close_invalid_pr(event, gh, *args, **kwargs):
-    """Close the invalid PR and dismiss any requested reviews.
+    """Close the invalid PR.
 
     PR is considered invalid if:
     * base_label is 'python:master'

@@ -50,6 +50,29 @@ async def test_set_status_failure():
 
 
 @pytest.mark.asyncio
+async def test_set_status_failure_via_invalid_issue():
+    data = {
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-0: an issue!",
+            "issue_url": "issue URL",
+        },
+    }
+    issue_data = {
+        "labels": [
+            {"name": "non-trivial"},
+        ]
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH(getitem=issue_data)
+    await bpo.set_status(event, gh)
+    status = gh.data
+    assert status["state"] == "failure"
+    assert status["target_url"].startswith("https://devguide.python.org")
+    assert status["context"] == "bedevere/issue-number"
+
+
+@pytest.mark.asyncio
 async def test_set_status_success():
     data = {
         "action": "opened",
@@ -267,3 +290,11 @@ async def test_set_body_failure():
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is None
     assert gh.patch_url is None
+
+
+def test_validate_issue_number():
+    exists = bpo.validate_issue_number(30952)
+    assert exists is True
+    does_not_exist = bpo.validate_issue_number(0)
+    assert does_not_exist is False
+

@@ -1,5 +1,7 @@
 """Check if a bugs.python.org issue number is specified in the pull request's title."""
 import re
+import urllib.request
+import urllib.error
 
 from gidgethub import routing
 
@@ -21,7 +23,7 @@ ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
 SKIP_ISSUE_LABEL = util.skip_label("issue")
 STATUS_CONTEXT = "bedevere/issue-number"
 # Try to keep descriptions at or below 50 characters, else GitHub's CSS will truncate it.
-_FAILURE_DESCRIPTION = 'No issue # in title or "skip issue" label found'
+_FAILURE_DESCRIPTION = 'Issue does not exit, No issue # in title or "skip issue" label found'
 _FAILURE_URL = "https://devguide.python.org/pullrequest/#submitting"
 FAILURE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
                                     description=_FAILURE_DESCRIPTION,
@@ -48,7 +50,10 @@ async def set_status(event, gh, *args, **kwargs):
                 new_body = BODY.format(body=body, issue_number=issue_number)
                 body_data = {"body": new_body, "maintainer_can_modify": True}
                 await gh.patch(event.data["pull_request"]["url"], data=body_data)
-        status = create_success_status(issue_number_found)
+        if validate_issue_number(issue_number_found.group("issue")):
+            status = create_success_status(issue_number_found)
+        else:
+            status = FAILURE_STATUS
     await util.post_status(gh, event, status)
 
 
@@ -89,3 +94,13 @@ def create_success_status(found_issue):
     return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                               description=f"Issue number {issue_number} found",
                               target_url=url)
+
+def validate_issue_number(issue_number):
+    """Validate that the issue number exists on bpo"""
+    url = f"https://bugs.python.org/issue{issue_number}"
+    req = urllib.request.Request(url=url, method='HEAD')
+    try:
+        urllib.request.urlopen(req)
+        return True
+    except urllib.error.HTTPError:
+        return False

@@ -1,7 +1,9 @@
-import pytest
+from unittest.mock import patch, Mock
+from urllib import error
 
-from gidgethub import sansio
+import pytest
 from gidgethub import abc as gh_abc
+from gidgethub import sansio
 
 from bedevere import bpo
 
@@ -292,9 +294,13 @@ async def test_set_body_failure():
     assert gh.patch_url is None
 
 
-def test_validate_issue_number():
-    exists = bpo.validate_issue_number(30952)
+@patch('urllib.request.urlopen')
+def test_validate_issue_number(mock_urlopen):
+
+    mock_urlopen.return_value = 200
+    exists = bpo.validate_issue_number(0)
     assert exists is True
+
+    mock_urlopen.side_effect = error.HTTPError('', 400, '', '', Mock())
     does_not_exist = bpo.validate_issue_number(0)
     assert does_not_exist is False
-

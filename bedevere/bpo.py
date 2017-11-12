@@ -1,12 +1,10 @@
 """Check if a bugs.python.org issue number is specified in the pull request's title."""
 import re
-import urllib.request
-import urllib.error
+from urllib import error, request
 
 from gidgethub import routing
 
 from . import util
-
 
 router = routing.Router()
 TAG_NAME = "issue-number"
@@ -96,11 +94,11 @@ def create_success_status(found_issue):
                               target_url=url)
 
 def validate_issue_number(issue_number):
-    """Validate that the issue number exists on bpo"""
+    """Validate that the issue number exists on bpo."""
     url = f"https://bugs.python.org/issue{issue_number}"
-    req = urllib.request.Request(url=url, method='HEAD')
+    req = request.Request(url=url, method='HEAD')
     try:
-        urllib.request.urlopen(req)
+        res = request.urlopen(req)
         return True
-    except urllib.error.HTTPError:
+    except error.HTTPError:
         return False

@@ -4,7 +4,7 @@ import re
 import gidgethub.routing
 
 
-PYTHON_MAINT_BRANCH_RE = re.compile(r'^\w+:\d+.\d+$')
+PYTHON_MAINT_BRANCH_RE = re.compile(r'^\w+:\d+\.\d+$')
 
 router = gidgethub.routing.Router()
 

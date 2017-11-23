@@ -72,7 +72,7 @@ you're ready for them to take another look at this pull request.
 
 CORE_DEV_CHANGES_REQUESTED_MESSAGE = f"""\
 <!-- {TAG_NAME} -->
-When you're done making the requested changes, say: `{BORING_TRIGGER_PHRASE}`.
+When you're done making the requested changes, leave the comment: `{BORING_TRIGGER_PHRASE}`.
 <!-- /{TAG_NAME} -->
 
 {{easter_egg}}

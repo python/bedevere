@@ -274,7 +274,8 @@ async def test_new_review():
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
-        f"https://api.github.com/teams/6/memberships/miss-islington": False,
+        f"https://api.github.com/teams/6/memberships/miss-islington":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",

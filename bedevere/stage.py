@@ -70,6 +70,14 @@ you're ready for them to take another look at this pull request.
 {{easter_egg}}
 """
 
+CORE_DEV_CHANGES_REQUESTED_MESSAGE = f"""\
+<!-- {TAG_NAME} -->
+When you're done making the requested changes, say: `{BORING_TRIGGER_PHRASE}`.
+<!-- /{TAG_NAME} -->
+
+{{easter_egg}}
+"""
+
 EASTER_EGG_1 = """\
 And if you don't make the requested changes, \
 [you will be poked with soft cushions!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
@@ -181,6 +189,10 @@ async def new_review(event, gh, *args, **kwargs):
             if random.random() < 0.1:  # pragma: no cover
                 easter_egg = random.choice([EASTER_EGG_1, EASTER_EGG_2])
             comment = CHANGES_REQUESTED_MESSAGE.format(easter_egg=easter_egg)
+            pr_author = util.user_login(pull_request)
+            if await util.is_core_dev(gh, pr_author):
+                comment = CORE_DEV_CHANGES_REQUESTED_MESSAGE.format(
+                    easter_egg=easter_egg)
             await stage(gh, issue, Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
         else: # pragma: no cover

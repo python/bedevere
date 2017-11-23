@@ -264,11 +264,16 @@ async def test_new_review():
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
+            "user": {
+                "login": "miss-islington"
+            }
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
+        f"https://api.github.com/teams/6/memberships/miss-islington":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
@@ -434,6 +439,107 @@ async def test_new_comment():
     assert "@brettcannon" in comment_body
     assert "@gvanrossum" in comment_body
     assert "not-core-dev" not in comment_body
+
+
+async def test_change_requested_for_core_dev():
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": "gvanrossum",
+            },
+            "state": "changes_requested".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+            "user": {
+                "login": "brettcannon"
+            }
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/gvanrossum": True,
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [{"user": {"login": "brettcannon"}, "state": "changes_requested"}],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+
+    assert len(gh.post_) == 2
+    labeling = gh.post_[0]
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.changes.value]
+    message = gh.post_[1]
+    assert message[0] == "https://api.github.com/comment/42"
+
+    core_dev_message = awaiting.CORE_DEV_CHANGES_REQUESTED_MESSAGE.replace(
+        "{easter_egg}", "").strip()
+    assert core_dev_message in message[1]["body"]
+
+
+async def test_change_requested_for_non_core_dev():
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": "gvanrossum",
+            },
+            "state": "changes_requested".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+            "user": {
+                "login": "miss-islington"
+            }
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/gvanrossum": True,
+        "https://api.github.com/teams/6/memberships/miss-islington":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [{"user": {"login": "brettcannon"}, "state": "changes_requested"}],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+
+    assert len(gh.post_) == 2
+    labeling = gh.post_[0]
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.changes.value]
+    message = gh.post_[1]
+    assert message[0] == "https://api.github.com/comment/42"
+
+    change_requested_message = awaiting.CHANGES_REQUESTED_MESSAGE.replace(
+        "{easter_egg}", "").strip()
+    assert change_requested_message in message[1]["body"]
 
 
 async def test_awaiting_labels_removed_when_pr_merged():

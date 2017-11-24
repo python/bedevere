@@ -604,3 +604,104 @@ async def test_awaiting_labels_not_removed_when_pr_not_merged():
 
     await awaiting.router.dispatch(event, gh)
     assert gh.delete_url is None
+
+
+async def test_wait_for_all_approved_reviews_before_allowing_merge():
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": "gvanrossum",
+            },
+            "state": "approved".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+            "user": {
+                "login": "miss-islington"
+            }
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review",
+                         delivery_id="12345")
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/gvanrossum": True,
+        "https://api.github.com/teams/6/memberships/miss-islington":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [
+                {"user": {"login": "bedevere-bot"},
+                 "state": "changes_requested"},
+                {"user": {"login": "miss-islington"}, "state": "approved"},
+                {"user": {"login": "the-knights-who-says-ni"},
+                 "state": "approved"},
+            ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+
+    assert len(gh.post_) == 0
+
+
+async def test_apply_awaiting_merge_label_after_all_reviews_approved():
+    data = {
+        "action": "submitted",
+        "review": {
+            "user": {
+                "login": "gvanrossum",
+            },
+            "state": "approved".upper(),
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "comments_url": "https://api.github.com/comment/42",
+            "user": {
+                "login": "miss-islington"
+            }
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review",
+                         delivery_id="12345")
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/gvanrossum": True,
+        "https://api.github.com/teams/6/memberships/miss-islington":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [
+                {"user": {"login": "bedevere-bot"},
+                 "state": "changes_requested"},
+                {"user": {"login": "miss-islington"}, "state": "approved"},
+                {"user": {"login": "bedevere-bot"},
+                 "state": "approved"},
+            ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+
+    assert len(gh.post_) == 1
+    labeling = gh.post_[0]
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.merge.value]

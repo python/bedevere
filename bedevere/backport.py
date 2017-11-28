@@ -16,7 +16,7 @@ MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
 
 
 async def _copy_over_labels(gh, original_issue, backport_issue):
-    """Copy over relevent labels from the original PR to the backport PR."""
+    """Copy over relevant labels from the original PR to the backport PR."""
     label_prefixes = "skip", "type", "sprint"
     labels = list(filter(lambda x: x.startswith(label_prefixes),
                     util.labels(original_issue)))

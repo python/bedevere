@@ -180,7 +180,7 @@ async def test_new_label_not_skip_issue():
 
 @pytest.mark.asyncio
 async def test_removed_label_from_label_deletion():
-    """When a label is completely deleted from a repo, it triggers an 'unlabled'
+    """When a label is completely deleted from a repo, it triggers an 'unlabeled'
     event, but the payload has no details about the removed label."""
     data = {
         "action": "unlabeled",

@@ -157,6 +157,17 @@ async def core_dev_reviewers(gh, pull_request_url):
             yield reviewer
 
 
+async def is_change_still_requested(gh, pull_request_url):
+    """Return True if there is any review in 'changes_requested' state."""
+    reviews = {}
+    async for review in gh.getiter(f"{pull_request_url}/reviews"):
+        reviews[review['user']['login']] = review['state']
+    change_requested_reviews = list(
+        filter(lambda r: reviews[r].lower() == 'changes_requested',
+               reviews))
+    return len(change_requested_reviews) > 0
+
+
 @router.register("pull_request_review", action="submitted")
 async def new_review(event, gh, *args, **kwargs):
     """Update the stage based on the latest review."""
@@ -179,7 +190,13 @@ async def new_review(event, gh, *args, **kwargs):
                         Blocker.core_review)
     else:
         if state == "approved":
-            await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.merge)
+            # Check the state of other reviews in the PR
+            if await is_change_still_requested(gh, pull_request['url']):
+                # Nothing to do when there is still 'change_requested' review
+                return
+            else:
+                # All approved, add awaiting merge label
+                await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.merge)
         elif state == "changes_requested":
             issue = await util.issue_for_PR(gh, pull_request)
             if Blocker.changes.value in util.labels(issue):

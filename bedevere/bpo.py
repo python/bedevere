@@ -43,7 +43,7 @@ async def set_status(event, gh, *args, **kwargs):
     else:
         if "body" in event.data["pull_request"]:
             body = event.data["pull_request"]["body"]
-            if CLOSING_TAG not in body:
+            if not body or CLOSING_TAG not in body:
                 issue_number = issue_number_found.group("issue")
                 new_body = BODY.format(body=body, issue_number=issue_number)
                 body_data = {"body": new_body, "maintainer_can_modify": True}

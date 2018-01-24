@@ -8,6 +8,6 @@ multidict==4.0.0
 packaging==16.8
 py==1.5.2
 pyparsing==2.2.0
-six==1.10.0
+six==1.11.0
 uritemplate==3.0.0
 yarl==0.10.3

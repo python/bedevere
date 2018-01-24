@@ -110,6 +110,26 @@ async def test_edit_title():
 
 
 @pytest.mark.asyncio
+async def test_no_body_when_edit_title():
+    data = {
+        "action": "edited",
+        "pull_request": {
+            "url": "https://api.github.com/repos/python/cpython/pulls/5291",
+            "title": "bpo-32636: Fix @asyncio.coroutine debug mode bug",
+            "body": None,
+            "statuses_url": "https://api.github.com/repos/python/cpython/statuses/98d60953c85df9f0f28e04322a4c4ebec7b180f4",
+        },
+        "changes": {
+            "title": "bpo-32636: Fix @asyncio.coroutine debug mode bug exposed by #5250."
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    assert gh.data is not None
+
+
+@pytest.mark.asyncio
 async def test_edit_other_than_title():
     data = {
         "pull_request": {

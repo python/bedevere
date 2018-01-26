@@ -34,6 +34,9 @@ async def test_remind_to_replace_gh_number():
             "issue_url": "issue URL",
             "merge_commit_sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
             "comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
+            "merged_by": {
+                "login": "1st1"
+            }
         },
         "repository": {
             "commits_url": "https://api.github.com/repos/python/cpython/commits{/sha}"
@@ -45,9 +48,6 @@ async def test_remind_to_replace_gh_number():
             "sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
             "commit": {
                 "message": "bpo-32436: Fix a refleak; var GC tracking; a GCC warning (#5326)\n\nThe refleak in question wasn't really important, as context vars\r\nare usually created at the toplevel and live as long as the interpreter\r\nlives, so the context var name isn't ever GCed anyways."
-            },
-            "committer": {
-                "login": "1st1",
             }
         }
     }
@@ -57,7 +57,7 @@ async def test_remind_to_replace_gh_number():
     post_data = gh.post_data
     print(getitem)
     assert post_data["body"] == follow_up.REPLACE_GH_NUMBER_MESSAGE.format(
-        committer=getitem["https://api.github.com/repos/python/cpython/commits/6ab62920c87930dedc31fe633ecda3e51d3d7503"]["committer"]["login"])
+        committer=data["pull_request"]["merged_by"]["login"])
 
 
 @pytest.mark.asyncio
@@ -72,6 +72,9 @@ async def test_no_remind_when_gh_replaced():
             "issue_url": "issue URL",
             "merge_commit_sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
             "comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
+            "merged_by": {
+                "login": "1st1"
+            }
         },
         "repository": {
             "commits_url": "https://api.github.com/repos/python/cpython/commits{/sha}"
@@ -83,9 +86,6 @@ async def test_no_remind_when_gh_replaced():
             "sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
             "commit": {
                 "message": "bpo-32436: Fix a refleak; var GC tracking; a GCC warning (GH-5326)\n\nThe refleak in question wasn't really important, as context vars\r\nare usually created at the toplevel and live as long as the interpreter\r\nlives, so the context var name isn't ever GCed anyways."
-            },
-            "committer": {
-                "login": "1st1"
             }
         }
     }

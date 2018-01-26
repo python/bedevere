@@ -33,7 +33,7 @@ async def test_remind_to_replace_gh_number():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "merge_commit_sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
-            "review_comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
+            "comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
         },
         "repository": {
             "commits_url": "https://api.github.com/repos/python/cpython/commits{/sha}"
@@ -71,7 +71,7 @@ async def test_no_remind_when_gh_replaced():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "merge_commit_sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
-            "review_comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
+            "comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
         },
         "repository": {
             "commits_url": "https://api.github.com/repos/python/cpython/commits{/sha}"
@@ -107,7 +107,7 @@ async def test_no_reminder_when_pr_closed_not_merged():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "merge_commit_sha": None,
-            "review_comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
+            "comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
         },
         "repository": {
             "commits_url": "https://api.github.com/repos/python/cpython/commits{/sha}"

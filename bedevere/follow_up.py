@@ -18,5 +18,5 @@ async def remind_replace_gh_number(event, gh, *args, **kwargs):
         commit_message = commit["commit"]["message"]
         committer = commit["author"]["login"]
         if f"(#{pr_number})" in commit_message:
-            await gh.post(event.data["pull_request"]["review_comments_url"],
+            await gh.post(event.data["pull_request"]["comments_url"],
                           data={'body': REPLACE_GH_NUMBER_MESSAGE.format(committer=committer)})

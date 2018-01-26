@@ -3,7 +3,7 @@ from gidgethub import routing
 
 router = routing.Router()
 
-REPLACE_GH_NUMBER_MESSAGE = "@{committer}: Please replace # with GH- in the commit message next time. Thanks!"
+REPLACE_GH_NUMBER_MESSAGE = "@{committer}: Please replace `#` with `GH-` in the commit message next time. Thanks!"
 
 
 @router.register("pull_request", action="closed")
@@ -16,7 +16,7 @@ async def remind_replace_gh_number(event, gh, *args, **kwargs):
             event.data["repository"]["commits_url"],
             {"sha": commit_hash})
         commit_message = commit["commit"]["message"]
-        committer = commit["author"]["login"]
+        committer = commit["committer"]["login"]
         if f"(#{pr_number})" in commit_message:
             await gh.post(event.data["pull_request"]["comments_url"],
                           data={'body': REPLACE_GH_NUMBER_MESSAGE.format(committer=committer)})

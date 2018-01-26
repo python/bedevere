@@ -33,7 +33,7 @@ async def test_remind_to_replace_gh_number():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "merge_commit_sha": "6ab62920c87930dedc31fe633ecda3e51d3d7503",
-            "comments_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
+            "review_comment_url": "https://api.github.com/repos/python/cpython/pulls/5326/comments",
         },
         "repository": {
             "commits_url": "https://api.github.com/repos/python/cpython/commits{/sha}"

@@ -126,7 +126,8 @@ async def test_no_body_when_edit_title():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert gh.data is not None
+    assert gh.patch_data is not None
+    assert gh.patch_data['body'] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
 
 
 @pytest.mark.asyncio

@@ -42,7 +42,7 @@ async def set_status(event, gh, *args, **kwargs):
         status = SKIP_ISSUE_STATUS if util.skip("issue", issue) else FAILURE_STATUS
     else:
         if "body" in event.data["pull_request"]:
-            body = event.data["pull_request"]["body"]
+            body = event.data["pull_request"]["body"] or ""
             if not body or CLOSING_TAG not in body:
                 issue_number = issue_number_found.group("issue")
                 new_body = BODY.format(body=body, issue_number=issue_number)

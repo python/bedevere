@@ -210,6 +210,7 @@ async def test_dismiss_review_request_for_invalid_pr():
     assert gh.delete_data == {'reviewers': ['gpshead', 'gvanrossum'],
                               'team_reviewers': ['import-team', 'windows-team']
                               }
+    assert gh.delete_url == f"https://api.github.com/org/repo/pulls/123/requested_reviewers"
 
 
 @pytest.mark.asyncio
@@ -250,3 +251,4 @@ async def test_valid_pr_review_request_not_dismissed():
     gh = FakeGH()
     await close_pr.router.dispatch(event, gh)
     assert gh.delete_data is None
+    assert gh.delete_url is None

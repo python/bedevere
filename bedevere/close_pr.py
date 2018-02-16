@@ -43,5 +43,5 @@ async def dismiss_invalid_pr_review_request(event, gh, *args, **kwargs):
         data = {"reviewers": [reviewer["login"] for reviewer in event.data["pull_request"]["requested_reviewers"]],
                 "team_reviewers": [team["name"] for team in event.data["pull_request"]["requested_teams"]]
                 }
-        await gh.delete(f'{event.data["pull_request"]["number"]}/requested_reviewers',
+        await gh.delete(f'{event.data["pull_request"]["url"]}/requested_reviewers',
                         data=data)

@@ -5,7 +5,7 @@ cachetools==2.0.1
 chardet==3.0.4
 gidgethub==2.4.1
 multidict==4.1.0
-packaging==16.8
+packaging==17.1
 py==1.5.2
 pyparsing==2.2.0
 six==1.11.0

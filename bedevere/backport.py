@@ -8,7 +8,7 @@ from . import util
 
 router = gidgethub.routing.Router()
 
-TITLE_RE = re.compile(r'\[(?P<branch>\d+\.\d+)\].+?(?P<pr>\d+)\)')
+TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)')
 BACKPORT_LABEL = 'needs backport to {branch}'
 MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
                     'a backport of this pull request to the '

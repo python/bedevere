@@ -119,6 +119,66 @@ async def test_backport_label_removal_success():
     assert message == backport.MESSAGE_TEMPLATE.format(branch='3.6', pr='2248')
 
 
+async def test_backport_label_removal_with_leading_space_in_title():
+    event_data = {
+        'action': 'opened',
+        'number': 2248,
+        'pull_request': {
+            'title': '  [3.6] Backport this (GH-1234)',
+            'body': '…',
+            'issue_url': 'https://api.github.com/issue/2248',
+        },
+        'repository': {
+            'issues_url': 'https://api.github.com/issue{/number}',
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request',
+                        delivery_id='1')
+    getitem_data = {
+        'https://api.github.com/issue/1234': {
+            'labels': [{'name': 'needs backport to 3.6'}],
+            'labels_url': 'https://api.github.com/issue/1234/labels{/name}',
+            'comments_url': 'https://api.github.com/issue/1234/comments',
+        },
+        'https://api.github.com/issue/2248': {},
+    }
+    gh = FakeGH(getitem=getitem_data)
+    await backport.router.dispatch(event, gh)
+    issue_data = getitem_data['https://api.github.com/issue/1234']
+    assert gh.delete_url == sansio.format_url(issue_data['labels_url'],
+                                              {'name': 'needs backport to 3.6'})
+
+
+async def test_backport_label_removal_with_parentheses_in_title():
+    event_data = {
+        'action': 'opened',
+        'number': 2248,
+        'pull_request': {
+            'title': '[3.6] Backport (0.9.6) this (more bpo-1234) (GH-1234)',
+            'body': '…',
+            'issue_url': 'https://api.github.com/issue/2248',
+        },
+        'repository': {
+            'issues_url': 'https://api.github.com/issue{/number}',
+        },
+    }
+    event = sansio.Event(event_data, event='pull_request',
+                        delivery_id='1')
+    getitem_data = {
+        'https://api.github.com/issue/1234': {
+            'labels': [{'name': 'needs backport to 3.6'}],
+            'labels_url': 'https://api.github.com/issue/1234/labels{/name}',
+            'comments_url': 'https://api.github.com/issue/1234/comments',
+        },
+        'https://api.github.com/issue/2248': {},
+    }
+    gh = FakeGH(getitem=getitem_data)
+    await backport.router.dispatch(event, gh)
+    issue_data = getitem_data['https://api.github.com/issue/1234']
+    assert gh.delete_url == sansio.format_url(issue_data['labels_url'],
+                                              {'name': 'needs backport to 3.6'})
+
+
 async def test_label_copying():
     event_data = {
         'action': 'opened',

@@ -15,7 +15,6 @@ create_status = functools.partial(util.create_status, 'bedevere/news')
 
 DEVGUIDE_URL = 'https://devguide.python.org/committing/#what-s-new-and-news-entries'
 
-NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
 FILENAME_RE = re.compile(r"""# YYYY-mm-dd or YYYY-mm-dd-HH-MM-SS
                              \d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\.
                              bpo-\d+(?:,\d+)*\.       # Issue number(s)
@@ -28,20 +27,12 @@ SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
                                   description='"skip news" label found')
 
 
-@router.register('pull_request', action='opened')
-@router.register('pull_request', action='synchronize')
-async def check_news(event, gh, *args, **kwargs):
-    pr_number = event.data['number']
-    pull_request = event.data['pull_request']
-    # For some unknown reason there isn't any files URL in a pull request
-    # payload.
-    files_url = f'/repos/python/cpython/pulls/{pr_number}/files'
-    # Could have collected all the filenames in an async set comprehension,
-    # but doing it this way potentially minimizes the number of API calls.
+async def check_news(gh, pull_request, filenames=None):
+    if not filenames:
+        filenames = await util.filenames_for_PR(gh, pull_request)
     in_next_dir = file_found = False
-    async for file_data in gh.getiter(files_url):
-        filename = file_data['filename']
-        if not filename.startswith(NEWS_NEXT_DIR):
+    for filename in filenames:
+        if not util.is_news_dir(filename):
             continue
         in_next_dir = True
         file_path = pathlib.PurePath(filename)
@@ -58,7 +49,7 @@ async def check_news(event, gh, *args, **kwargs):
             status = SKIP_LABEL_STATUS
         else:
             if not in_next_dir:
-                description = f'No news entry in {NEWS_NEXT_DIR} or "skip news" label found'
+                description = f'No news entry in {util.NEWS_NEXT_DIR} or "skip news" label found'
             elif not file_found:
                 description = "News entry not in an appropriate directory"
             else:
@@ -81,4 +72,5 @@ async def label_removed(event, gh, *args, **kwargs):
     if util.no_labels(event.data):
         return
     elif util.label_name(event.data) == SKIP_NEWS_LABEL:
-        await check_news(event, gh)
+        pull_request = event.data['pull_request']
+        await check_news(gh, pull_request)

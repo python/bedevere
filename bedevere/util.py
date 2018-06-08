@@ -3,6 +3,7 @@ import sys
 
 import gidgethub
 
+NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
 
 @enum.unique
 class StatusState(enum.Enum):
@@ -57,6 +58,14 @@ def user_login(item):
     return item["user"]["login"]
 
 
+async def filenames_for_PR(gh, pull_request):
+    """Get filenames for a pull request."""
+    # For some unknown reason there isn't any files URL in a pull request
+    # payload.
+    files_url = f'{pull_request["url"]}/files'
+    return {filedata['filename'] async for filedata in gh.getiter(files_url)}
+
+
 async def issue_for_PR(gh, pull_request):
     """Get the issue data for a pull request."""
     return await gh.getitem(pull_request["issue_url"])
@@ -83,6 +92,11 @@ async def is_core_dev(gh, username):
         raise
     else:
         return True
+
+
+def is_news_dir(filename):
+    "Return True if file is in the News directory."
+    return filename.startswith(NEWS_NEXT_DIR)
 
 
 def normalize_title(title, body):

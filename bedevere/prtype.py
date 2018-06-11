@@ -25,8 +25,14 @@ async def add_category(gh, issue, category):
     await gh.post(issue["labels_url"], data=[category.value])
 
 
-async def classify_by_files(gh, pull_request, filenames):
-    """Categorize pull request."""
+async def classify_by_filepaths(gh, pull_request, filenames):
+    """Categorize the pull request based on the files it has modified.
+
+    If any paths are found which do not fall within a specific classification,
+    then no new label is applied.
+
+    The routing is handled by the filepaths module.
+    """
     issue = await util.issue_for_PR(gh, pull_request)
     docs = tests = 0
     for filename in filenames:
@@ -41,6 +47,5 @@ async def classify_by_files(gh, pull_request, filenames):
             return
     if tests:
         await add_category(gh, issue, Category.tests)
-        return
-    if docs:
+    elif docs:
         await add_category(gh, issue, Category.documentation)

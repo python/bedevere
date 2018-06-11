@@ -33,7 +33,7 @@ GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 
 async def test_news_only():
-    filenames = {'README', 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}
+    filenames = {'README', f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}
     issue = {'labels': []}
     gh = FakeGH(getitem=issue)
     event_data = {
@@ -46,7 +46,7 @@ async def test_news_only():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # News only .rst does not add a type-documentation label.
     assert len(gh.post_url) == 0
@@ -68,7 +68,7 @@ async def test_docs_no_news():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
@@ -76,7 +76,7 @@ async def test_docs_no_news():
 
 
 async def test_docs_and_news():
-    filenames = {'/path/to/docs1.rst', 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}
+    filenames = {'/path/to/docs1.rst', f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getitem=issue)
@@ -90,7 +90,7 @@ async def test_docs_and_news():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
@@ -112,7 +112,7 @@ async def test_tests_only():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
@@ -134,7 +134,7 @@ async def test_docs_and_tests():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
     assert len(gh.post_url) == 1
@@ -157,14 +157,14 @@ async def test_leave_existing_type_labels():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
     assert len(gh.post_url) == 0
 
 
 async def test_news_and_tests():
-    filenames = {'test_docs2.py', 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}
+    filenames = {'test_docs2.py', f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getitem=issue)
@@ -178,7 +178,7 @@ async def test_news_and_tests():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Creates type-tests label.
     assert len(gh.post_url) == 1
@@ -188,7 +188,7 @@ async def test_news_and_tests():
 
 async def test_other_files():
     filenames = {'README', '/path/to/docs.rst', 'test_docs2.py',
-                 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}
+                 f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getitem=issue)
@@ -202,7 +202,7 @@ async def test_other_files():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await prtype.classify_by_files(gh, event_data['pull_request'], filenames)
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # No labels if a file other than doc or test exists.
     assert len(gh.post_url) == 0

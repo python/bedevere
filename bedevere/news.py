@@ -28,6 +28,10 @@ SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
 
 
 async def check_news(gh, pull_request, filenames=None):
+    """Check for a news entry.
+
+    The routing is handled through the filepaths module.
+    """
     if not filenames:
         filenames = await util.filenames_for_PR(gh, pull_request)
     in_next_dir = file_found = False

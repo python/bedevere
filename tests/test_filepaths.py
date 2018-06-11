@@ -1,6 +1,6 @@
 from gidgethub import sansio
 
-from bedevere import files
+from bedevere import filepaths
 
 
 class FakeGH:
@@ -33,7 +33,7 @@ GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 
 async def test_news_only():
-    filenames = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}]
+    filenames = [{'filename': 'README'}, {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}]
     issue = {'labels': []}
     gh = FakeGH(getiter=filenames, getitem=issue)
     event_data = {
@@ -46,7 +46,7 @@ async def test_news_only():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await files.router.dispatch(event, gh)
+    await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
@@ -69,7 +69,7 @@ async def test_docs_only():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await files.router.dispatch(event, gh)
+    await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 2
@@ -94,7 +94,7 @@ async def test_tests_only():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await files.router.dispatch(event, gh)
+    await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 2
@@ -119,7 +119,7 @@ async def test_docs_and_tests():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await files.router.dispatch(event, gh)
+    await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
@@ -132,7 +132,7 @@ async def test_docs_and_tests():
 
 async def test_news_and_tests():
     filenames = [{'filename': '/path/to/docs.rst'}, {'filename': 'test_docs2.py'},
-                 {'filename': 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}]
+                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}]
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
@@ -146,7 +146,7 @@ async def test_news_and_tests():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await files.router.dispatch(event, gh)
+    await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
@@ -157,9 +157,9 @@ async def test_news_and_tests():
     assert gh.post_data[1] == ['type-tests']
 
 
-async def test_synchonize():
+async def test_synchronize():
     filenames = [{'filename': '/path/to/docs.rst'}, {'filename': 'test_docs2.py'},
-                 {'filename': 'Misc/NEWS.d/next/Lib/' + GOOD_BASENAME}]
+                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}]
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
@@ -173,7 +173,7 @@ async def test_synchonize():
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await files.router.dispatch(event, gh)
+    await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url is None
     # Only creates type-tests label.

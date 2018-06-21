@@ -34,15 +34,15 @@ async def classify_by_filepaths(gh, pull_request, filenames):
     The routing is handled by the filepaths module.
     """
     issue = await util.issue_for_PR(gh, pull_request)
-    docs = tests = 0
+    docs = tests = False
     for filename in filenames:
         if util.is_news_dir(filename):
             continue
         filepath = pathlib.PurePath(filename)
         if filepath.suffix == '.rst':
-            docs += 1
+            docs = True
         elif filepath.name.startswith('test_'):
-            tests += 1
+            tests = True
         else:
             return
     if tests:

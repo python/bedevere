@@ -18,11 +18,6 @@ class FakeGH:
         self.getitem_url = url
         return self._getitem_return
 
-    async def getiter(self, url):
-        self.getiter_url = url
-        for item in self._getiter_return:
-            yield item
-
     async def post(self, url, *, data):
         self.post_url.append(url)
         self.post_data.append(data)

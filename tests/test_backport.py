@@ -11,7 +11,7 @@ class FakeGH:
         self._post_return = post
         self.getitem_url = None
         self.delete_url = None
-        self.post_url = self.post_data = None
+        self.post_ = []
 
     async def getitem(self, url, url_vars={}):
         self.getitem_url = sansio.format_url(url, url_vars)
@@ -21,8 +21,8 @@ class FakeGH:
         self.delete_url = sansio.format_url(url, url_vars)
 
     async def post(self, url, url_vars={}, *, data):
-        self.post_url = sansio.format_url(url, url_vars)
-        self.post_data = data
+        post_url = sansio.format_url(url, url_vars)
+        self.post_.append((post_url, data))
 
 
 async def test_edit_not_title():
@@ -41,7 +41,14 @@ async def test_edit_not_title():
 async def test_missing_branch_in_title():
     data = {
         'action': 'opened',
-        'pull_request': {'title': 'Backport this (GH-1234)', 'body': ''},
+        'pull_request': {
+            'title': 'Backport this (GH-1234)',
+            'body': '',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
+        },
     }
     event = sansio.Event(data, event='pull_request',
                          delivery_id='1')
@@ -53,7 +60,14 @@ async def test_missing_branch_in_title():
 async def test_missing_pr_in_title():
     data = {
         'action': 'opened',
-        'pull_request': {'title': '[3.6] Backport this', 'body': ''},
+        'pull_request': {
+            'title': '[3.6] Backport this',
+            'body': '',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
+        },
     }
     event = sansio.Event(data, event='pull_request',
                         delivery_id='1')
@@ -71,6 +85,10 @@ async def test_missing_backport_label():
             'title': title,
             'body': '',
             'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
         'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
     }
@@ -94,6 +112,10 @@ async def test_backport_label_removal_success():
             'title': '[3.6] Backport this …',
             'body': '…(GH-1234)',
             'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
         'repository': {
             'issues_url': 'https://api.github.com/issue{/number}',
@@ -114,8 +136,9 @@ async def test_backport_label_removal_success():
     issue_data = getitem_data['https://api.github.com/issue/1234']
     assert gh.delete_url == sansio.format_url(issue_data['labels_url'],
                                               {'name': 'needs backport to 3.6'})
-    assert gh.post_url == issue_data['comments_url']
-    message = gh.post_data['body']
+    post = gh.post_[0]
+    assert post[0] == issue_data['comments_url']
+    message = post[1]['body']
     assert message == backport.MESSAGE_TEMPLATE.format(branch='3.6', pr='2248')
 
 
@@ -127,6 +150,10 @@ async def test_backport_label_removal_with_leading_space_in_title():
             'title': '  [3.6] Backport this (GH-1234)',
             'body': '…',
             'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
         'repository': {
             'issues_url': 'https://api.github.com/issue{/number}',
@@ -157,6 +184,10 @@ async def test_backport_label_removal_with_parentheses_in_title():
             'title': '[3.6] Backport (0.9.6) this (more bpo-1234) (GH-1234)',
             'body': '…',
             'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
         'repository': {
             'issues_url': 'https://api.github.com/issue{/number}',
@@ -187,6 +218,10 @@ async def test_label_copying():
             'title': '[3.6] Backport this (GH-1234)',
             'body': 'N/A',
             'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
         'repository': {
             'issues_url': 'https://api.github.com/issue{/number}',
@@ -207,5 +242,99 @@ async def test_label_copying():
     }
     gh = FakeGH(getitem=getitem_data)
     await backport.router.dispatch(event, gh)
-    assert gh.post_url == 'https://api.github.com/issue/1234/labels'
-    assert {"skip news", "type-enhancement", "sprint"} == frozenset(gh.post_data)
+    post = gh.post_[0]
+    assert post[0] == 'https://api.github.com/issue/1234/labels'
+    assert {"skip news", "type-enhancement", "sprint"} == frozenset(post[1])
+
+
+async def test_valid_backport_pr_title():
+    title = '[3.6] Backport this (GH-1234)'
+    data = {
+        'action': 'opened',
+        'number': 2248,
+        'pull_request': {
+            'title': title,
+            'body': '',
+            'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
+        },
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
+    }
+    event = sansio.Event(data, event='pull_request',
+                        delivery_id='1')
+    getitem = {
+        'https://api.github.com/issue/1234':
+            {'labels': [{'name': 'CLA signed'}]},
+        'https://api.github.com/issue/2248': {},
+    }
+    gh = FakeGH(getitem=getitem)
+    await backport.router.dispatch(event, gh)
+    post = gh.post_[0]
+    assert post[0] == "https://api.github.com/repos/python/cpython/statuses/somehash"
+    assert post[1]["context"] == "bedevere/backport-pr"
+    assert post[1]["description"] == "Valid backport PR title."
+    assert post[1]["state"] == "success"
+
+
+async def test_not_valid_backport_pr_title():
+    title = 'Fix some typo'
+    data = {
+        'action': 'opened',
+        'number': 2248,
+        'pull_request': {
+            'title': title,
+            'body': '',
+            'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': '3.6',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
+        },
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
+    }
+    event = sansio.Event(data, event='pull_request',
+                        delivery_id='1')
+    getitem = {
+        'https://api.github.com/issue/1234':
+            {'labels': [{'name': 'CLA signed'}]},
+        'https://api.github.com/issue/2248': {},
+    }
+    gh = FakeGH(getitem=getitem)
+    await backport.router.dispatch(event, gh)
+    post = gh.post_[0]
+    assert post[0] == "https://api.github.com/repos/python/cpython/statuses/somehash"
+    assert post[1]["context"] == "bedevere/backport-pr"
+    assert post[1]["description"] == "Not a valid backport PR title."
+    assert post[1]["state"] == "failure"
+    assert post[1]["target_url"] == "https://devguide.python.org/committing/#backport-pr-title"
+
+
+async def test_backport_pr_status_not_posted_on_master():
+    title = 'Fix some typo'
+    data = {
+        'action': 'opened',
+        'number': 2248,
+        'pull_request': {
+            'title': title,
+            'body': '',
+            'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': 'master',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
+        },
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
+    }
+    event = sansio.Event(data, event='pull_request',
+                        delivery_id='1')
+    getitem = {
+        'https://api.github.com/issue/1234':
+            {'labels': [{'name': 'CLA signed'}]},
+        'https://api.github.com/issue/2248': {},
+    }
+    gh = FakeGH(getitem=getitem)
+    await backport.router.dispatch(event, gh)
+    assert len(gh.post_) == 0

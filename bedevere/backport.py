@@ -1,9 +1,12 @@
-"""Automatically remove a backport label."""
+"""Automatically remove a backport label, and check backport PR validity."""
+import functools
 import re
 
 import gidgethub.routing
 
 from . import util
+
+create_status = functools.partial(util.create_status, 'bedevere/backport-pr')
 
 
 router = gidgethub.routing.Router()
@@ -14,6 +17,8 @@ MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
                     'a backport of this pull request to the '
                     '[{branch} branch](https://github.com/python/cpython/tree/{branch}).')
 
+
+BACKPORT_TITLE_DEVGUIDE_URL = "https://devguide.python.org/committing/#backport-pr-title"
 
 async def _copy_over_labels(gh, original_issue, backport_issue):
     """Copy over relevant labels from the original PR to the backport PR."""
@@ -58,3 +63,33 @@ async def manage_labels(event, gh, *args, **kwargs):
 
     backport_issue = await util.issue_for_PR(gh, pull_request)
     await _copy_over_labels(gh, original_issue, backport_issue)
+
+
+@router.register("pull_request", action="opened")
+@router.register("pull_request", action="edited")
+@router.register("pull_request", action="synchronize")
+async def validate_backport_pr(event, gh, *args, **kwargs):
+    """ Detect when PRs made against maintenance branch, and the title does not
+    match backport PR pattern.
+    Post a failure status check.
+    """
+    if event.data["action"] == "edited" and "title" not in event.data["changes"]:
+        return
+    pull_request = event.data["pull_request"]
+    base_branch = pull_request["base"]["ref"]
+
+    if base_branch == "master":
+        return
+
+    title = util.normalize_title(pull_request["title"],
+                                 pull_request["body"])
+    title_match = TITLE_RE.match(title)
+
+    if title_match is None:
+        status = create_status(util.StatusState.FAILURE,
+                               description="Not a valid backport PR title.",
+                               target_url=BACKPORT_TITLE_DEVGUIDE_URL)
+    else:
+        status = create_status(util.StatusState.SUCCESS,
+                               description="Valid backport PR title.")
+    await util.post_status(gh, event, status)

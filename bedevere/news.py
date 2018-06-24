@@ -62,7 +62,7 @@ async def check_news(gh, pull_request, filenames=None):
                                    description=description,
                                    target_url=DEVGUIDE_URL)
 
-    await gh.post(pull_request['statuses_url'], data=status)
+    await util.post_status(gh, event, status)
 
 
 @router.register('pull_request', action="labeled")

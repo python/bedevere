@@ -26,7 +26,7 @@ GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 
 
-async def no_files():
+async def test_no_files():
     filenames = {}
     issue = {'labels': []}
     gh = FakeGH(getitem=issue)

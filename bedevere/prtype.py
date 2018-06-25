@@ -49,5 +49,4 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         await add_category(gh, issue, Category.tests)
     elif docs:
         await add_category(gh, issue, Category.documentation)
-    else:
-        return
+    return

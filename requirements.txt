@@ -10,4 +10,4 @@ py==1.5.4
 pyparsing==2.2.0
 six==1.11.0
 uritemplate==3.0.0
-yarl==1.2.4
+yarl==1.2.6

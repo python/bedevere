@@ -1,4 +1,4 @@
-aiohttp==3.3.0
+aiohttp==3.3.2
 appdirs==1.4.3
 async-timeout==3.0.0
 cachetools==2.1.0
@@ -6,8 +6,8 @@ chardet==3.0.4
 gidgethub==2.5.0.post1
 multidict==4.3.0
 packaging==17.1
-py==1.5.3
+py==1.5.4
 pyparsing==2.2.0
 six==1.11.0
 uritemplate==3.0.0
-yarl==1.2.4
+yarl==1.2.6

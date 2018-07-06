@@ -542,7 +542,16 @@ async def test_change_requested_for_non_core_dev():
     assert change_requested_message in message[1]["body"]
 
 
-async def test_awaiting_labels_removed_when_pr_merged():
+@pytest.mark.parametrize('label', [
+    'awaiting change review',
+    'awaiting changes',
+    'awaiting core review',
+    'awaiting merge',
+    'awaiting review',
+])
+async def test_awaiting_labels_removed_when_pr_merged(label):
+    encoded_label = label.replace(' ', '%20')
+
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
@@ -556,8 +565,8 @@ async def test_awaiting_labels_removed_when_pr_merged():
     issue_data = {
         issue_url: {
             "labels": [
-                {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
-                 "name": "awaiting merge",
+                {"url": "https://api.github.com/repos/python/cpython/labels/" + encoded_label,
+                 "name": label,
                  },
                 {
                   "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
@@ -571,10 +580,17 @@ async def test_awaiting_labels_removed_when_pr_merged():
     gh = FakeGH(getitem=issue_data)
 
     await awaiting.router.dispatch(event, gh)
-    assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/12345/labels/awaiting%20merge"
+    assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/12345/labels/" + encoded_label
 
 
-async def test_awaiting_labels_not_removed_when_pr_not_merged():
+@pytest.mark.parametrize('label', [
+    'awaiting change review',
+    'awaiting changes',
+    'awaiting core review',
+    'awaiting merge',
+    'awaiting review',
+])
+async def test_awaiting_labels_not_removed_when_pr_not_merged(label):
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
@@ -588,8 +604,8 @@ async def test_awaiting_labels_not_removed_when_pr_not_merged():
     issue_data = {
         issue_url: {
             "labels": [
-                {"url": "https://api.github.com/repos/python/cpython/labels/awaiting%20merge",
-                 "name": "awaiting merge",
+                {"url": "https://api.github.com/repos/python/cpython/labels/" + label.replace(' ', '%20'),
+                 "name": label,
                  },
                 {
                   "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",

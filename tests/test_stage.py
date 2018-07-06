@@ -542,13 +542,16 @@ async def test_change_requested_for_non_core_dev():
     assert change_requested_message in message[1]["body"]
 
 
-@pytest.mark.parametrize('label', [
+labels = (
     'awaiting change review',
     'awaiting changes',
     'awaiting core review',
     'awaiting merge',
     'awaiting review',
-])
+)
+
+
+@pytest.mark.parametrize('label', labels)
 async def test_awaiting_labels_removed_when_pr_merged(label):
     encoded_label = label.replace(' ', '%20')
 
@@ -565,7 +568,7 @@ async def test_awaiting_labels_removed_when_pr_merged(label):
     issue_data = {
         issue_url: {
             "labels": [
-                {"url": "https://api.github.com/repos/python/cpython/labels/" + encoded_label,
+                {"url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
                  "name": label,
                  },
                 {
@@ -580,17 +583,13 @@ async def test_awaiting_labels_removed_when_pr_merged(label):
     gh = FakeGH(getitem=issue_data)
 
     await awaiting.router.dispatch(event, gh)
-    assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/12345/labels/" + encoded_label
+    assert gh.delete_url == f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
 
 
-@pytest.mark.parametrize('label', [
-    'awaiting change review',
-    'awaiting changes',
-    'awaiting core review',
-    'awaiting merge',
-    'awaiting review',
-])
+@pytest.mark.parametrize('label', labels)
 async def test_awaiting_labels_not_removed_when_pr_not_merged(label):
+    encoded_label = label.replace(' ', '%20')
+
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
@@ -604,7 +603,7 @@ async def test_awaiting_labels_not_removed_when_pr_not_merged(label):
     issue_data = {
         issue_url: {
             "labels": [
-                {"url": "https://api.github.com/repos/python/cpython/labels/" + label.replace(' ', '%20'),
+                {"url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
                  "name": label,
                  },
                 {

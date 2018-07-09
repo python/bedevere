@@ -543,17 +543,17 @@ async def test_change_requested_for_non_core_dev():
 
 
 awaiting_labels = (
-    'awaiting change review',
-    'awaiting changes',
-    'awaiting core review',
-    'awaiting merge',
-    'awaiting review',
+    "awaiting change review",
+    "awaiting changes",
+    "awaiting core review",
+    "awaiting merge",
+    "awaiting review",
 )
 
 
-@pytest.mark.parametrize('label', awaiting_labels)
+@pytest.mark.parametrize("label", awaiting_labels)
 async def test_awaiting_label_removed_when_pr_merged(label):
-    encoded_label = label.replace(' ', '%20')
+    encoded_label = label.replace(" ", "%20")
 
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
@@ -586,9 +586,9 @@ async def test_awaiting_label_removed_when_pr_merged(label):
     assert gh.delete_url == f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
 
 
-@pytest.mark.parametrize('label', awaiting_labels)
+@pytest.mark.parametrize("label", awaiting_labels)
 async def test_awaiting_label_not_removed_when_pr_not_merged(label):
-    encoded_label = label.replace(' ', '%20')
+    encoded_label = label.replace(" ", "%20")
 
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {

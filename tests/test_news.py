@@ -1,3 +1,5 @@
+import pytest
+
 from gidgethub import sansio
 
 from bedevere import news
@@ -49,12 +51,12 @@ class TestFilenameRE:
         assert news.FILENAME_RE.match(basename)
 
 
-async def failure_testing(path):
+async def failure_testing(path, action):
     files = [{'filename': 'README'}, {'filename': path}]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
-        'action': 'opened',
+        'action': action,
         'number': 1234,
         'pull_request': {
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
@@ -69,23 +71,25 @@ async def failure_testing(path):
     assert gh.post_data['state'] == 'failure'
 
 
-async def test_bad_news_entry():
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
+async def test_bad_news_entry(action):
     # Not in Misc/NEWS.d.
-    await failure_testing('some/other/dir/' + GOOD_BASENAME)
+    await failure_testing('some/other/dir/' + GOOD_BASENAME, action)
     # Not in next/.
-    await failure_testing('Misc/NEWS.d/' + GOOD_BASENAME)
+    await failure_testing('Misc/NEWS.d/' + GOOD_BASENAME, action)
     # Not in a classifying subdirectory.
-    await failure_testing('Misc/NEWS.d/next/' + GOOD_BASENAME)
+    await failure_testing('Misc/NEWS.d/next/' + GOOD_BASENAME, action)
     # Missing the nonce.
-    await failure_testing('Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst')
+    await failure_testing('Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst', action)
 
 
-async def test_skip_news():
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
+async def test_skip_news(action):
     files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
     issue = {'labels': [{'name': 'skip news'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
-        'action': 'opened',
+        'action': action,
         'number': 1234,
         'pull_request': {
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
@@ -100,13 +104,14 @@ async def test_skip_news():
     assert gh.post_data['state'] == 'success'
 
 
-async def test_news_file():
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
+async def test_news_file(action):
     files = [{'filename': 'README'},
              {'filename': 'Misc/NEWS.d/next/Library/' + GOOD_BASENAME}]
     issue = {'labels': [{'name': 'CLA signed'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
-        'action': 'synchronize',
+        'action': action,
         'number': 1234,
         'pull_request': {
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',

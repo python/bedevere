@@ -1,7 +1,6 @@
 import pytest
 
 from gidgethub import sansio
-from gidgethub import abc as gh_abc
 
 from bedevere import bpo
 
@@ -27,8 +26,10 @@ class FakeGH:
 
 
 @pytest.mark.asyncio
-async def test_set_status_failure():
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_failure(action):
     data = {
+        "action": action,
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",
@@ -42,7 +43,7 @@ async def test_set_status_failure():
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
-    await bpo.set_status(event, gh)
+    await bpo.router.dispatch(event, gh)
     status = gh.data
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://devguide.python.org")
@@ -50,9 +51,10 @@ async def test_set_status_failure():
 
 
 @pytest.mark.asyncio
-async def test_set_status_success():
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success(action):
     data = {
-        "action": "opened",
+        "action": action,
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "[3.6] bpo-1234: an issue!",
@@ -70,9 +72,10 @@ async def test_set_status_success():
 
 
 @pytest.mark.asyncio
-async def test_set_status_success_via_skip_issue_label():
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success_via_skip_issue_label(action):
     data = {
-        "action": "opened",
+        "action": action,
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",

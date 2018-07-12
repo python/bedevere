@@ -135,7 +135,7 @@ async def test_adding_skip_news_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data['state'] == 'success'
 
@@ -150,7 +150,7 @@ async def test_adding_benign_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data is None
 
@@ -164,7 +164,7 @@ async def test_deleting_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data is None
 
@@ -184,7 +184,7 @@ async def test_removing_skip_news_label():
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data["state"] == "failure"
 
@@ -199,6 +199,6 @@ async def test_removing_benign_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data is None

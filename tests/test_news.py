@@ -57,13 +57,13 @@ async def failure_testing(path):
         'action': 'opened',
         'number': 1234,
         'pull_request': {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.router.dispatch(event, gh)
-    assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
+    await news.check_news(gh, event_data['pull_request'])
+    assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'failure'
@@ -88,13 +88,13 @@ async def test_skip_news():
         'action': 'opened',
         'number': 1234,
         'pull_request': {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.router.dispatch(event, gh)
-    assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
+    await news.check_news(gh, event_data['pull_request'])
+    assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'
@@ -109,13 +109,13 @@ async def test_news_file():
         'action': 'synchronize',
         'number': 1234,
         'pull_request': {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
-    await news.router.dispatch(event, gh)
-    assert gh.getiter_url == '/repos/python/cpython/pulls/1234/files'
+    await news.check_news(gh, event_data['pull_request'])
+    assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'
 
@@ -173,6 +173,7 @@ async def test_removing_skip_news_label():
         "label": {"name": news.SKIP_NEWS_LABEL},
         "number": 1234,
         "pull_request": {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             "title": "An easy fix",
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',

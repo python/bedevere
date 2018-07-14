@@ -74,18 +74,18 @@ async def failure_testing(path, action):
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
 async def test_bad_news_entry(action):
     # Not in Misc/NEWS.d.
-    await failure_testing('some/other/dir/' + GOOD_BASENAME, action)
+    await failure_testing(f'some/other/dir/{GOOD_BASENAME}', action)
     # Not in next/.
-    await failure_testing('Misc/NEWS.d/' + GOOD_BASENAME, action)
+    await failure_testing(f'Misc/NEWS.d/{GOOD_BASENAME}', action)
     # Not in a classifying subdirectory.
-    await failure_testing('Misc/NEWS.d/next/' + GOOD_BASENAME, action)
+    await failure_testing(f'Misc/NEWS.d/next/{GOOD_BASENAME}', action)
     # Missing the nonce.
-    await failure_testing('Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst', action)
+    await failure_testing(f'Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst', action)
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
 async def test_skip_news(action):
-    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
+    files = [{'filename': 'README'}, {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}'}]
     issue = {'labels': [{'name': 'skip news'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -107,7 +107,7 @@ async def test_skip_news(action):
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
 async def test_news_file(action):
     files = [{'filename': 'README'},
-             {'filename': 'Misc/NEWS.d/next/Library/' + GOOD_BASENAME}]
+             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}'}]
     issue = {'labels': [{'name': 'CLA signed'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -135,7 +135,7 @@ async def test_adding_skip_news_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data['state'] == 'success'
 
@@ -150,7 +150,7 @@ async def test_adding_benign_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data is None
 
@@ -164,13 +164,13 @@ async def test_deleting_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data is None
 
 
 async def test_removing_skip_news_label():
-    files = [{'filename': 'README'}, {'filename': 'Misc/NEWS.d/next/' + GOOD_BASENAME}]
+    files = [{'filename': 'README'}, {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}'}]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -184,7 +184,7 @@ async def test_removing_skip_news_label():
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data["state"] == "failure"
 
@@ -199,6 +199,6 @@ async def test_removing_benign_label():
             "title": "An easy fix",
         },
     }
-    event = sansio.Event(event_data, event='pull_request', delivery_id=1)
+    event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
     assert gh.post_data is None

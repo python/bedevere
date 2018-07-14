@@ -11,6 +11,7 @@ router = gidgethub.routing.Router()
 
 @router.register('pull_request', action='opened')
 @router.register('pull_request', action='synchronize')
+@router.register('pull_request', action='reopened')
 async def check_file_paths(event, gh, *args, **kwargs):
     pull_request = event.data['pull_request']
     filenames = await util.filenames_for_PR(gh, pull_request)

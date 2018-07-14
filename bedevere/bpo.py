@@ -34,6 +34,7 @@ SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
 
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
+@router.register("pull_request", action="reopened")
 async def set_status(event, gh, *args, **kwargs):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])

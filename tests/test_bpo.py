@@ -296,14 +296,17 @@ async def test_set_body_failure():
 @pytest.mark.asyncio
 async def test_set_comment_body_success():
     data = {
-        "action": "created",
-        "comment": {
-            "url":"https://api.github.com/repos/blah/blah/issues/comments/123456",
-            "body":"An issue bpo-12345 in the body"
+        "action": "opened",
+        "pull_request": {
+            "title": "[3.6] bpo-12345: some issue",
+            "url": "https://api.github.com/repos/python/cpython/pulls/4321",
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "issue_url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
+            "body": "An issue bpo-12345 in the body"
         }
     }
         
-    event = sansio.Event(data, event="issue_comment", delivery_id="123123")
+    event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     body_data = gh.patch_data
@@ -316,8 +319,8 @@ async def test_set_comment_body_without_bpo():
     data = {
         "action": "created",
         "comment": {
-            "url":"https://api.github.com/repos/blah/blah/issues/comments/123456",
-            "body":"This body doesn't contain any bpo text"
+            "url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
+            "body": "This body doesn't contain any bpo text"
         }
     }
 
@@ -331,10 +334,13 @@ async def test_set_comment_body_without_bpo():
 @pytest.mark.asyncio
 async def test_set_comment_body_already_hyperlink_bpo():
     data = {
-        "action": "created",
-        "comment": {
-            "url":"https://api.github.com/repos/blah/blah/issues/comments/123456",
-            "body":("bpo-123"
+        "action": "opened",
+        "pull_request": {
+            "title": "[3.6] bpo-12345: some issue",
+            "url": "https://api.github.com/repos/python/cpython/pulls/4321",
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "issue_url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
+            "body": ("bpo-123"
                     "[bpo-123](https://www.bugs.python.org/issue123)"
                     "<a href='https://www.bugs.python.org/issue123'>bpo-123</a>"
                    )
@@ -342,25 +348,9 @@ async def test_set_comment_body_already_hyperlink_bpo():
         }
     }
     
-    event = sansio.Event(data, event="issue_comment", delivery_id="123123")
+    event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://www.bugs.python.org/issue123)") == 2
     assert '123456' in gh.patch_url
-
-
-@pytest.mark.asyncio
-async def test_set_comment_edited_body_hyperlink():
-    data = {
-        "action": "edited",
-        "comment": {
-            "url":"https://api.github.com/repos/blah/blah/issues/comments/123456",
-            "body":"Not containing bpo text"
-        }
-    }
-
-    event = sansio.Event(data, event="issue_comment", delivery_id="123123")
-    gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
-    assert gh.patch_data is None

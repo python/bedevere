@@ -66,6 +66,7 @@ async def manage_labels(event, gh, *args, **kwargs):
 
 
 @router.register("pull_request", action="opened")
+@router.register("pull_request", action="reopened")
 @router.register("pull_request", action="edited")
 @router.register("pull_request", action="synchronize")
 async def validate_backport_pr(event, gh, *args, **kwargs):

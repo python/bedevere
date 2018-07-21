@@ -1,3 +1,5 @@
+import pytest
+
 from gidgethub import sansio
 
 from bedevere import backport
@@ -247,10 +249,11 @@ async def test_label_copying():
     assert {'skip news', 'type-enhancement', 'sprint'} == frozenset(post[1])
 
 
-async def test_valid_backport_pr_title():
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
+async def test_valid_backport_pr_title(action):
     title = '[3.6] Backport this (GH-1234)'
     data = {
-        'action': 'opened',
+        'action': action,
         'number': 2248,
         'pull_request': {
             'title': title,
@@ -261,7 +264,8 @@ async def test_valid_backport_pr_title():
             },
             'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
-        'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'},
+        'changes': {'title': title},
     }
     event = sansio.Event(data, event='pull_request',
                         delivery_id='1')
@@ -279,10 +283,11 @@ async def test_valid_backport_pr_title():
     assert post[1]['state'] == 'success'
 
 
-async def test_not_valid_backport_pr_title():
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
+async def test_not_valid_backport_pr_title(action):
     title = 'Fix some typo'
     data = {
-        'action': 'opened',
+        'action': action,
         'number': 2248,
         'pull_request': {
             'title': title,
@@ -293,7 +298,8 @@ async def test_not_valid_backport_pr_title():
             },
             'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
-        'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'},
+        'changes': {'title': title},
     }
     event = sansio.Event(data, event='pull_request',
                         delivery_id='1')
@@ -312,10 +318,11 @@ async def test_not_valid_backport_pr_title():
     assert post[1]['target_url'] == 'https://devguide.python.org/committing/#backport-pr-title'
 
 
-async def test_backport_pr_status_not_posted_on_master():
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
+async def test_backport_pr_status_not_posted_on_master(action):
     title = 'Fix some typo'
     data = {
-        'action': 'opened',
+        'action': action,
         'number': 2248,
         'pull_request': {
             'title': title,
@@ -326,7 +333,8 @@ async def test_backport_pr_status_not_posted_on_master():
             },
             'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },
-        'repository': {'issues_url': 'https://api.github.com/issue{/number}'}
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'},
+        'changes': {'title': title},
     }
     event = sansio.Event(data, event='pull_request',
                         delivery_id='1')

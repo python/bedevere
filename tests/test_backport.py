@@ -244,7 +244,7 @@ async def test_label_copying():
     await backport.router.dispatch(event, gh)
     post = gh.post_[0]
     assert post[0] == 'https://api.github.com/issue/1234/labels'
-    assert {"skip news", "type-enhancement", "sprint"} == frozenset(post[1])
+    assert {'skip news', 'type-enhancement', 'sprint'} == frozenset(post[1])
 
 
 async def test_valid_backport_pr_title():
@@ -273,10 +273,10 @@ async def test_valid_backport_pr_title():
     gh = FakeGH(getitem=getitem)
     await backport.router.dispatch(event, gh)
     post = gh.post_[0]
-    assert post[0] == "https://api.github.com/repos/python/cpython/statuses/somehash"
-    assert post[1]["context"] == "bedevere/backport-pr"
-    assert post[1]["description"] == "Valid backport PR title."
-    assert post[1]["state"] == "success"
+    assert post[0] == 'https://api.github.com/repos/python/cpython/statuses/somehash'
+    assert post[1]['context'] == 'bedevere/backport-pr'
+    assert post[1]['description'] == 'Valid backport PR title.'
+    assert post[1]['state'] == 'success'
 
 
 async def test_not_valid_backport_pr_title():
@@ -305,11 +305,11 @@ async def test_not_valid_backport_pr_title():
     gh = FakeGH(getitem=getitem)
     await backport.router.dispatch(event, gh)
     post = gh.post_[0]
-    assert post[0] == "https://api.github.com/repos/python/cpython/statuses/somehash"
-    assert post[1]["context"] == "bedevere/backport-pr"
-    assert post[1]["description"] == "Not a valid backport PR title."
-    assert post[1]["state"] == "failure"
-    assert post[1]["target_url"] == "https://devguide.python.org/committing/#backport-pr-title"
+    assert post[0] == 'https://api.github.com/repos/python/cpython/statuses/somehash'
+    assert post[1]['context'] == 'bedevere/backport-pr'
+    assert post[1]['description'] == 'Not a valid backport PR title.'
+    assert post[1]['state'] == 'failure'
+    assert post[1]['target_url'] == 'https://devguide.python.org/committing/#backport-pr-title'
 
 
 async def test_backport_pr_status_not_posted_on_master():

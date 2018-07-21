@@ -69,9 +69,10 @@ async def manage_labels(event, gh, *args, **kwargs):
 @router.register("pull_request", action="edited")
 @router.register("pull_request", action="synchronize")
 async def validate_backport_pr(event, gh, *args, **kwargs):
-    """ Detect when PRs made against maintenance branch, and the title does not
-    match backport PR pattern.
-    Post a failure status check.
+    """Check the PR title for backport pull requests.
+
+    If the PR was made against maintenance branch, and the title does not
+    match the backport PR pattern, then post a failure status.
     """
     if event.data["action"] == "edited" and "title" not in event.data["changes"]:
         return

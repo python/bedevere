@@ -113,7 +113,7 @@ def create_success_status(found_issue):
 
 def check_hyperlink(match):
     """The span checking of regex matches takes care of cases like bpo-123 [bpo-123]…"""
-    issue = match.group('issue')
+    issue = match.group("issue")
     markdown_link_re = re.compile(r"""
                                     \[\s*bpo-(?P<issue>{issue})\s*\]   
                                     \(\s*https://www.bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
@@ -126,18 +126,18 @@ def check_hyperlink(match):
                                    </a>""".format(issue=issue),
                                    re.VERBOSE)
     for markdown_match in markdown_link_re.finditer(match.string):
-        if markdown_match.span('issue') == match.span('issue'):
+        if markdown_match.span("issue") == match.span("issue"):
             return markdown_match.end()
     for html_match in html_link_re.finditer(match.string):
-        if html_match.span('issue') == match.span('issue'):
+        if html_match.span("issue") == match.span("issue"):
             return html_match.end()
 
     return False
 
 
 def create_hyperlink_in_comment_body(body):
-    """Uses infinite loop for updating the string being searched dynamically"""
-    new_body = ''
+    """Uses infinite loop for updating the string being searched dynamically."""
+    new_body = ""
     leftover_body = body
     ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
     while True:
@@ -148,7 +148,7 @@ def create_hyperlink_in_comment_body(body):
         if presence is False:
             new_body = new_body + leftover_body[:match.start()]
             leftover_body = leftover_body[match.end():]
-            new_body = new_body + match.expand('[bpo-\g<issue>](https://www.bugs.python.org/issue\g<issue>)')
+            new_body = new_body + match.expand("[bpo-\g<issue>](https://www.bugs.python.org/issue\g<issue>)")
         else:
             new_body = new_body + leftover_body[:presence]
             leftover_body = leftover_body[presence:]

@@ -355,7 +355,6 @@ async def test_set_pull_request_body_without_bpo(action):
         assert "[bpo-123](https://www.bugs.python.org/issue123)" not in gh.patch_data
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["created", "edited"])
 async def test_set_comment_body_without_bpo(action):
@@ -411,7 +410,6 @@ async def test_set_comment_body_already_hyperlinked_bpo(action):
                     "[bpo-123](https://www.bugs.python.org/issue123)"
                     "<a href='https://www.bugs.python.org/issue123'>bpo-123</a>"
                    )
-
         }
     }
 

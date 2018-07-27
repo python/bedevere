@@ -83,6 +83,25 @@ async def removed_label(event, gh, *args, **kwargs):
         await set_status(event, gh)
 
 
+@router.register("issue_comment", action="edited")
+@router.register("issue_comment", action="created")
+@router.register("pull_request", action="edited")
+@router.register("pull_request", action="opened")
+async def hyperlink_bpo_text(event, gh, *args, **kwargs):
+    if "pull_request" in event.data:
+        event_name = "pull_request"
+        body_location = "issue_url"
+    else:
+        event_name = "comment"
+        body_location = "url"
+    if "body" in event.data[event_name] and body_location in event.data[event_name]:
+        body = event.data[event_name]["body"] or ""
+        new_body = create_hyperlink_in_comment_body(body)
+        if new_body != body:
+            body_data = {"body": new_body, "maintainer_can_modify": True}
+            await gh.patch(event.data[event_name][body_location], data=body_data)
+
+
 def create_success_status(found_issue):
     """Create a success status for when an issue number was found in the title."""
     issue_number = found_issue.group("issue")
@@ -90,3 +109,48 @@ def create_success_status(found_issue):
     return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                               description=f"Issue number {issue_number} found",
                               target_url=url)
+
+
+def check_hyperlink(match):
+    """The span checking of regex matches takes care of cases like bpo-123 [bpo-123]…"""
+    issue = match.group("issue")
+    markdown_link_re = re.compile(r"""
+                                    \[\s*bpo-(?P<issue>{issue})\s*\]   
+                                    \(\s*https://www.bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
+                                    re.VERBOSE)
+    html_link_re = re.compile(r""" <a
+                                   \s*href\s*=\s*[",']\s*
+                                   https://www.bugs.python.org/issue{issue}
+                                   \s*[",']\s*>
+                                   \s*bpo-(?P<issue>{issue})\s*
+                                   </a>""".format(issue=issue),
+                                   re.VERBOSE)
+    for markdown_match in markdown_link_re.finditer(match.string):
+        if markdown_match.span("issue") == match.span("issue"):
+            return markdown_match.end()
+    for html_match in html_link_re.finditer(match.string):
+        if html_match.span("issue") == match.span("issue"):
+            return html_match.end()
+
+    return False
+
+
+def create_hyperlink_in_comment_body(body):
+    """Uses infinite loop for updating the string being searched dynamically."""
+    new_body = ""
+    leftover_body = body
+    ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
+    while True:
+        match = ISSUE_RE.search(leftover_body)
+        if match is None:
+            break
+        presence = check_hyperlink(match)
+        if presence is False:
+            new_body = new_body + leftover_body[:match.start()]
+            leftover_body = leftover_body[match.end():]
+            new_body = new_body + match.expand("[bpo-\g<issue>](https://www.bugs.python.org/issue\g<issue>)")
+        else:
+            new_body = new_body + leftover_body[:presence]
+            leftover_body = leftover_body[presence:]
+    new_body = new_body + leftover_body
+    return new_body

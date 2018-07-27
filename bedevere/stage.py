@@ -80,12 +80,12 @@ When you're done making the requested changes, leave the comment: `{BORING_TRIGG
 
 EASTER_EGG_1 = """\
 And if you don't make the requested changes, \
-[you will be poked with soft cushions!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
+[you will be poked with soft cushions!](https://youtu.be/XnS49c9KZw8?t=1m7s)
 """
 
 EASTER_EGG_2 = """\
 And if you don't make the requested changes, \
-[you will be put in the comfy chair!](https://www.youtube.com/watch?v=Nf_Y4MbUCLY&feature=youtu.be&t=4m7s)
+[you will be put in the comfy chair!](https://youtu.be/XnS49c9KZw8?t=1m30s)
 """
 
 ACK = """\
@@ -94,7 +94,7 @@ ACK = """\
 {core_devs}: please review the changes made to this pull request.
 """
 BORING_THANKS = "Thanks for making the requested changes!"
-FUN_THANKS = "[Nobody expects the Spanish Inquisition!](https://youtu.be/Nf_Y4MbUCLY)"
+FUN_THANKS = "[Nobody expects the Spanish Inquisition!](https://youtu.be/QqreRufrkxM)"
 
 
 LABEL_PREFIX = "awaiting"

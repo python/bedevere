@@ -6,12 +6,13 @@ import gidgethub.routing
 
 from . import util
 
-create_status = functools.partial(util.create_status, 'bedevere/backport-pr')
+create_status = functools.partial(util.create_status, 'bedevere/maintenance-branch-pr')
 
 
 router = gidgethub.routing.Router()
 
 TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)')
+MAINTENANCE_BRANCH_TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+')
 BACKPORT_LABEL = 'needs backport to {branch}'
 MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
                     'a backport of this pull request to the '
@@ -69,11 +70,13 @@ async def manage_labels(event, gh, *args, **kwargs):
 @router.register("pull_request", action="reopened")
 @router.register("pull_request", action="edited")
 @router.register("pull_request", action="synchronize")
-async def validate_backport_pr(event, gh, *args, **kwargs):
-    """Check the PR title for backport pull requests.
+async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
+    """Check the PR title for maintenance branch pull requests.
 
     If the PR was made against maintenance branch, and the title does not
-    match the backport PR pattern, then post a failure status.
+    match the maintenance branch PR pattern, then post a failure status.
+
+    The maintenance branch PR has to start with `[X.Y]`
     """
     if event.data["action"] == "edited" and "title" not in event.data["changes"]:
         return
@@ -85,13 +88,13 @@ async def validate_backport_pr(event, gh, *args, **kwargs):
 
     title = util.normalize_title(pull_request["title"],
                                  pull_request["body"])
-    title_match = TITLE_RE.match(title)
+    title_match = MAINTENANCE_BRANCH_TITLE_RE.match(title)
 
     if title_match is None:
         status = create_status(util.StatusState.FAILURE,
-                               description="Not a valid backport PR title.",
+                               description="Not a valid maintenance branch PR title.",
                                target_url=BACKPORT_TITLE_DEVGUIDE_URL)
     else:
         status = create_status(util.StatusState.SUCCESS,
-                               description="Valid backport PR title.")
+                               description="Valid maintenance branch PR title.")
     await util.post_status(gh, event, status)

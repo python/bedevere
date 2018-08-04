@@ -250,8 +250,8 @@ async def test_label_copying():
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
-async def test_valid_backport_pr_title(action):
-    title = '[3.6] Backport this (GH-1234)'
+async def test_valid_maintenance_branch_pr_title(action):
+    title = '[3.6] Fix to a maintenance branch'
     data = {
         'action': action,
         'number': 2248,
@@ -278,13 +278,13 @@ async def test_valid_backport_pr_title(action):
     await backport.router.dispatch(event, gh)
     post = gh.post_[0]
     assert post[0] == 'https://api.github.com/repos/python/cpython/statuses/somehash'
-    assert post[1]['context'] == 'bedevere/backport-pr'
-    assert post[1]['description'] == 'Valid backport PR title.'
+    assert post[1]['context'] == 'bedevere/maintenance-branch-pr'
+    assert post[1]['description'] == 'Valid maintenance branch PR title.'
     assert post[1]['state'] == 'success'
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
-async def test_not_valid_backport_pr_title(action):
+async def test_not_valid_maintenance_branch_pr_title(action):
     title = 'Fix some typo'
     data = {
         'action': action,
@@ -312,14 +312,14 @@ async def test_not_valid_backport_pr_title(action):
     await backport.router.dispatch(event, gh)
     post = gh.post_[0]
     assert post[0] == 'https://api.github.com/repos/python/cpython/statuses/somehash'
-    assert post[1]['context'] == 'bedevere/backport-pr'
-    assert post[1]['description'] == 'Not a valid backport PR title.'
+    assert post[1]['context'] == 'bedevere/maintenance-branch-pr'
+    assert post[1]['description'] == 'Not a valid maintenance branch PR title.'
     assert post[1]['state'] == 'failure'
     assert post[1]['target_url'] == 'https://devguide.python.org/committing/#backport-pr-title'
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
-async def test_backport_pr_status_not_posted_on_master(action):
+async def test_maintenance_branch_pr_status_not_posted_on_master(action):
     title = 'Fix some typo'
     data = {
         'action': action,

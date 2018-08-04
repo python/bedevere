@@ -76,7 +76,7 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
     If the PR was made against maintenance branch, and the title does not
     match the maintenance branch PR pattern, then post a failure status.
 
-    The maintenance branch PR has to start with [X.Y]
+    The maintenance branch PR has to start with `[X.Y]`
     """
     if event.data["action"] == "edited" and "title" not in event.data["changes"]:
         return

@@ -52,7 +52,9 @@ class TestFilenameRE:
 
 
 async def failure_testing(path, action):
-    files = [{'filename': 'README'}, {'filename': path}]
+    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+             {'filename': path, 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'},
+             ]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -85,7 +87,9 @@ async def test_bad_news_entry(action):
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
 async def test_skip_news(action):
-    files = [{'filename': 'README'}, {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}'}]
+    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+             {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'},
+             ]
     issue = {'labels': [{'name': 'skip news'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -106,8 +110,9 @@ async def test_skip_news(action):
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
 async def test_news_file(action):
-    files = [{'filename': 'README'},
-             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}'}]
+    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'},
+             ]
     issue = {'labels': [{'name': 'CLA signed'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -123,6 +128,49 @@ async def test_news_file(action):
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'
+
+
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
+async def test_empty_news_file(action):
+    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}'},
+             ]
+    issue = {'labels': [{'name': 'CLA signed'}]}
+    gh = FakeGH(getiter=files, getitem=issue)
+    event_data = {
+        'action': action,
+        'number': 1234,
+        'pull_request': {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
+            'statuses_url': 'https://api.github.com/some/status',
+            'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+        },
+    }
+    await news.check_news(gh, event_data['pull_request'])
+    assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
+    assert gh.post_url == 'https://api.github.com/some/status'
+    assert gh.post_data['state'] == 'failure'
+
+
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
+async def test_news_file_too_short(action):
+    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Changed this and that.'}]
+    issue = {'labels': [{'name': 'CLA signed'}]}
+    gh = FakeGH(getiter=files, getitem=issue)
+    event_data = {
+        'action': action,
+        'number': 1234,
+        'pull_request': {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
+            'statuses_url': 'https://api.github.com/some/status',
+            'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+        },
+    }
+    await news.check_news(gh, event_data['pull_request'])
+    assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
+    assert gh.post_url == 'https://api.github.com/some/status'
+    assert gh.post_data['state'] == 'failure'
 
 
 async def test_adding_skip_news_label():
@@ -170,7 +218,10 @@ async def test_deleting_label():
 
 
 async def test_removing_skip_news_label():
-    files = [{'filename': 'README'}, {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}'}]
+    files = [
+        {'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+        {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'},
+        ]
     issue = {'labels': []}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {

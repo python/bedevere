@@ -58,13 +58,18 @@ def user_login(item):
     return item["user"]["login"]
 
 
-async def filenames_for_PR(gh, pull_request):
-    """Get filenames for a pull request."""
+async def files_for_PR(gh, pull_request):
+    """Get files for a pull request."""
     # For some unknown reason there isn't any files URL in a pull request
     # payload.
     files_url = f'{pull_request["url"]}/files'
-    return {filedata['filename'] async for filedata in gh.getiter(files_url)}
-
+    data = []
+    async for filedata in gh.getiter(files_url):
+        data.append({
+            'file_name': filedata['filename'],
+            'patch': filedata.get('patch', ''),
+        })
+    return data
 
 async def issue_for_PR(gh, pull_request):
     """Get the issue data for a pull request."""

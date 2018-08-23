@@ -33,7 +33,9 @@ GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 
 async def test_news_only():
-    filenames = [{'filename': 'README'}, {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}]
+    filenames = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 ]
     issue = {'labels': []}
     gh = FakeGH(getiter=filenames, getitem=issue)
     event_data = {
@@ -55,7 +57,9 @@ async def test_news_only():
 
 
 async def test_docs_only():
-    filenames = [{'filename': '/path/to/docs1.rst'}, {'filename': 'docs2.rst'}]
+    filenames = [{'filename': '/path/to/docs1.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': 'docs2.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 ]
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
@@ -80,7 +84,9 @@ async def test_docs_only():
 
 
 async def test_tests_only():
-    filenames = [{'filename': '/path/to/test_docs1.py'}, {'filename': 'test_docs2.py'}]
+    filenames = [{'filename': '/path/to/test_docs1.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': 'test_docs2.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 ]
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
@@ -105,7 +111,9 @@ async def test_tests_only():
 
 
 async def test_docs_and_tests():
-    filenames = [{'filename': '/path/to/docs.rst'}, {'filename': 'test_docs2.py'}]
+    filenames = [{'filename': '/path/to/docs.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': 'test_docs2.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 ]
     issue = {'labels': [{'name': 'skip news'}],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
@@ -131,8 +139,10 @@ async def test_docs_and_tests():
 
 
 async def test_news_and_tests():
-    filenames = [{'filename': '/path/to/docs.rst'}, {'filename': 'test_docs2.py'},
-                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}]
+    filenames = [{'filename': '/path/to/docs.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': 'test_docs2.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'}]
+
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
@@ -158,8 +168,9 @@ async def test_news_and_tests():
 
 
 async def test_synchronize():
-    filenames = [{'filename': '/path/to/docs.rst'}, {'filename': 'test_docs2.py'},
-                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}'}]
+    filenames = [{'filename': '/path/to/docs.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': 'test_docs2.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
+                 {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'}]
     issue = {'labels': [],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)

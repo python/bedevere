@@ -14,8 +14,9 @@ router = gidgethub.routing.Router()
 @router.register('pull_request', action='reopened')
 async def check_file_paths(event, gh, *args, **kwargs):
     pull_request = event.data['pull_request']
-    filenames = await util.filenames_for_PR(gh, pull_request)
-    await news.check_news(gh, pull_request, filenames)
+    files = await util.files_for_PR(gh, pull_request)
+    filenames = [file['file_name'] for file in files]
+    await news.check_news(gh, pull_request, files)
     if event.data['action'] == 'opened':
         await prtype.classify_by_filepaths(gh, pull_request, filenames)
 

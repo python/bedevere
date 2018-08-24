@@ -27,23 +27,23 @@ SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
                                   description='"skip news" label found')
 
 
-async def check_news(gh, pull_request, filenames=None):
+async def check_news(gh, pull_request, files=None):
     """Check for a news entry.
 
     The routing is handled through the filepaths module.
     """
-    if not filenames:
-        filenames = await util.filenames_for_PR(gh, pull_request)
+    if not files:
+        files = await util.files_for_PR(gh, pull_request)
     in_next_dir = file_found = False
-    for filename in filenames:
-        if not util.is_news_dir(filename):
+    for file in files:
+        if not util.is_news_dir(file['file_name']):
             continue
         in_next_dir = True
-        file_path = pathlib.PurePath(filename)
+        file_path = pathlib.PurePath(file['file_name'])
         if len(file_path.parts) != 5:  # Misc, NEWS.d, next, <subsection>, <entry>
             continue
         file_found = True
-        if FILENAME_RE.match(file_path.name):
+        if FILENAME_RE.match(file_path.name) and len(file['patch']) >= 45:
             status = create_status(util.StatusState.SUCCESS,
                                    description='News entry found in Misc/NEWS.d')
             break

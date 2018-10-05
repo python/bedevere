@@ -148,7 +148,7 @@ def create_hyperlink_in_comment_body(body):
         if presence is False:
             new_body = new_body + leftover_body[:match.start()]
             leftover_body = leftover_body[match.end():]
-            new_body = new_body + match.expand("[bpo-\g<issue>](https://www.bugs.python.org/issue\g<issue>)")
+            new_body = new_body + match.expand(r"[bpo-\g<issue>](https://www.bugs.python.org/issue\g<issue>)")
         else:
             new_body = new_body + leftover_body[:presence]
             leftover_body = leftover_body[presence:]

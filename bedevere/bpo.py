@@ -116,11 +116,11 @@ def check_hyperlink(match):
     issue = match.group("issue")
     markdown_link_re = re.compile(r"""
                                     \[\s*bpo-(?P<issue>{issue})\s*\]   
-                                    \(\s*https://www.bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
+                                    \(\s*https://bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
                                     re.VERBOSE)
     html_link_re = re.compile(r""" <a
                                    \s*href\s*=\s*[",']\s*
-                                   https://www.bugs.python.org/issue{issue}
+                                   https://bugs.python.org/issue{issue}
                                    \s*[",']\s*>
                                    \s*bpo-(?P<issue>{issue})\s*
                                    </a>""".format(issue=issue),
@@ -148,7 +148,7 @@ def create_hyperlink_in_comment_body(body):
         if presence is False:
             new_body = new_body + leftover_body[:match.start()]
             leftover_body = leftover_body[match.end():]
-            new_body = new_body + match.expand(r"[bpo-\g<issue>](https://www.bugs.python.org/issue\g<issue>)")
+            new_body = new_body + match.expand(r"[bpo-\g<issue>](https://bugs.python.org/issue\g<issue>)")
         else:
             new_body = new_body + leftover_body[:presence]
             leftover_body = leftover_body[presence:]

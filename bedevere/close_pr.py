@@ -6,12 +6,19 @@ import gidgethub.routing
 
 PYTHON_MAINT_BRANCH_RE = re.compile(r'^\w+:\d+\.\d+$')
 
+INVALID_PR_COMMENT = """\
+PRs attempting to merge a maintenance branch into the \
+master branch are deemed to be spam and automatically closed. \
+If you were attempting to report a bug, please go to bugs.python.org; \
+see devguide.python.org for further instruction as needed."""
+
+
 router = gidgethub.routing.Router()
 
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 async def close_invalid_pr(event, gh, *args, **kwargs):
-    """Close the invalid PR.
+    """Close the invalid PR, add 'invalid' label, and post a message.
 
     PR is considered invalid if:
     * base_label is 'python:master'
@@ -25,6 +32,14 @@ async def close_invalid_pr(event, gh, *args, **kwargs):
         data = {'state': 'closed',
                 'maintainer_can_modify': True}
         await gh.patch(event.data["pull_request"]["url"], data=data)
+        await gh.post(
+            f'{event.data["pull_request"]["issue_url"]}/labels',
+            data=["invalid"]
+        )
+        await gh.post(
+            f'{event.data["pull_request"]["issue_url"]}/comments',
+            data={'body': INVALID_PR_COMMENT}
+        )
 
 
 @router.register("pull_request", action="review_requested")

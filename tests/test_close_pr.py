@@ -7,13 +7,16 @@ from bedevere import close_pr
 
 class FakeGH:
 
-    def __init__(self, *, getitem=None):
+    def __init__(self, *, getitem=None, post=None):
         self._getitem_return = getitem
         self.patch_url = None
         self.patch_data = None
         self.delete_url = None
         self.delete_data = None
         self.data = None
+        self._post_return = post
+        self.post_url = []
+        self.post_data = []
 
     async def patch(self, url, data):
         self.patch_url = url
@@ -23,6 +26,11 @@ class FakeGH:
         self.delete_url = url
         self.delete_data = data
 
+    async def post(self, url, *, data):
+        self.post_url.append(url)
+        self.post_data.append(data)
+        return self._post_return
+
 
 @pytest.mark.asyncio
 async def test_close_invalid_pr_on_open():
@@ -31,7 +39,7 @@ async def test_close_invalid_pr_on_open():
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",
-            "issue_url": "issue URL",
+            "issue_url": "https://api.github.com/org/repo/issues/123",
             "url": "https://api.github.com/org/repo/pulls/123",
             "head": {
                 "label": "python:3.6"
@@ -51,6 +59,12 @@ async def test_close_invalid_pr_on_open():
     await close_pr.router.dispatch(event, gh)
     patch_data = gh.patch_data
     assert patch_data["state"] == "closed"
+
+    assert len(gh.post_url) == 2
+    assert gh.post_url[0] == 'https://api.github.com/org/repo/issues/123/labels'
+    assert gh.post_data[0] == ['invalid']
+    assert gh.post_url[1] == 'https://api.github.com/org/repo/issues/123/comments'
+    assert gh.post_data[1] == {'body': close_pr.INVALID_PR_COMMENT}
 
 
 @pytest.mark.asyncio
@@ -60,7 +74,7 @@ async def test_close_invalid_pr_on_synchronize():
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",
-            "issue_url": "issue URL",
+            "issue_url": "https://api.github.com/org/repo/issues/123",
             "url": "https://api.github.com/org/repo/pulls/123",
             "head": {
                 "label": "python:3.6"
@@ -80,6 +94,12 @@ async def test_close_invalid_pr_on_synchronize():
     await close_pr.router.dispatch(event, gh)
     patch_data = gh.patch_data
     assert patch_data["state"] == "closed"
+
+    assert len(gh.post_url) == 2
+    assert gh.post_url[0] == 'https://api.github.com/org/repo/issues/123/labels'
+    assert gh.post_data[0] == ['invalid']
+    assert gh.post_url[1] == 'https://api.github.com/org/repo/issues/123/comments'
+    assert gh.post_data[1] == {'body': close_pr.INVALID_PR_COMMENT}
 
 
 @pytest.mark.asyncio

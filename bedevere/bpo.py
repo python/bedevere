@@ -115,7 +115,7 @@ def check_hyperlink(match):
     """The span checking of regex matches takes care of cases like bpo-123 [bpo-123]…"""
     issue = match.group("issue")
     markdown_link_re = re.compile(r"""
-                                    \[\s*bpo-(?P<issue>{issue})\s*\]   
+                                    \[\s*bpo-(?P<issue>{issue})\s*\]
                                     \(\s*https://bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
                                     re.VERBOSE)
     html_link_re = re.compile(r""" <a
@@ -140,6 +140,12 @@ def create_hyperlink_in_comment_body(body):
     new_body = ""
     leftover_body = body
     ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
+
+    # leave code blocks, inline or otherwise, untouched
+    CODE_BLOCK = re.compile(r"(`{1,3})(.|\s)*(`{1,3})")
+    if CODE_BLOCK.search(body):
+        return body
+
     while True:
         match = ISSUE_RE.search(leftover_body)
         if match is None:
@@ -153,4 +159,5 @@ def create_hyperlink_in_comment_body(body):
             new_body = new_body + leftover_body[:presence]
             leftover_body = leftover_body[presence:]
     new_body = new_body + leftover_body
+
     return new_body

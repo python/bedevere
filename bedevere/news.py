@@ -13,7 +13,7 @@ router = gidgethub.routing.Router()
 
 create_status = functools.partial(util.create_status, 'bedevere/news')
 
-DEVGUIDE_URL = 'https://devguide.python.org/committing/#what-s-new-and-news-entries'
+BLURB_IT_URL = 'https://blurb-it.herokuapp.com'
 
 FILENAME_RE = re.compile(r"""# YYYY-mm-dd or YYYY-mm-dd-HH-MM-SS
                              \d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\.
@@ -60,7 +60,7 @@ async def check_news(gh, pull_request, files=None):
                 description = "News entry file name incorrectly formatted"
             status = create_status(util.StatusState.FAILURE,
                                    description=description,
-                                   target_url=DEVGUIDE_URL)
+                                   target_url=BLURB_IT_URL)
 
     await gh.post(pull_request['statuses_url'], data=status)
 

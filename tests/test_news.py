@@ -71,6 +71,7 @@ async def failure_testing(path, action):
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'failure'
+    assert gh.post_data['target_url'] == news.BLURB_IT_URL
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -106,6 +107,7 @@ async def test_skip_news(action):
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'
+    assert gh.post_data.get('target_url') is None
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -128,6 +130,7 @@ async def test_news_file(action):
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'success'
+    assert gh.post_data.get('target_url') is None
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -150,6 +153,7 @@ async def test_empty_news_file(action):
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'failure'
+    assert gh.post_data['target_url'] == news.BLURB_IT_URL
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -171,6 +175,7 @@ async def test_news_file_too_short(action):
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
     assert gh.post_data['state'] == 'failure'
+    assert gh.post_data['target_url'] == news.BLURB_IT_URL
 
 
 async def test_adding_skip_news_label():

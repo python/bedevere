@@ -8,7 +8,7 @@ This bot is meant to help identify issues with a CPython pull request.
 ### bugs.python.org issue numbers in the title
 If no b.p.o issue number is found the status fails and the
 "Details" link points to the relevant
-[section of the devguide](https://cpython-devguide.readthedocs.io/pullrequest.html?highlight=bpo-#submitting).
+[section of the devguide](https://devguide.python.org/pullrequest/#submitting).
 If an issue number is found then the "Details" link points to the
 issue itself, making it easier to navigate from PR to issue.
 

@@ -140,17 +140,22 @@ def create_hyperlink_in_comment_body(body):
     new_body = ""
     leftover_body = body
     ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
-
-    # leave code blocks, inline or otherwise, untouched
-    CODE_BLOCK = re.compile(r"(`{1,3})(.|\s)*(`{1,3})")
-    if CODE_BLOCK.search(body):
-        return body
+    CODE_BLOCK = re.compile(r"(`{3}([^`]*?)`{3})|(^`([^`]*?)`$)")  # leave code blocks, inline or otherwise, untouched
 
     while True:
         match = ISSUE_RE.search(leftover_body)
+        codeblock_match = CODE_BLOCK.search(leftover_body)
+
         if match is None:
             break
+
         presence = check_hyperlink(match)
+        if codeblock_match:
+            temp = leftover_body
+            new_body += leftover_body[:codeblock_match.end()]
+            # new_body += leftover_body[codeblock_match.end():] leftover_body = leftover_body[codeblock_match.end():]
+            new_body = temp
+            break
         if presence is False:
             new_body = new_body + leftover_body[:match.start()]
             leftover_body = leftover_body[match.end():]
@@ -158,6 +163,7 @@ def create_hyperlink_in_comment_body(body):
         else:
             new_body = new_body + leftover_body[:presence]
             leftover_body = leftover_body[presence:]
+
     new_body = new_body + leftover_body
 
     return new_body

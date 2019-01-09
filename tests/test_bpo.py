@@ -384,9 +384,8 @@ async def test_set_pull_request_body_already_hyperlinked_bpo(action):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "issue_url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
             "body": ("bpo-123"
-                    "[bpo-123](https://bugs.python.org/issue123)"
-                    "<a href='https://bugs.python.org/issue123'>bpo-123</a>"
-                   )
+                     "[bpo-123](https://bugs.python.org/issue123)"
+                     "<a href='https://bugs.python.org/issue123'>bpo-123</a>")
         },
         "changes": {"stuff": "thingy"}
     }
@@ -407,9 +406,8 @@ async def test_set_comment_body_already_hyperlinked_bpo(action):
         "comment": {
             "url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
             "body": ("bpo-123"
-                    "[bpo-123](https://bugs.python.org/issue123)"
-                    "<a href='https://bugs.python.org/issue123'>bpo-123</a>"
-                   )
+                     "[bpo-123](https://bugs.python.org/issue123)"
+                     "<a href='https://bugs.python.org/issue123'>bpo-123</a>")
         }
     }
 
@@ -419,3 +417,58 @@ async def test_set_comment_body_already_hyperlinked_bpo(action):
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
     assert "123456" in gh.patch_url
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "edited"])
+async def test_bpo_text_within_codeblocks_in_comments(action):
+    data = {
+        "action": action,
+        "pull_request": {
+            "title": "[3.6] bpo-12345: some issue",
+            "url": "https://api.github.com/repos/python/cpython/pulls/4321",
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "issue_url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
+            "body": ("bpo-123"
+                     "```bpo-123```"
+                     "`bpo-123`"
+                     "[bpo-123](https://bugs.python.org/issue123)"
+                     "<a href='https://bugs.python.org/issue123'>bpo-123</a>")
+        },
+        "changes": {"stuff": "thingy"}
+    }
+
+    event = sansio.Event(data, event="pull_request", delivery_id="123123")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    body_data = gh.patch_data
+    assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
+    assert "123456" in gh.patch_url
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "edited"])
+async def test_bpo_text_within_codeblocks_in_pull_request(action):
+    data = {
+        "action": action,
+        "pull_request": {
+            "title": "[3.6] bpo-12345: some issue",
+            "url": "https://api.github.com/repos/python/cpython/pulls/4321",
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "issue_url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
+            "body": ("bpo-123"
+                     "```bpo-123```"
+                     "`bpo-123`"
+                     "[bpo-123](https://bugs.python.org/issue123)"
+                     "<a href='https://bugs.python.org/issue123'>bpo-123</a>")
+        },
+        "changes": {"stuff": "thingy"}
+    }
+
+    event = sansio.Event(data, event="pull_request", delivery_id="123123")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    body_data = gh.patch_data
+    assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
+    assert "123456" in gh.patch_url
+    assert 1 == 2

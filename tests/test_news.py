@@ -135,7 +135,7 @@ async def test_news_file(action):
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
 async def test_empty_news_file(action):
-    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ '},
+    files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
              {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}'},
              ]
     issue = {'labels': [{'name': 'CLA signed'}]}

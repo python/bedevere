@@ -43,7 +43,7 @@ async def check_news(gh, pull_request, files=None):
         if len(file_path.parts) != 5:  # Misc, NEWS.d, next, <subsection>, <entry>
             continue
         file_found = True
-        if FILENAME_RE.match(file_path.name) and len(file['patch']) >= 45:
+        if FILENAME_RE.match(file_path.name) and len(file['patch']) >= 1:
             status = create_status(util.StatusState.SUCCESS,
                                    description='News entry found in Misc/NEWS.d')
             break

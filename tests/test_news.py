@@ -157,9 +157,9 @@ async def test_empty_news_file(action):
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
-async def test_news_file_too_short(action):
+async def test_news_file_not_empty(action):
     files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
-             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Changed this and that.'}]
+             {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +A'}]
     issue = {'labels': [{'name': 'CLA signed'}]}
     gh = FakeGH(getiter=files, getitem=issue)
     event_data = {
@@ -174,8 +174,8 @@ async def test_news_file_too_short(action):
     await news.check_news(gh, event_data['pull_request'])
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.post_url == 'https://api.github.com/some/status'
-    assert gh.post_data['state'] == 'failure'
-    assert gh.post_data['target_url'] == news.BLURB_IT_URL
+    assert gh.post_data['state'] == 'success'
+    assert gh.post_data.get('target_url') is None
 
 
 async def test_adding_skip_news_label():

@@ -90,7 +90,7 @@ async def test_opened_pr():
     assert len(gh.post_) == 1
     post_ = gh.post_[0]
     assert post_[0] == "https://api.github.com/labels"
-    assert post_[1] == [awaiting.Blocker.merge.value]
+    assert post_[1] == [awaiting.Blocker.core_review.value]
 
     username = "andreamcinnes"
     issue_url = "https://api.github.com/issue/42"

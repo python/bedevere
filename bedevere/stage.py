@@ -134,7 +134,7 @@ async def opened_pr(event, gh, *arg, **kwargs):
     """Decide if a new pull request requires a review.
 
     If a pull request comes in from a core developer, then mark it
-    as "awaiting merge". Otherwise the pull request is
+    as "awaiting core review". Otherwise the pull request is
     "awaiting review".
     """
     pull_request = event.data["pull_request"]

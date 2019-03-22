@@ -52,6 +52,32 @@ async def test_set_status_failure(action):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_failure_via_issue_not_found_on_bpo(action):
+    data = {
+        "action": action,
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-123: Invalid issue number",
+            "issue_url": "issue URL",
+        },
+    }
+    issue_data = {
+        "labels": [
+            {"name": "non-trivial"},
+        ]
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH(getitem=issue_data)
+    await bpo.router.dispatch(event, gh)
+    status = gh.data
+    assert status["state"] == "failure"
+    assert status["target_url"].startswith("https://devguide.python.org")
+    assert status["context"] == "bedevere/issue-number"
+    assert status["description"] == "Issue #123 not found on bugs.python.org"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success(action):
     data = {
         "action": action,

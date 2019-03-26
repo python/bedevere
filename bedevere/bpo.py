@@ -85,6 +85,8 @@ async def removed_label(event, gh, *args, **kwargs):
 
 @router.register("issue_comment", action="edited")
 @router.register("issue_comment", action="created")
+@router.register("commit_comment", action="edited")
+@router.register("commit_comment", action="created")
 @router.register("pull_request", action="edited")
 @router.register("pull_request", action="opened")
 async def hyperlink_bpo_text(event, gh, *args, **kwargs):

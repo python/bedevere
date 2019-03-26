@@ -419,3 +419,24 @@ async def test_set_comment_body_already_hyperlinked_bpo(action):
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
     assert "123456" in gh.patch_url
+
+
+@pytest.mark.parametrize("action", ["created", "edited"])
+async def test_set_commit_comment_body_already_hyperlinked_bpo(action):
+    data = {
+        "action": action,
+        "comment": {
+            "url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
+            "body": ("bpo-123"
+                    "[bpo-123](https://bugs.python.org/issue123)"
+                    "<a href='https://bugs.python.org/issue123'>bpo-123</a>"
+                   )
+        }
+    }
+
+    event = sansio.Event(data, event="commit_comment", delivery_id="123123")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    body_data = gh.patch_data
+    assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
+    assert "123456" in gh.patch_url

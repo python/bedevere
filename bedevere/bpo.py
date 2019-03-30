@@ -111,7 +111,7 @@ def create_success_status(found_issue):
 
 
 def create_failure_status_issue_not_on_bpo(issue_number_found):
-    """Create a failure status for when an issue does not exist on the bug tracker"""
+    """Create a failure status for when an issue does not exist on the bug tracker."""
     issue_number = issue_number_found.group("issue")
     description = f"Issue #{issue_number} not found on bugs.python.org"
     url = "https://devguide.python.org/pullrequest/#submitting"
@@ -121,6 +121,7 @@ def create_failure_status_issue_not_on_bpo(issue_number_found):
 
 
 def create_failure_status_no_issue():
+    """Create a failure status for when no issue number was found in the title."""
     description = 'No issue # in title or "skip issue" label found'
     url = "https://devguide.python.org/pullrequest/#submitting"
     return util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
@@ -174,6 +175,7 @@ def create_hyperlink_in_comment_body(body):
 
 
 async def _validate_issue_number(issue_number):
+    """Make sure the issue number exists on bugs.python.org."""
     url = f"https://bugs.python.org/issue{issue_number}"
     async with aiohttp.ClientSession() as session:
         async with session.head(url) as res:

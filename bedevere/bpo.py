@@ -47,7 +47,7 @@ async def set_status(event, gh, *args, **kwargs):
             if not body or CLOSING_TAG not in body:
                 issue_number = issue_number_found.group("issue")
                 new_body = BODY.format(body=body, issue_number=issue_number)
-                body_data = {"body": new_body, "maintainer_can_modify": True}
+                body_data = {"body": new_body}
                 await gh.patch(event.data["pull_request"]["url"], data=body_data)
         status = create_success_status(issue_number_found)
     await util.post_status(gh, event, status)
@@ -98,7 +98,7 @@ async def hyperlink_bpo_text(event, gh, *args, **kwargs):
         body = event.data[event_name]["body"] or ""
         new_body = create_hyperlink_in_comment_body(body)
         if new_body != body:
-            body_data = {"body": new_body, "maintainer_can_modify": True}
+            body_data = {"body": new_body}
             await gh.patch(event.data[event_name][body_location], data=body_data)
 
 

@@ -38,17 +38,17 @@ async def set_status(event, gh, *args, **kwargs):
                                     else create_failure_status_no_issue())
     else:
         issue_number = issue_number_found.group("issue")
-        if "body" in event.data["pull_request"]:
-            body = event.data["pull_request"]["body"] or ""
-            if not body or CLOSING_TAG not in body:
-                new_body = BODY.format(body=body, issue_number=issue_number)
-                body_data = {"body": new_body, "maintainer_can_modify": True}
-                await gh.patch(event.data["pull_request"]["url"], data=body_data)
         issue_number_on_bpo = await _validate_issue_number(issue_number)
         if issue_number_on_bpo:
-            status = create_success_status(issue_number_found)
+            if "body" in event.data["pull_request"]:
+                body = event.data["pull_request"]["body"] or ""
+                if not body or CLOSING_TAG not in body:
+                    new_body = BODY.format(body=body, issue_number=issue_number)
+                    body_data = {"body": new_body, "maintainer_can_modify": True}
+                    await gh.patch(event.data["pull_request"]["url"], data=body_data)
+            status = create_success_status(issue_number)
         else:
-            status = create_failure_status_issue_not_on_bpo(issue_number_found)
+            status = create_failure_status_issue_not_on_bpo(issue_number)
     await util.post_status(gh, event, status)
 
 
@@ -67,7 +67,7 @@ async def new_label(event, gh, *args, **kwargs):
         issue_number_found = ISSUE_RE.search(
             event.data["pull_request"]["title"])
         if issue_number_found:
-            status = create_success_status(issue_number_found)
+            status = create_success_status(issue_number_found.group("issue"))
         else:
             status = SKIP_ISSUE_STATUS
         await util.post_status(gh, event, status)
@@ -101,18 +101,16 @@ async def hyperlink_bpo_text(event, gh, *args, **kwargs):
             await gh.patch(event.data[event_name][body_location], data=body_data)
 
 
-def create_success_status(found_issue):
+def create_success_status(issue_number):
     """Create a success status for when an issue number was found in the title."""
-    issue_number = found_issue.group("issue")
     url = f"https://bugs.python.org/issue{issue_number}"
     return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                               description=f"Issue number {issue_number} found",
                               target_url=url)
 
 
-def create_failure_status_issue_not_on_bpo(issue_number_found):
+def create_failure_status_issue_not_on_bpo(issue_number):
     """Create a failure status for when an issue does not exist on the bug tracker."""
-    issue_number = issue_number_found.group("issue")
     description = f"Issue #{issue_number} not found on bugs.python.org"
     url = "https://devguide.python.org/pullrequest/#submitting"
     return util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,

@@ -97,7 +97,7 @@ async def hyperlink_bpo_text(event, gh, *args, **kwargs):
         body = event.data[event_name]["body"] or ""
         new_body = create_hyperlink_in_comment_body(body)
         if new_body != body:
-            body_data = {"body": new_body, "maintainer_can_modify": True}
+            body_data = {"body": new_body}
             await gh.patch(event.data[event_name][body_location], data=body_data)
 
 

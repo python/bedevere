@@ -27,7 +27,8 @@ class FakeGH:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_failure(action):
+async def test_set_status_failure(action, monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": action,
         "pull_request": {
@@ -78,7 +79,8 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success(action):
+async def test_set_status_success(action, monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": action,
         "pull_request": {
@@ -93,6 +95,27 @@ async def test_set_status_success(action):
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
     assert "1234" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
+    assert "git-sha" in gh.url
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success_issue_found_on_bpo(action):
+    data = {
+        "action": action,
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-12345: an issue!",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await bpo.router.dispatch(event, gh)
+    status = gh.data
+    assert status["state"] == "success"
+    assert status["target_url"].endswith("issue12345")
+    assert "12345" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
 
@@ -123,7 +146,8 @@ async def test_set_status_success_via_skip_issue_label(action):
 
 
 @pytest.mark.asyncio
-async def test_edit_title():
+async def test_edit_title(monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -139,7 +163,8 @@ async def test_edit_title():
 
 
 @pytest.mark.asyncio
-async def test_no_body_when_edit_title():
+async def test_no_body_when_edit_title(monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": "edited",
         "pull_request": {
@@ -247,7 +272,8 @@ async def test_removed_label_from_label_deletion():
 
 
 @pytest.mark.asyncio
-async def test_removed_label_skip_issue():
+async def test_removed_label_skip_issue(monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": "unlabeled",
         "label": {"name": "skip issue"},
@@ -283,7 +309,8 @@ async def test_removed_label_non_skip_issue():
 
 
 @pytest.mark.asyncio
-async def test_set_body_success():
+async def test_set_body_success(monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": "opened",
         "pull_request": {
@@ -302,7 +329,8 @@ async def test_set_body_success():
 
 
 @pytest.mark.asyncio
-async def test_set_body_failure():
+async def test_set_body_failure(monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": "opened",
         "pull_request": {
@@ -321,7 +349,8 @@ async def test_set_body_failure():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_success(action):
+async def test_set_pull_request_body_success(action, monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": action,
         "pull_request": {
@@ -401,7 +430,8 @@ async def test_set_comment_body_without_bpo(action):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_already_hyperlinked_bpo(action):
+async def test_set_pull_request_body_already_hyperlinked_bpo(action, monkeypatch):
+    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
     data = {
         "action": action,
         "pull_request": {

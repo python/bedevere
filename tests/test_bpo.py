@@ -316,8 +316,11 @@ async def test_set_pull_request_body_success(action):
     assert "123456" in gh.patch_url
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action", ["created", "edited"])
-async def test_set_comment_body_success(action):
+@pytest.mark.parametrize("event,action", [("issue_comment", "created"), 
+                                          ("issue_comment", "edited"),
+                                          ("commit_comment", "created"),
+                                          ("commit_comment", "edited")])
+async def test_set_comment_body_success(event, action):
     data = {
         "action": action,
         "comment": {
@@ -326,7 +329,7 @@ async def test_set_comment_body_success(action):
         }
     }
 
-    event = sansio.Event(data, event="issue_comment", delivery_id="123123")
+    event = sansio.Event(data, event=event, delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     body_data = gh.patch_data
@@ -356,8 +359,11 @@ async def test_set_pull_request_body_without_bpo(action):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action", ["created", "edited"])
-async def test_set_comment_body_without_bpo(action):
+@pytest.mark.parametrize("event,action", [("issue_comment", "created"), 
+                                          ("issue_comment", "edited"),
+                                          ("commit_comment", "created"),
+                                          ("commit_comment", "edited")])
+async def test_set_comment_body_without_bpo(event, action):
     data = {
         "action": action,
         "comment": {
@@ -366,7 +372,7 @@ async def test_set_comment_body_without_bpo(action):
         }
     }
 
-    event = sansio.Event(data, event="issue_comment", delivery_id="123123")
+    event = sansio.Event(data, event=event, delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is None
@@ -400,8 +406,11 @@ async def test_set_pull_request_body_already_hyperlinked_bpo(action):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action", ["created", "edited"])
-async def test_set_comment_body_already_hyperlinked_bpo(action):
+@pytest.mark.parametrize("event,action", [("issue_comment", "created"), 
+                                          ("issue_comment", "edited"),
+                                          ("commit_comment", "created"),
+                                          ("commit_comment", "edited")])
+async def test_set_comment_body_already_hyperlinked_bpo(event, action):
     data = {
         "action": action,
         "comment": {
@@ -413,7 +422,7 @@ async def test_set_comment_body_already_hyperlinked_bpo(action):
         }
     }
 
-    event = sansio.Event(data, event="issue_comment", delivery_id="123123")
+    event = sansio.Event(data, event=event, delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     body_data = gh.patch_data

@@ -117,7 +117,7 @@ def check_hyperlink(match):
     """The span checking of regex matches takes care of cases like bpo-123 [bpo-123]…"""
     issue = match.group("issue")
     markdown_link_re = re.compile(r"""
-                                    \[\s*bpo-(?P<issue>{issue})\s*\]   
+                                    \[[^\]]*bpo-(?P<issue>{issue})[^\]]*\]
                                     \(\s*https://bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
                                     re.VERBOSE)
     html_link_re = re.compile(r""" <a

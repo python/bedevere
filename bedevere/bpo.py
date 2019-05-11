@@ -141,7 +141,6 @@ def create_hyperlink_in_comment_body(body):
     """Uses infinite loop for updating the string being searched dynamically."""
     new_body = ""
     leftover_body = body
-    ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
     while True:
         match = ISSUE_RE.search(leftover_body)
         if match is None:

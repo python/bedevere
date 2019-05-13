@@ -222,6 +222,9 @@ async def new_comment(event, gh, *args, **kwargs):
             thanks = BORING_THANKS
         comment = ACK.format(greeting=thanks, core_devs=core_devs)
         await gh.post(issue["comments_url"], data={"body": comment})
+        reviewers_url = pr_url + '/requested_reviewers'
+        reviewers = [core_dev async for core_dev in core_dev_reviewers(gh, pr_url)]
+        await gh.post(reviewers_url, data={"reviewers": reviewers})
 
 
 @router.register("pull_request", action="closed")

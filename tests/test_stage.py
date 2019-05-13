@@ -401,8 +401,8 @@ async def test_new_comment():
     }
     gh = FakeGH(getitem=items, getiter=iterators)
     await awaiting.router.dispatch(event, gh)
-    assert len(gh.post_) == 2
-    labeling, comment = gh.post_
+    assert len(gh.post_) == 3
+    labeling, comment, review_request = gh.post_
     assert labeling[0] == "https://api.github.com/labels/42"
     assert labeling[1] == [awaiting.Blocker.change_review.value]
     assert comment[0] == "https://api.github.com/comments/42"
@@ -410,6 +410,11 @@ async def test_new_comment():
     assert "@brettcannon" in comment_body
     assert "@gvanrossum" in comment_body
     assert "not-core-dev" not in comment_body
+    assert review_request[0] == "https://api.github.com/pr/42/requested_reviewers"
+    requested_reviewers = review_request[1]["reviewers"]
+    assert "brettcannon" in requested_reviewers
+    assert "gvanrossum" in requested_reviewers
+    assert "not-core-dev" not in requested_reviewers
 
     # All is right with the Monty Python world.
     data = {
@@ -430,8 +435,8 @@ async def test_new_comment():
     event = sansio.Event(data, event="issue_comment", delivery_id="12345")
     gh = FakeGH(getitem=items, getiter=iterators)
     await awaiting.router.dispatch(event, gh)
-    assert len(gh.post_) == 2
-    labeling, comment = gh.post_
+    assert len(gh.post_) == 3
+    labeling, comment, review_request = gh.post_
     assert labeling[0] == "https://api.github.com/labels/42"
     assert labeling[1] == [awaiting.Blocker.change_review.value]
     assert comment[0] == "https://api.github.com/comments/42"
@@ -439,6 +444,11 @@ async def test_new_comment():
     assert "@brettcannon" in comment_body
     assert "@gvanrossum" in comment_body
     assert "not-core-dev" not in comment_body
+    assert review_request[0] == "https://api.github.com/pr/42/requested_reviewers"
+    requested_reviewers = review_request[1]["reviewers"]
+    assert "brettcannon" in requested_reviewers
+    assert "gvanrossum" in requested_reviewers
+    assert "not-core-dev" not in requested_reviewers
 
 
 async def test_change_requested_for_core_dev():

@@ -13,12 +13,14 @@ from gidgethub import sansio
 
 from . import backport, bpo, close_pr, filepaths, follow_up, news, stage
 
+import sentry_sdk
 
 router = routing.Router(backport.router, bpo.router, close_pr.router,
                         filepaths.router, follow_up.router, news.router,
                         stage.router)
 cache = cachetools.LRUCache(maxsize=500)
 
+sentry_sdk.init(os.environ.get("SENTRY_DSN"))
 
 async def main(request):
     try:

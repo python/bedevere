@@ -316,7 +316,7 @@ async def test_set_pull_request_body_success(action):
     assert "123456" in gh.patch_url
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("event,action", [("issue_comment", "created"), 
+@pytest.mark.parametrize("event,action", [("issue_comment", "created"),
                                           ("issue_comment", "edited"),
                                           ("commit_comment", "created"),
                                           ("commit_comment", "edited")])
@@ -359,7 +359,7 @@ async def test_set_pull_request_body_without_bpo(action):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("event,action", [("issue_comment", "created"), 
+@pytest.mark.parametrize("event,action", [("issue_comment", "created"),
                                           ("issue_comment", "edited"),
                                           ("commit_comment", "created"),
                                           ("commit_comment", "edited")])
@@ -391,6 +391,7 @@ async def test_set_pull_request_body_already_hyperlinked_bpo(action):
             "issue_url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
             "body": ("bpo-123"
                     "[bpo-123](https://bugs.python.org/issue123)"
+                    "[something about bpo-123](https://bugs.python.org/issue123)"
                     "<a href='https://bugs.python.org/issue123'>bpo-123</a>"
                    )
         },
@@ -402,11 +403,12 @@ async def test_set_pull_request_body_already_hyperlinked_bpo(action):
     await bpo.router.dispatch(event, gh)
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
+    assert body_data["body"].count("[something about bpo-123](https://bugs.python.org/issue123)") == 1
     assert "123456" in gh.patch_url
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("event,action", [("issue_comment", "created"), 
+@pytest.mark.parametrize("event,action", [("issue_comment", "created"),
                                           ("issue_comment", "edited"),
                                           ("commit_comment", "created"),
                                           ("commit_comment", "edited")])
@@ -417,6 +419,7 @@ async def test_set_comment_body_already_hyperlinked_bpo(event, action):
             "url": "https://api.github.com/repos/blah/blah/issues/comments/123456",
             "body": ("bpo-123"
                     "[bpo-123](https://bugs.python.org/issue123)"
+                    "[something about bpo-123](https://bugs.python.org/issue123)"
                     "<a href='https://bugs.python.org/issue123'>bpo-123</a>"
                    )
         }
@@ -427,4 +430,5 @@ async def test_set_comment_body_already_hyperlinked_bpo(event, action):
     await bpo.router.dispatch(event, gh)
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
+    assert body_data["body"].count("[something about bpo-123](https://bugs.python.org/issue123)") == 1
     assert "123456" in gh.patch_url

@@ -13,6 +13,7 @@ router = gidgethub.routing.Router()
 
 TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)')
 MAINTENANCE_BRANCH_TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+')
+MAINTENANCE_BRANCH_RE = re.compile(r'\s*(?P<branch>\d+\.\d+)')
 BACKPORT_LABEL = 'needs backport to {branch}'
 MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
                     'a backport of this pull request to the '
@@ -98,3 +99,23 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
         status = create_status(util.StatusState.SUCCESS,
                                description="Valid maintenance branch PR title.")
     await util.post_status(gh, event, status)
+
+
+@router.register("create", ref_type="branch")
+async def maintenance_branch_created(event, gh, *args, **kwargs):
+    """Create the needs backport label when maintenance branch created.
+
+    If a maintenance branch was created (e.g.: 3.9, or 4.0),
+    automatically create the `needs backport to ` label.
+
+    The maintenance branch PR has to start with `[X.Y]`
+    """
+    branch_name = event.data["ref"]
+    title_match = MAINTENANCE_BRANCH_RE.match(branch_name)
+
+    if title_match:
+        await gh.post(
+            "/repos/python/cpython/labels",
+            data={'name': f'needs backport to {branch_name}',
+                  'color': '#c2e0c6'
+                  })

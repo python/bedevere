@@ -105,6 +105,9 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
 async def maintenance_branch_created(event, gh, *args, **kwargs):
     """Create the needs backport label when maintenance branch created.
 
+    Also post a reminder to add the maintenance branch to the list of
+    `ALLOWED_BRANCHES` in CPython-emailer-webhook.
+
     If a maintenance branch was created (e.g.: 3.9, or 4.0),
     automatically create the `needs backport to ` label.
 
@@ -116,6 +119,17 @@ async def maintenance_branch_created(event, gh, *args, **kwargs):
     if title_match:
         await gh.post(
             "/repos/python/cpython/labels",
-            data={'name': f'needs backport to {branch_name}',
-                  'color': '#c2e0c6'
-                  })
+            data={"name": f"needs backport to {branch_name}", "color": "#c2e0c6"},
+        )
+
+        await gh.post(
+            "/repos/berkerpeksag/cpython-emailer-webhook/issues",
+            data={
+                "title": f"Please add {branch_name} to ALLOWED_BRANCHES",
+                "body": (
+                    f"A new CPython maintenance branch `{branch_name}` has just been created.",
+                    "\nThis is a reminder to add `{branch_name}` to the list of `ALLOWED_BRANCHES`",
+                    "\nhttps://github.com/berkerpeksag/cpython-emailer-webhook/blob/e164cb9a6735d56012a4e557fd67dd7715c16d7b/mailer.py#L15",
+                ),
+            },
+        )

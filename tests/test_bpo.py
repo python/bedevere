@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from gidgethub import sansio
@@ -25,10 +27,17 @@ class FakeGH:
         self.patch_data = data
 
 
+@pytest.fixture
+def mock_issue_validation(mocker):
+    return mocker.patch(
+        'bedevere.bpo._validate_issue_number',
+        return_value=True
+    )
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_failure(action, monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_set_status_failure(action, mock_issue_validation):
     data = {
         "action": action,
         "pull_request": {
@@ -49,6 +58,7 @@ async def test_set_status_failure(action, monkeypatch):
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://devguide.python.org")
     assert status["context"] == "bedevere/issue-number"
+    mock_issue_validation.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -79,8 +89,7 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success(action, monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_set_status_success(action, mock_issue_validation):
     data = {
         "action": action,
         "pull_request": {
@@ -97,6 +106,7 @@ async def test_set_status_success(action, monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
+    mock_issue_validation.assert_called_with("1234")
 
 
 @pytest.mark.asyncio
@@ -120,9 +130,11 @@ async def test_set_status_success_issue_found_on_bpo(action):
     assert "git-sha" in gh.url
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success_via_skip_issue_label(action):
+async def test_set_status_success_via_skip_issue_label(fake_validate, action):
     data = {
         "action": action,
         "pull_request": {
@@ -143,11 +155,13 @@ async def test_set_status_success_via_skip_issue_label(action):
     assert status["state"] == "success"
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
+    fake_validate.assert_not_called()
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_edit_title(monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_edit_title(fake_validate):
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -160,11 +174,13 @@ async def test_edit_title(monkeypatch):
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is not None
+    fake_validate.assert_called_with("1234")
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_no_body_when_edit_title(monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_no_body_when_edit_title(fake_validate):
     data = {
         "action": "edited",
         "pull_request": {
@@ -182,10 +198,13 @@ async def test_no_body_when_edit_title(monkeypatch):
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is not None
     assert gh.patch_data["body"] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
+    fake_validate.assert_called_with("32636")
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_edit_other_than_title():
+async def test_edit_other_than_title(fake_validate):
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -198,6 +217,7 @@ async def test_edit_other_than_title():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is None
+    fake_validate.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -253,8 +273,10 @@ async def test_new_label_not_skip_issue():
     assert gh.data is None
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_removed_label_from_label_deletion():
+async def test_removed_label_from_label_deletion(fake_validate):
     """When a label is completely deleted from a repo, it triggers an 'unlabeled'
     event, but the payload has no details about the removed label."""
     data = {
@@ -269,11 +291,13 @@ async def test_removed_label_from_label_deletion():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is None
+    fake_validate.assert_not_called()
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_removed_label_skip_issue(monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_removed_label_skip_issue(fake_validate):
     data = {
         "action": "unlabeled",
         "label": {"name": "skip issue"},
@@ -291,10 +315,13 @@ async def test_removed_label_skip_issue(monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
+    fake_validate.assert_called_with("1234")
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_removed_label_non_skip_issue():
+async def test_removed_label_non_skip_issue(fake_validate):
     data = {
         "action": "unlabeled",
         "label": {"name": "non-trivial"},
@@ -306,11 +333,13 @@ async def test_removed_label_non_skip_issue():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is None
+    fake_validate.assert_not_called()
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_set_body_success(monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_set_body_success(fake_validate):
     data = {
         "action": "opened",
         "pull_request": {
@@ -326,11 +355,13 @@ async def test_set_body_success(monkeypatch):
     status = gh.patch_data
     assert "https://bugs.python.org/issue1234" in status["body"]
     assert "1347" in gh.patch_url
+    fake_validate.assert_called_with("1234")
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
-async def test_set_body_failure(monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_set_body_failure(fake_validate):
     data = {
         "action": "opened",
         "pull_request": {
@@ -345,12 +376,14 @@ async def test_set_body_failure(monkeypatch):
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is None
     assert gh.patch_url is None
+    fake_validate.assert_called_with("1234")
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_success(action, monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_set_pull_request_body_success(fake_validate, action):
     data = {
         "action": action,
         "pull_request": {
@@ -369,6 +402,8 @@ async def test_set_pull_request_body_success(action, monkeypatch):
     body_data = gh.patch_data
     assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
     assert "123456" in gh.patch_url
+    fake_validate.assert_called_with("12345")
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["created", "edited"])
@@ -388,9 +423,12 @@ async def test_set_comment_body_success(action):
     assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
     assert "123456" in gh.patch_url
 
+
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_without_bpo(action):
+async def test_set_pull_request_body_without_bpo(fake_validate, action):
     data = {
         "action": action,
         "pull_request": {
@@ -408,6 +446,7 @@ async def test_set_pull_request_body_without_bpo(action):
     await bpo.router.dispatch(event, gh)
     if gh.patch_data:
         assert "[bpo-123](https://bugs.python.org/issue123)" not in gh.patch_data
+        fake_validate.assert_called_with("12345")
 
 
 @pytest.mark.asyncio
@@ -428,10 +467,11 @@ async def test_set_comment_body_without_bpo(action):
     assert gh.patch_url is None
 
 
+@mock.patch('bedevere.bpo._validate_issue_number',
+            mock.MagicMock(return_value=True))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_already_hyperlinked_bpo(action, monkeypatch):
-    monkeypatch.delattr('bedevere.bpo._validate_issue_number')
+async def test_set_pull_request_body_already_hyperlinked_bpo(fake_validate, action):
     data = {
         "action": action,
         "pull_request": {
@@ -453,6 +493,7 @@ async def test_set_pull_request_body_already_hyperlinked_bpo(action, monkeypatch
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
     assert "123456" in gh.patch_url
+    fake_validate.assert_called_with("12345")
 
 
 @pytest.mark.asyncio

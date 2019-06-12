@@ -38,16 +38,13 @@ async def set_status(event, gh, *args, **kwargs):
                                     else create_failure_status_no_issue())
     else:
         issue_number = issue_number_found.group("issue")
-        try:
-            issue_number_on_bpo = await _validate_issue_number(issue_number)
-        except NameError:
-            issue_number_on_bpo = True
+        issue_number_on_bpo = await _validate_issue_number(issue_number)
         if issue_number_on_bpo:
             if "body" in event.data["pull_request"]:
                 body = event.data["pull_request"]["body"] or ""
                 if not body or CLOSING_TAG not in body:
                     new_body = BODY.format(body=body, issue_number=issue_number)
-                    body_data = {"body": new_body, "maintainer_can_modify": True}
+                    body_data = {"body": new_body}
                     await gh.patch(event.data["pull_request"]["url"], data=body_data)
             status = create_success_status(issue_number)
         else:

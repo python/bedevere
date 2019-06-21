@@ -114,7 +114,6 @@ async def maintenance_branch_created(event, gh, *args, **kwargs):
     The maintenance branch PR has to start with `[X.Y]`
     """
     branch_name = event.data["ref"]
-    title_match = MAINTENANCE_BRANCH_RE.match(branch_name)
 
     if MAINTENANCE_BRANCH_RE.match(branch_name):
         await gh.post(

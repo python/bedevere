@@ -103,7 +103,7 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
 
 @router.register("create", ref_type="branch")
 async def maintenance_branch_created(event, gh, *args, **kwargs):
-    """Create the needs backport label when maintenance branch created.
+    """Create the `needs backport label` when the maintenance branch is created.
 
     Also post a reminder to add the maintenance branch to the list of
     `ALLOWED_BRANCHES` in CPython-emailer-webhook.

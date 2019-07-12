@@ -13,12 +13,12 @@ If no b.p.o issue number is found the status fails and the
 If an issue number is found then the "Details" link points to the relevant issue 
 itself, making it easier to navigate from PR to issue.
 - ### Identifies missing news entry
-If no misc/news.d entry is found or news entry is formatted incorrectly 
-and issue doesn't have the skip news label, the status fails and relevant 
+If no `Misc/NEWS.d` entry is found or the news entry is formatted incorrectly 
+and the issue doesn't have the `skip news` label, the status fails and a relevant 
 description label is added to it.
 - ### Closes invalid PRs
 Closes PRs that try to merge a maintenance branch into the master branch, adds 
-`invalid` label, and posts relevant message.
+`invalid` label, and posts a relevant message.
 - ### Labels PRs for docs
 Labels PRs for documentation as `type-documentation`
 - ### Copies master labels to backport

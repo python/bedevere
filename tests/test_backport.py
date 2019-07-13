@@ -346,3 +346,36 @@ async def test_maintenance_branch_pr_status_not_posted_on_master(action):
     gh = FakeGH(getitem=getitem)
     await backport.router.dispatch(event, gh)
     assert len(gh.post_) == 0
+
+
+@pytest.mark.parametrize('ref', ['3.9', '4.0', '3.10'])
+async def test_maintenance_branch_created(ref):
+    event_data = {
+        'ref': ref,
+        'ref_type': "branch",
+
+    }
+    event = sansio.Event(event_data, event='create',
+                        delivery_id='1')
+    gh = FakeGH()
+    await backport.router.dispatch(event, gh)
+    label_creation_post = gh.post_[0]
+    assert label_creation_post[0] == "https://api.github.com/repos/python/cpython/labels"
+    assert label_creation_post[1] == {'name': f"needs backport to {ref}", 'color': '#c2e0c6'}
+
+    issue_creation_post = gh.post_[1]
+    assert issue_creation_post[0] == "https://api.github.com/repos/berkerpeksag/cpython-emailer-webhook/issues"
+    assert issue_creation_post[1]['title'] == f"Please add {ref} to ALLOWED_BRANCHES"
+
+
+@pytest.mark.parametrize('ref', ['backport-3.9', 'test', 'Mariatta-patch-1'])
+async def test_other_branch_created(ref):
+    event_data = {
+        'ref': ref,
+        'ref_type': "branch",
+
+    }
+    event = sansio.Event(event_data, event='create', delivery_id='1')
+    gh = FakeGH()
+    await backport.router.dispatch(event, gh)
+    assert gh.post_ == []

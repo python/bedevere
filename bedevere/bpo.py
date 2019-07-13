@@ -84,6 +84,8 @@ async def removed_label(event, gh, *args, **kwargs):
 
 @router.register("issue_comment", action="edited")
 @router.register("issue_comment", action="created")
+@router.register("commit_comment", action="edited")
+@router.register("commit_comment", action="created")
 @router.register("pull_request", action="edited")
 @router.register("pull_request", action="opened")
 async def hyperlink_bpo_text(event, gh, *args, **kwargs):
@@ -131,7 +133,7 @@ def check_hyperlink(match):
     """The span checking of regex matches takes care of cases like bpo-123 [bpo-123]…"""
     issue = match.group("issue")
     markdown_link_re = re.compile(r"""
-                                    \[\s*bpo-(?P<issue>{issue})\s*\]   
+                                    \[[^\]]*bpo-(?P<issue>{issue})[^\]]*\]
                                     \(\s*https://bugs.python.org/issue{issue}\s*\)""".format(issue=issue),
                                     re.VERBOSE)
     html_link_re = re.compile(r""" <a
@@ -155,7 +157,6 @@ def create_hyperlink_in_comment_body(body):
     """Uses infinite loop for updating the string being searched dynamically."""
     new_body = ""
     leftover_body = body
-    ISSUE_RE = re.compile(r"bpo-(?P<issue>\d+)")
     while True:
         match = ISSUE_RE.search(leftover_body)
         if match is None:

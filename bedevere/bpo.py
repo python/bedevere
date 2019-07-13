@@ -178,4 +178,3 @@ async def _validate_issue_number(issue_number):
     async with aiohttp.ClientSession() as session:
         async with session.head(url) as res:
             return res.status != 404
-

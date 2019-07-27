@@ -24,7 +24,7 @@ digraph "PR stages" {
   "Awaiting review" -> "Awaiting core review" [label="New review", color=blue]
   "Awaiting core review" -> "Awaiting core review" [label="New review", color=blue]
   "Awaiting core review" -> "Awaiting changes" [label="New review requests changes", color=green]
-  "Awaiting changes" -> "Awaiting change review" [label="Comments changes are done", color=orange]
+  "Awaiting changes" -> "Awaiting change review" [label="Comments changes are done\nBedevere requests review from core-dev", color=orange]
   "Awaiting change review" -> "Awaiting changes" [label="New review requests changes", color=green]
   "Awaiting change review" -> "Awaiting merge" [label="New review approves", color=green]
 

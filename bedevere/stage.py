@@ -32,7 +32,7 @@ digraph "PR stages" {
   "Awaiting review" -> "Awaiting changes" [label="New review requests changes", color=green]
   "Awaiting core review" -> "Awaiting merge" [label="New review approves", color=green]
 
-  "New PR" -> "Awaiting merge" [label="New PR", color=green]
+  "New PR" -> "Awaiting core review" [label="New PR", color=green]
 }
 """
 

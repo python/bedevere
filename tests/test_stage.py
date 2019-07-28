@@ -340,7 +340,6 @@ async def test_new_review():
 
 
 async def test_non_core_dev_does_not_downgrade():
-    pr_author = "potomak"
     core_dev = "brettcannon"
     non_core_dev = "andreamcinnes"
     teams = [

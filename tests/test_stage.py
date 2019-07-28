@@ -65,6 +65,7 @@ async def test_stage():
 
 
 async def test_opened_pr():
+    # New PR from a core dev.
     username = "brettcannon"
     issue_url = "https://api.github.com/issue/42"
     data = {
@@ -92,6 +93,7 @@ async def test_opened_pr():
     assert post_[0] == "https://api.github.com/labels"
     assert post_[1] == [awaiting.Blocker.core_review.value]
 
+    # New PR from a non-core dev.
     username = "andreamcinnes"
     issue_url = "https://api.github.com/issue/42"
     data = {
@@ -335,6 +337,78 @@ async def test_new_review():
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
     assert not len(gh.post_)
+
+
+async def test_non_core_dev_does_not_downgrade():
+    pr_author = "potomak"
+    core_dev = "brettcannon"
+    non_core_dev = "andreamcinnes"
+    teams = [
+        {"name": "python core", "id": 6}
+    ]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{non_core_dev}":
+            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        f"https://api.github.com/teams/6/memberships/{core_dev}": True,
+        "https://api.github.com/issue/42": {
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+        }
+    }
+
+    # Approval from a core dev changes the state to "Awaiting merge".
+    data = {
+        "action": "submitted",
+        "review": {
+            "state": "approved",
+            "user": {
+                "login": core_dev,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [{"user": {"login": core_dev}, "state": "approved"}],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels/42"
+    assert post_[1] == [awaiting.Blocker.merge.value]
+
+    # Non-comment review from a non-core dev doesn't "downgrade" the PR's state.
+    data = {
+        "action": "submitted",
+        "review": {
+            "state": "approved",
+            "user": {
+                "login": non_core_dev,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews":
+            [
+                {"user": {"login": core_dev}, "state": "approved"},
+                {"user": {"login": non_core_dev}, "state": "approved"},
+            ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert not gh.post_
 
 
 async def test_new_comment():

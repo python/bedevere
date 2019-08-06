@@ -37,7 +37,7 @@ async def main(request):
                                       cache=cache)
             # Give GitHub some time to reach internal consistency.
             await asyncio.sleep(1)
-            await router.dispatch(event, gh)
+            await router.dispatch(event, gh, session=session)
         try:
             print('GH requests remaining:', gh.rate_limit.remaining)
         except AttributeError:

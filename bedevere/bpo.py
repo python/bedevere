@@ -1,7 +1,6 @@
 """Check if a bugs.python.org issue number is specified in the pull request's title."""
 import re
 
-import aiohttp
 from gidgethub import routing
 
 from . import util
@@ -38,7 +37,8 @@ async def set_status(event, gh, *args, **kwargs):
                                     else create_failure_status_no_issue())
     else:
         issue_number = issue_number_found.group("issue")
-        issue_number_on_bpo = await _validate_issue_number(issue_number)
+        session = kwargs.get('session', '')
+        issue_number_on_bpo = await _validate_issue_number(issue_number, session)
         if issue_number_on_bpo:
             if "body" in event.data["pull_request"]:
                 body = event.data["pull_request"]["body"] or ""
@@ -173,9 +173,8 @@ def create_hyperlink_in_comment_body(body):
     return new_body
 
 
-async def _validate_issue_number(issue_number):
+async def _validate_issue_number(issue_number, session):
     """Make sure the issue number exists on bugs.python.org."""
     url = f"https://bugs.python.org/issue{issue_number}"
-    async with aiohttp.ClientSession() as session:
-        async with session.head(url) as res:
-            return res.status != 404
+    async with session.head(url) as res:
+        return res.status != 404

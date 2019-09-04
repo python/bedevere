@@ -28,7 +28,7 @@ SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 @router.register("pull_request", action="reopened")
-async def set_status(event, gh, *args, **kwargs):
+async def set_status(event, gh, session=None, *args, **kwargs):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
@@ -37,7 +37,6 @@ async def set_status(event, gh, *args, **kwargs):
                                     else create_failure_status_no_issue())
     else:
         issue_number = issue_number_found.group("issue")
-        session = kwargs.get('session', '')
         issue_number_on_bpo = await _validate_issue_number(issue_number, session)
         if issue_number_on_bpo:
             if "body" in event.data["pull_request"]:
@@ -114,7 +113,7 @@ def create_success_status(issue_number):
 def create_failure_status_issue_not_on_bpo(issue_number):
     """Create a failure status for when an issue does not exist on the bug tracker."""
     description = f"Issue #{issue_number} not found on bugs.python.org"
-    url = "https://devguide.python.org/pullrequest/#submitting"
+    url = f"https://bugs.python.org/issue{issue_number}"
     return util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
                               description=description,
                               target_url=url)

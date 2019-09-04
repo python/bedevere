@@ -67,9 +67,8 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    session = aiohttp.ClientSession()
-    await bpo.router.dispatch(event, gh, session=session)
-    await session.close()
+    async with aiohttp.ClientSession() as session:
+        await bpo.router.dispatch(event, gh, session=session)
     status = gh.data
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://bugs.python.org")
@@ -113,9 +112,8 @@ async def test_set_status_success_issue_found_on_bpo(action):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    session = aiohttp.ClientSession()
-    await bpo.router.dispatch(event, gh, session=session)
-    await session.close()
+    async with aiohttp.ClientSession() as session:
+        await bpo.router.dispatch(event, gh, session=session)
     status = gh.data
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue12345")

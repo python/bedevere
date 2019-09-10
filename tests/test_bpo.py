@@ -97,7 +97,7 @@ async def test_set_status_success(action, monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
-    bpo._validate_issue_number.assert_awaited_with("1234", None)
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
@@ -166,7 +166,7 @@ async def test_edit_title(monkeypatch):
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is not None
-    bpo._validate_issue_number.assert_awaited_with("1234", None)
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
@@ -190,7 +190,7 @@ async def test_no_body_when_edit_title(monkeypatch):
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is not None
     assert gh.patch_data["body"] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
-    bpo._validate_issue_number.assert_awaited_with("32636", None)
+    bpo._validate_issue_number.assert_awaited_with("32636", session=None)
 
 
 @pytest.mark.asyncio
@@ -307,7 +307,7 @@ async def test_removed_label_skip_issue(monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
-    bpo._validate_issue_number.assert_awaited_with("1234", None)
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
@@ -347,7 +347,7 @@ async def test_set_body_success(monkeypatch):
     status = gh.patch_data
     assert "https://bugs.python.org/issue1234" in status["body"]
     assert "1347" in gh.patch_url
-    bpo._validate_issue_number.assert_awaited_with("1234", None)
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
@@ -368,13 +368,13 @@ async def test_set_body_failure(monkeypatch):
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is None
     assert gh.patch_url is None
-    bpo._validate_issue_number.assert_awaited_with("1234", None)
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
 async def test_set_pull_request_body_success_opened(monkeypatch):
     await set_pull_request_body_success_helper("opened", monkeypatch)
-    bpo._validate_issue_number.assert_awaited_with("12345", None)
+    bpo._validate_issue_number.assert_awaited_with("12345", session=None)
 
 
 @pytest.mark.asyncio
@@ -450,7 +450,7 @@ async def test_set_pull_request_body_without_bpo(action, monkeypatch):
     await bpo.router.dispatch(event, gh)
     if gh.patch_data:
         assert "[bpo-123](https://bugs.python.org/issue123)" not in gh.patch_data
-        bpo._validate_issue_number.assert_awaited_with("12345", None)
+        bpo._validate_issue_number.assert_awaited_with("12345", session=None)
 
 
 @pytest.mark.asyncio
@@ -480,7 +480,7 @@ async def test_set_pull_request_body_already_hyperlinked_bpo_opened(monkeypatch)
         "opened",
         monkeypatch
     )
-    bpo._validate_issue_number.assert_awaited_with("12345", None)
+    bpo._validate_issue_number.assert_awaited_with("12345", session=None)
 
 
 @pytest.mark.asyncio

@@ -1,3 +1,5 @@
+import aiohttp
+import asynctest
 import pytest
 
 from gidgethub import sansio
@@ -27,7 +29,9 @@ class FakeGH:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_failure(action):
+async def test_set_status_failure(action, monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -48,11 +52,35 @@ async def test_set_status_failure(action):
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://devguide.python.org")
     assert status["context"] == "bedevere/issue-number"
+    bpo._validate_issue_number.assert_not_awaited()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success(action):
+async def test_set_status_failure_via_issue_not_found_on_bpo(action):
+    data = {
+        "action": action,
+        "pull_request": {
+             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-123: Invalid issue number",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    async with aiohttp.ClientSession() as session:
+        await bpo.router.dispatch(event, gh, session=session)
+    status = gh.data
+    assert status["state"] == "failure"
+    assert status["target_url"].startswith("https://bugs.python.org")
+    assert status["context"] == "bedevere/issue-number"
+    assert status["description"] == "Issue #123 not found on bugs.python.org"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success(action, monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -69,11 +97,36 @@ async def test_set_status_success(action):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success_via_skip_issue_label(action):
+async def test_set_status_success_issue_found_on_bpo(action):
+    data = {
+        "action": action,
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "bpo-12345: an issue!",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    async with aiohttp.ClientSession() as session:
+        await bpo.router.dispatch(event, gh, session=session)
+    status = gh.data
+    assert status["state"] == "success"
+    assert status["target_url"].endswith("issue12345")
+    assert "12345" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
+    assert "git-sha" in gh.url
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -94,10 +147,13 @@ async def test_set_status_success_via_skip_issue_label(action):
     assert status["state"] == "success"
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
+    bpo._validate_issue_number.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_edit_title():
+async def test_edit_title(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -110,10 +166,13 @@ async def test_edit_title():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is not None
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
-async def test_no_body_when_edit_title():
+async def test_no_body_when_edit_title(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": "edited",
         "pull_request": {
@@ -131,10 +190,13 @@ async def test_no_body_when_edit_title():
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is not None
     assert gh.patch_data["body"] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
+    bpo._validate_issue_number.assert_awaited_with("32636", session=None)
 
 
 @pytest.mark.asyncio
-async def test_edit_other_than_title():
+async def test_edit_other_than_title(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -147,6 +209,7 @@ async def test_edit_other_than_title():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is None
+    bpo._validate_issue_number.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -203,9 +266,11 @@ async def test_new_label_not_skip_issue():
 
 
 @pytest.mark.asyncio
-async def test_removed_label_from_label_deletion():
+async def test_removed_label_from_label_deletion(monkeypatch):
     """When a label is completely deleted from a repo, it triggers an 'unlabeled'
     event, but the payload has no details about the removed label."""
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": "unlabeled",
         # No "label" key.
@@ -218,10 +283,13 @@ async def test_removed_label_from_label_deletion():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is None
+    bpo._validate_issue_number.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_removed_label_skip_issue():
+async def test_removed_label_skip_issue(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": "unlabeled",
         "label": {"name": "skip issue"},
@@ -239,10 +307,13 @@ async def test_removed_label_skip_issue():
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.url
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
-async def test_removed_label_non_skip_issue():
+async def test_removed_label_non_skip_issue(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": "unlabeled",
         "label": {"name": "non-trivial"},
@@ -254,10 +325,13 @@ async def test_removed_label_non_skip_issue():
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
     assert gh.data is None
+    bpo._validate_issue_number.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_set_body_success():
+async def test_set_body_success(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": "opened",
         "pull_request": {
@@ -273,10 +347,13 @@ async def test_set_body_success():
     status = gh.patch_data
     assert "https://bugs.python.org/issue1234" in status["body"]
     assert "1347" in gh.patch_url
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
-async def test_set_body_failure():
+async def test_set_body_failure(monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": "opened",
         "pull_request": {
@@ -291,11 +368,24 @@ async def test_set_body_failure():
     await bpo.router.dispatch(event, gh)
     assert gh.patch_data is None
     assert gh.patch_url is None
+    bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_success(action):
+async def test_set_pull_request_body_success_opened(monkeypatch):
+    await set_pull_request_body_success_helper("opened", monkeypatch)
+    bpo._validate_issue_number.assert_awaited_with("12345", session=None)
+
+
+@pytest.mark.asyncio
+async def test_set_pull_request_body_success_edited(monkeypatch):
+    await set_pull_request_body_success_helper("edited", monkeypatch)
+    bpo._validate_issue_number.assert_not_awaited()
+
+
+async def set_pull_request_body_success_helper(action, monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -314,6 +404,7 @@ async def test_set_pull_request_body_success(action):
     body_data = gh.patch_data
     assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
     assert "123456" in gh.patch_url
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("event,action", [("issue_comment", "created"),
@@ -336,9 +427,12 @@ async def test_set_comment_body_success(event, action):
     assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
     assert "123456" in gh.patch_url
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_without_bpo(action):
+async def test_set_pull_request_body_without_bpo(action, monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -356,6 +450,7 @@ async def test_set_pull_request_body_without_bpo(action):
     await bpo.router.dispatch(event, gh)
     if gh.patch_data:
         assert "[bpo-123](https://bugs.python.org/issue123)" not in gh.patch_data
+        bpo._validate_issue_number.assert_awaited_with("12345", session=None)
 
 
 @pytest.mark.asyncio
@@ -380,8 +475,26 @@ async def test_set_comment_body_without_bpo(event, action):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("action", ["opened", "edited"])
-async def test_set_pull_request_body_already_hyperlinked_bpo(action):
+async def test_set_pull_request_body_already_hyperlinked_bpo_opened(monkeypatch):
+    await set_pull_request_body_already_hyperlinked_bpo_helper(
+        "opened",
+        monkeypatch
+    )
+    bpo._validate_issue_number.assert_awaited_with("12345", session=None)
+
+
+@pytest.mark.asyncio
+async def test_set_pull_request_body_already_hyperlinked_bpo_edited(monkeypatch):
+    await set_pull_request_body_already_hyperlinked_bpo_helper(
+        "edited",
+        monkeypatch
+    )
+    bpo._validate_issue_number.assert_not_awaited()
+
+
+async def set_pull_request_body_already_hyperlinked_bpo_helper(action, monkeypatch):
+    monkeypatch.setattr(bpo, '_validate_issue_number',
+                        asynctest.CoroutineMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {

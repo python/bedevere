@@ -37,7 +37,7 @@ async def set_status(event, gh, session=None, *args, **kwargs):
                                     else create_failure_status_no_issue())
     else:
         issue_number = issue_number_found.group("issue")
-        issue_number_on_bpo = await _validate_issue_number(issue_number, session)
+        issue_number_on_bpo = await _validate_issue_number(issue_number, session=session)
         if issue_number_on_bpo:
             if "body" in event.data["pull_request"]:
                 body = event.data["pull_request"]["body"] or ""

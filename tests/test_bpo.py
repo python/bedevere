@@ -47,7 +47,7 @@ async def test_set_status_failure(action, monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     status = gh.data
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://devguide.python.org")
@@ -90,7 +90,7 @@ async def test_set_status_success(action, monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     status = gh.data
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
@@ -142,7 +142,7 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     status = gh.data
     assert status["state"] == "success"
     assert status["context"] == "bedevere/issue-number"
@@ -164,7 +164,7 @@ async def test_edit_title(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     assert gh.data is not None
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
@@ -187,7 +187,7 @@ async def test_no_body_when_edit_title(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     assert gh.patch_data is not None
     assert gh.patch_data["body"] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
     bpo._validate_issue_number.assert_awaited_with("32636", session=None)
@@ -207,7 +207,7 @@ async def test_edit_other_than_title(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     assert gh.data is None
     bpo._validate_issue_number.assert_not_awaited()
 
@@ -281,7 +281,7 @@ async def test_removed_label_from_label_deletion(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     assert gh.data is None
     bpo._validate_issue_number.assert_not_awaited()
 
@@ -300,7 +300,7 @@ async def test_removed_label_skip_issue(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     status = gh.data
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
@@ -323,7 +323,7 @@ async def test_removed_label_non_skip_issue(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     assert gh.data is None
     bpo._validate_issue_number.assert_not_awaited()
 
@@ -343,7 +343,7 @@ async def test_set_body_success(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     status = gh.patch_data
     assert "https://bugs.python.org/issue1234" in status["body"]
     assert "1347" in gh.patch_url
@@ -365,7 +365,7 @@ async def test_set_body_failure(monkeypatch):
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     assert gh.patch_data is None
     assert gh.patch_url is None
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
@@ -400,7 +400,7 @@ async def set_pull_request_body_success_helper(action, monkeypatch):
 
     event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     body_data = gh.patch_data
     assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
     assert "123456" in gh.patch_url
@@ -447,7 +447,7 @@ async def test_set_pull_request_body_without_bpo(action, monkeypatch):
 
     event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     if gh.patch_data:
         assert "[bpo-123](https://bugs.python.org/issue123)" not in gh.patch_data
         bpo._validate_issue_number.assert_awaited_with("12345", session=None)
@@ -513,7 +513,7 @@ async def set_pull_request_body_already_hyperlinked_bpo_helper(action, monkeypat
 
     event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
-    await bpo.router.dispatch(event, gh)
+    await bpo.router.dispatch(event, gh, session=None)
     body_data = gh.patch_data
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
     assert body_data["body"].count("[something about bpo-123](https://bugs.python.org/issue123)") == 1

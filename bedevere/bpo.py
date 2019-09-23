@@ -28,7 +28,7 @@ SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 @router.register("pull_request", action="reopened")
-async def set_status(event, gh, session=None, *args, **kwargs):
+async def set_status(event, gh, *args, session, **kwargs):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
@@ -52,11 +52,11 @@ async def set_status(event, gh, session=None, *args, **kwargs):
 
 
 @router.register("pull_request", action="edited")
-async def title_edited(event, gh, *args, **kwargs):
+async def title_edited(event, gh, *args, session, **kwargs):
     """Set the status on a pull request that has changed its title."""
     if "title" not in event.data["changes"]:
         return
-    await set_status(event, gh)
+    await set_status(event, gh, session=session)
 
 
 @router.register("pull_request", action="labeled")
@@ -73,12 +73,12 @@ async def new_label(event, gh, *args, **kwargs):
 
 
 @router.register("pull_request", action="unlabeled")
-async def removed_label(event, gh, *args, **kwargs):
+async def removed_label(event, gh, *args, session, **kwargs):
     """Re-check the status if the "skip issue" label is removed."""
     if util.no_labels(event.data):
         return
     elif util.label_name(event.data) == SKIP_ISSUE_LABEL:
-        await set_status(event, gh)
+        await set_status(event, gh, session=session)
 
 
 @router.register("issue_comment", action="edited")

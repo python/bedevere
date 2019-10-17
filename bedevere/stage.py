@@ -11,6 +11,7 @@ digraph "PR stages" {
      Blue: Anyone
      Orange: PR creator
      Green: Core developer
+     Purple: Triager Actions
   */
 
   "New PR" [color=orange]
@@ -20,19 +21,19 @@ digraph "PR stages" {
   "Awaiting change review" [shape=box, color=green]
   "Awaiting merge" [shape=box, color=green]
 
-  "New PR" -> "Awaiting review" [label="New PR", color=orange]
-  "Awaiting review" -> "Awaiting core review" [label="New review", color=blue]
-  "Awaiting core review" -> "Awaiting core review" [label="New review", color=blue]
-  "Awaiting core review" -> "Awaiting changes" [label="New review requests changes", color=green]
-  "Awaiting changes" -> "Awaiting change review" [label="Comments changes are done\nBedevere requests review from core-dev", color=orange]
-  "Awaiting change review" -> "Awaiting changes" [label="New review requests changes", color=green]
-  "Awaiting change review" -> "Awaiting merge" [label="New review approves", color=green]
+  "New PR" -> "Awaiting review" [label="New PR by a contributor", color=orange]
+  "Awaiting review" -> "Awaiting core review" [label="New review by another contributor", color=blue]
+  "Awaiting core review" -> "Awaiting core review" [label="New review by another contributor", color=blue]
+  "Awaiting core review" -> "Awaiting changes" [label="New core review requests changes", color=green]
+  "Awaiting changes" -> "Awaiting change review" [label="Comments changes are done by contributor\nBedevere requests review from core-dev", color=orange]
+  "Awaiting change review" -> "Awaiting changes" [label="New core review requests changes", color=green]
+  "Awaiting change review" -> "Awaiting merge" [label="New core review approves", color=green]
 
-  "Awaiting review" -> "Awaiting merge" [label="New review approves", color=green]
-  "Awaiting review" -> "Awaiting changes" [label="New review requests changes", color=green]
-  "Awaiting core review" -> "Awaiting merge" [label="New review approves", color=green]
+  "Awaiting review" -> "Awaiting merge" [label="New core review approves", color=green]
+  "Awaiting review" -> "Awaiting changes" [label="New core review requests changes", color=green]
+  "Awaiting core review" -> "Awaiting merge" [label="New core review approves", color=green]
 
-  "New PR" -> "Awaiting core review" [label="New PR", color=green]
+  "New PR" -> "Awaiting core review" [label="New PR by core devs", color=green]
 }
 """
 

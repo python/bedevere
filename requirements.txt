@@ -1,4 +1,4 @@
-aiohttp==3.5.4
+aiohttp==3.6.2
 appdirs==1.4.3
 async-timeout==3.0.1
 cachetools==3.1.1

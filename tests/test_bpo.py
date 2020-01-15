@@ -1,5 +1,6 @@
+from unittest import mock
+
 import aiohttp
-import asynctest
 import pytest
 
 from gidgethub import sansio
@@ -31,7 +32,7 @@ class FakeGH:
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_failure(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -80,7 +81,7 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -126,7 +127,7 @@ async def test_set_status_success_issue_found_on_bpo(action):
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -153,7 +154,7 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
 @pytest.mark.asyncio
 async def test_edit_title(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -172,7 +173,7 @@ async def test_edit_title(monkeypatch):
 @pytest.mark.asyncio
 async def test_no_body_when_edit_title(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": "edited",
         "pull_request": {
@@ -196,7 +197,7 @@ async def test_no_body_when_edit_title(monkeypatch):
 @pytest.mark.asyncio
 async def test_edit_other_than_title(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -270,7 +271,7 @@ async def test_removed_label_from_label_deletion(monkeypatch):
     """When a label is completely deleted from a repo, it triggers an 'unlabeled'
     event, but the payload has no details about the removed label."""
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": "unlabeled",
         # No "label" key.
@@ -289,7 +290,7 @@ async def test_removed_label_from_label_deletion(monkeypatch):
 @pytest.mark.asyncio
 async def test_removed_label_skip_issue(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": "unlabeled",
         "label": {"name": "skip issue"},
@@ -313,7 +314,7 @@ async def test_removed_label_skip_issue(monkeypatch):
 @pytest.mark.asyncio
 async def test_removed_label_non_skip_issue(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": "unlabeled",
         "label": {"name": "non-trivial"},
@@ -331,7 +332,7 @@ async def test_removed_label_non_skip_issue(monkeypatch):
 @pytest.mark.asyncio
 async def test_set_body_success(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": "opened",
         "pull_request": {
@@ -353,7 +354,7 @@ async def test_set_body_success(monkeypatch):
 @pytest.mark.asyncio
 async def test_set_body_failure(monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": "opened",
         "pull_request": {
@@ -385,7 +386,7 @@ async def test_set_pull_request_body_success_edited(monkeypatch):
 
 async def set_pull_request_body_success_helper(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -432,7 +433,7 @@ async def test_set_comment_body_success(event, action):
 @pytest.mark.parametrize("action", ["opened", "edited"])
 async def test_set_pull_request_body_without_bpo(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
@@ -494,7 +495,7 @@ async def test_set_pull_request_body_already_hyperlinked_bpo_edited(monkeypatch)
 
 async def set_pull_request_body_already_hyperlinked_bpo_helper(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
-                        asynctest.CoroutineMock(return_value=True))
+                        mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {

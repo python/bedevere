@@ -100,9 +100,11 @@ FUN_THANKS = "Nobody expects the Spanish Inquisition!"
 
 LABEL_PREFIX = "awaiting"
 
+
 @enum.unique
 class Blocker(enum.Enum):
     """What is blocking a pull request from being committed."""
+
     review = f"{LABEL_PREFIX} review"
     core_review = f"{LABEL_PREFIX} core review"
     changes = f"{LABEL_PREFIX} changes"
@@ -147,6 +149,26 @@ async def opened_pr(event, gh, *arg, **kwargs):
         await stage(gh, issue, Blocker.review)
 
 
+@router.register("push")
+async def new_commit_pushed(event, gh, *arg, **kwargs):
+    """If there is a new commit pushed to the PR branch that is in `awaiting merge` state,
+    move it back to `awaiting core review` stage.
+    """
+    commits = event.data["commits"]
+    if len(commits) > 0:
+        # get the latest commit hash
+        commit_hash = commits[-1]["id"]
+        pr = await util.get_pr_for_commit(gh, commit_hash)
+        for label in util.labels(pr):
+            if label == "awaiting merge":
+                issue = await util.issue_for_PR(gh, pr)
+                greeting = "There's a new commit after the PR has been approved."
+                await request_core_review(
+                    gh, issue, blocker=Blocker.core_review, greeting=greeting
+                )
+                break
+
+
 async def core_dev_reviewers(gh, pull_request_url):
     """Find the reviewers who are core developers."""
     # Unfortunately the reviews URL is not contained in a pull request's data.
@@ -176,8 +198,9 @@ async def new_review(event, gh, *args, **kwargs):
             return
         else:
             # Waiting for a core developer to leave a review.
-            await stage(gh, await util.issue_for_PR(gh, pull_request),
-                        Blocker.core_review)
+            await stage(
+                gh, await util.issue_for_PR(gh, pull_request), Blocker.core_review
+            )
     else:
         if state == "approved":
             await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.merge)
@@ -193,10 +216,11 @@ async def new_review(event, gh, *args, **kwargs):
             pr_author = util.user_login(pull_request)
             if await util.is_core_dev(gh, pr_author):
                 comment = CORE_DEV_CHANGES_REQUESTED_MESSAGE.format(
-                    easter_egg=easter_egg)
+                    easter_egg=easter_egg
+                )
             await stage(gh, issue, Blocker.changes)
             await gh.post(pull_request["comments_url"], data={"body": comment})
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"unexpected review state: {state!r}")
 
 
@@ -212,21 +236,29 @@ async def new_comment(event, gh, *args, **kwargs):
         # PR creator didn't request another review.
         return
     else:
-        await stage(gh, issue, Blocker.change_review)
-        pr_url = issue["pull_request"]["url"]
-        # Using a set comprehension to remove duplicates.
-        core_devs = ", ".join({"@" + core_dev
-                             async for core_dev in core_dev_reviewers(gh, pr_url)})
         if FUN_TRIGGER_PHRASE.lower() in comment_body:
             thanks = FUN_THANKS
         else:
             thanks = BORING_THANKS
-        comment = ACK.format(greeting=thanks, core_devs=core_devs)
-        await gh.post(issue["comments_url"], data={"body": comment})
-        # Re-request reviews from core developers based on the new state of the PR.
-        reviewers_url = f'{pr_url}/requested_reviewers'
-        reviewers = [core_dev async for core_dev in core_dev_reviewers(gh, pr_url)]
-        await gh.post(reviewers_url, data={"reviewers": reviewers})
+        await request_core_review(
+            gh, issue, blocker=Blocker.change_review, greeting=thanks
+        )
+
+
+async def request_core_review(gh, issue, *, blocker, greeting):
+    await stage(gh, issue, blocker)
+    pr_url = issue["pull_request"]["url"]
+    # Using a set comprehension to remove duplicates.
+    core_devs = ", ".join(
+        {"@" + core_dev async for core_dev in core_dev_reviewers(gh, pr_url)}
+    )
+
+    comment = ACK.format(greeting=greeting, core_devs=core_devs)
+    await gh.post(issue["comments_url"], data={"body": comment})
+    # Re-request reviews from core developers based on the new state of the PR.
+    reviewers_url = f"{pr_url}/requested_reviewers"
+    reviewers = [core_dev async for core_dev in core_dev_reviewers(gh, pr_url)]
+    await gh.post(reviewers_url, data={"reviewers": reviewers})
 
 
 @router.register("pull_request", action="closed")

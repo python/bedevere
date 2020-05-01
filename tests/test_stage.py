@@ -6,9 +6,10 @@ import pytest
 
 from bedevere import stage as awaiting
 
+from bedevere.stage import ACK
+
 
 class FakeGH:
-
     def __init__(self, *, getiter=None, getitem=None, delete=None, post=None):
         self._getiter_return = getiter
         self._getitem_return = getitem
@@ -52,12 +53,14 @@ async def test_stage():
     # Test deleting an old label and adding a new one.
     issue = {
         "labels": [{"name": "awaiting review"}, {"name": "skip issue"}],
-        "labels_url":
-            "https://api.github.com/repos/python/cpython/issues/42/labels{/name}",
+        "labels_url": "https://api.github.com/repos/python/cpython/issues/42/labels{/name}",
     }
     gh = FakeGH()
     await awaiting.stage(gh, issue, awaiting.Blocker.merge)
-    assert gh.delete_url == "https://api.github.com/repos/python/cpython/issues/42/labels/awaiting%20review"
+    assert (
+        gh.delete_url
+        == "https://api.github.com/repos/python/cpython/issues/42/labels/awaiting%20review"
+    )
     assert len(gh.post_) == 1
     post_ = gh.post_[0]
     assert post_[0] == "https://api.github.com/repos/python/cpython/issues/42/labels"
@@ -70,23 +73,17 @@ async def test_opened_pr():
     issue_url = "https://api.github.com/issue/42"
     data = {
         "action": "opened",
-        "pull_request": {
-            "user": {
-                "login": username,
-            },
-            "issue_url": issue_url,
-        }
+        "pull_request": {"user": {"login": username,}, "issue_url": issue_url,},
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": "OK",
-        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"}
+        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"},
     }
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
-                getitem=items)
+    gh = FakeGH(
+        getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
+    )
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 1
     post_ = gh.post_[0]
@@ -98,24 +95,19 @@ async def test_opened_pr():
     issue_url = "https://api.github.com/issue/42"
     data = {
         "action": "opened",
-        "pull_request": {
-            "user": {
-                "login": username,
-            },
-            "issue_url": issue_url,
-        }
+        "pull_request": {"user": {"login": username,}, "issue_url": issue_url,},
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
-        f"https://api.github.com/teams/6/memberships/{username}":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
-        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"}
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"},
     }
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": teams},
-                getitem=items)
+    gh = FakeGH(
+        getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
+    )
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 1
     post_ = gh.post_[0]
@@ -128,34 +120,29 @@ async def test_new_review():
     username = "andreamcinnes"
     data = {
         "action": "submitted",
-        "review": {
-            "state": "approved",
-            "user": {
-                "login": username,
-            },
-        },
+        "review": {"state": "approved", "user": {"login": username,},},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
-        f"https://api.github.com/teams/6/memberships/{username}":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}, "state": "commented"}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "commented"}
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -166,18 +153,20 @@ async def test_new_review():
 
     # First and second review from a non-core dev.
     items = {
-        f"https://api.github.com/teams/6/memberships/{username}":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}, "state": "approved"}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "approved"}
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -186,12 +175,7 @@ async def test_new_review():
     # First comment review from a non-core dev.
     data = {
         "action": "submitted",
-        "review": {
-            "state": "comment",
-            "user": {
-                "login": username,
-            },
-        },
+        "review": {"state": "comment", "user": {"login": username,},},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -199,18 +183,20 @@ async def test_new_review():
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     items = {
-        f"https://api.github.com/teams/6/memberships/{username}":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}, "state": "approved"}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "approved"}
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -220,27 +206,20 @@ async def test_new_review():
     username = "brettcannon"
     data = {
         "action": "submitted",
-        "review": {
-            "user": {
-                "login": username,
-            },
-            "state": "APPROVED",
-        },
+        "review": {"user": {"login": username,}, "state": "APPROVED",},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
         "https://api.github.com/issue/42": {
             "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
@@ -256,30 +235,24 @@ async def test_new_review():
     # Core dev requests changes.
     data = {
         "action": "submitted",
-        "review": {
-            "user": {
-                "login": username,
-            },
-            "state": "changes_requested".upper(),
-        },
+        "review": {"user": {"login": username,}, "state": "changes_requested".upper(),},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
-            "user": {
-                "login": "miss-islington"
-            }
+            "user": {"login": "miss-islington"},
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
-        f"https://api.github.com/teams/6/memberships/miss-islington":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        f"https://api.github.com/teams/6/memberships/miss-islington": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -294,12 +267,7 @@ async def test_new_review():
     # Comment reviews do nothing.
     data = {
         "action": "submitted",
-        "review": {
-            "user": {
-                "login": username,
-            },
-            "state": "commented".upper(),
-        },
+        "review": {"user": {"login": username,}, "state": "commented".upper(),},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -314,12 +282,7 @@ async def test_new_review():
     # Skip commenting if "awaiting changes" is already set.
     data = {
         "action": "submitted",
-        "review": {
-            "user": {
-                "login": username,
-            },
-            "state": "changes_requested".upper(),
-        },
+        "review": {"user": {"login": username,}, "state": "changes_requested".upper(),},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -332,7 +295,7 @@ async def test_new_review():
         "https://api.github.com/issue/42": {
             "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -342,28 +305,22 @@ async def test_new_review():
 async def test_non_core_dev_does_not_downgrade():
     core_dev = "brettcannon"
     non_core_dev = "andreamcinnes"
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
-        f"https://api.github.com/teams/6/memberships/{non_core_dev}":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        f"https://api.github.com/teams/6/memberships/{non_core_dev}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
         f"https://api.github.com/teams/6/memberships/{core_dev}": True,
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
 
     # Approval from a core dev changes the state to "Awaiting merge".
     data = {
         "action": "submitted",
-        "review": {
-            "state": "approved",
-            "user": {
-                "login": core_dev,
-            },
-        },
+        "review": {"state": "approved", "user": {"login": core_dev,},},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -372,8 +329,9 @@ async def test_non_core_dev_does_not_downgrade():
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": core_dev}, "state": "approved"}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": core_dev}, "state": "approved"}
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -385,12 +343,7 @@ async def test_non_core_dev_does_not_downgrade():
     # Non-comment review from a non-core dev doesn't "downgrade" the PR's state.
     data = {
         "action": "submitted",
-        "review": {
-            "state": "approved",
-            "user": {
-                "login": non_core_dev,
-            },
-        },
+        "review": {"state": "approved", "user": {"login": non_core_dev,},},
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -399,11 +352,10 @@ async def test_non_core_dev_does_not_downgrade():
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [
-                {"user": {"login": core_dev}, "state": "approved"},
-                {"user": {"login": non_core_dev}, "state": "approved"},
-            ],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": core_dev}, "state": "approved"},
+            {"user": {"login": non_core_dev}, "state": "approved"},
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -459,18 +411,17 @@ async def test_new_comment():
     items = {
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/teams/6/memberships/gvanrossum": True,
-        "https://api.github.com/teams/6/memberships/not-core-dev":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/teams/6/memberships/not-core-dev": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
     }
     iterators = {
-        "https://api.github.com/orgs/python/teams":
-            [{"name": "python core", "id": 6}],
-        "https://api.github.com/pr/42/reviews":
-            [
-                {"user": {"login": "brettcannon"}, "state": "approved"},
-                {"user": {"login": "gvanrossum"}, "state": "changes_requested"},
-                {"user": {"login": "not-core-dev"}, "state": "approved"},
-            ],
+        "https://api.github.com/orgs/python/teams": [{"name": "python core", "id": 6}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "approved"},
+            {"user": {"login": "gvanrossum"}, "state": "changes_requested"},
+            {"user": {"login": "not-core-dev"}, "state": "approved"},
+        ],
     }
     gh = FakeGH(getitem=items, getiter=iterators)
     await awaiting.router.dispatch(event, gh)
@@ -528,36 +479,31 @@ async def test_change_requested_for_core_dev():
     data = {
         "action": "submitted",
         "review": {
-            "user": {
-                "login": "gvanrossum",
-            },
+            "user": {"login": "gvanrossum",},
             "state": "changes_requested".upper(),
         },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
-            "user": {
-                "login": "brettcannon"
-            }
+            "user": {"login": "brettcannon"},
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/gvanrossum": True,
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}, "state": "changes_requested"}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "changes_requested"}
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -570,7 +516,8 @@ async def test_change_requested_for_core_dev():
     assert message[0] == "https://api.github.com/comment/42"
 
     core_dev_message = awaiting.CORE_DEV_CHANGES_REQUESTED_MESSAGE.replace(
-        "{easter_egg}", "").strip()
+        "{easter_egg}", ""
+    ).strip()
     assert core_dev_message in message[1]["body"]
 
 
@@ -578,37 +525,33 @@ async def test_change_requested_for_non_core_dev():
     data = {
         "action": "submitted",
         "review": {
-            "user": {
-                "login": "gvanrossum",
-            },
+            "user": {"login": "gvanrossum",},
             "state": "changes_requested".upper(),
         },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
-            "user": {
-                "login": "miss-islington"
-            }
+            "user": {"login": "miss-islington"},
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
-    teams = [
-        {"name": "python core", "id": 6}
-    ]
+    teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/gvanrossum": True,
-        "https://api.github.com/teams/6/memberships/miss-islington":
-            gidgethub.BadRequest(status_code=http.HTTPStatus(404)),
+        "https://api.github.com/teams/6/memberships/miss-islington": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
         "https://api.github.com/issue/42": {
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-        }
+        },
     }
     iterators = {
         "https://api.github.com/orgs/python/teams": teams,
-        "https://api.github.com/pr/42/reviews":
-            [{"user": {"login": "brettcannon"}, "state": "changes_requested"}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "changes_requested"}
+        ],
     }
     gh = FakeGH(getiter=iterators, getitem=items)
     await awaiting.router.dispatch(event, gh)
@@ -621,7 +564,8 @@ async def test_change_requested_for_non_core_dev():
     assert message[0] == "https://api.github.com/comment/42"
 
     change_requested_message = awaiting.CHANGES_REQUESTED_MESSAGE.replace(
-        "{easter_egg}", "").strip()
+        "{easter_egg}", ""
+    ).strip()
     assert change_requested_message in message[1]["body"]
 
 
@@ -641,22 +585,20 @@ async def test_awaiting_label_removed_when_pr_merged(label):
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
-        "pull_request": {
-            "merged": True,
-            "issue_url": issue_url,
-        }
+        "pull_request": {"merged": True, "issue_url": issue_url,},
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
 
     issue_data = {
         issue_url: {
             "labels": [
-                {"url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
-                 "name": label,
-                 },
                 {
-                  "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
-                  "name": "CLA signed",
+                    "url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
+                    "name": label,
+                },
+                {
+                    "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
+                    "name": "CLA signed",
                 },
             ],
             "labels_url": "https://api.github.com/repos/python/cpython/issues/12345/labels{/name}",
@@ -666,7 +608,10 @@ async def test_awaiting_label_removed_when_pr_merged(label):
     gh = FakeGH(getitem=issue_data)
 
     await awaiting.router.dispatch(event, gh)
-    assert gh.delete_url == f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
+    assert (
+        gh.delete_url
+        == f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
+    )
 
 
 @pytest.mark.parametrize("label", awaiting_labels)
@@ -676,22 +621,20 @@ async def test_awaiting_label_not_removed_when_pr_not_merged(label):
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
-        "pull_request": {
-            "merged": False,
-            "issue_url": issue_url,
-        }
+        "pull_request": {"merged": False, "issue_url": issue_url,},
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
 
     issue_data = {
         issue_url: {
             "labels": [
-                {"url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
-                 "name": label,
-                 },
                 {
-                  "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
-                  "name": "CLA signed",
+                    "url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
+                    "name": label,
+                },
+                {
+                    "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
+                    "name": "CLA signed",
                 },
             ],
             "labels_url": "https://api.github.com/repos/python/cpython/issues/12345/labels{/name}",
@@ -702,3 +645,106 @@ async def test_awaiting_label_not_removed_when_pr_not_merged(label):
 
     await awaiting.router.dispatch(event, gh)
     assert gh.delete_url is None
+
+
+async def test_new_commit_pushed_to_approved_pr():
+    # There is new commit on approved PR
+    username = "brettcannon"
+    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+    data = {"commits": [{"id": sha}]}
+    event = sansio.Event(data, event="push", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": "OK",
+        f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+            "total_count": 1,
+            "items": [
+                {
+                    "number": 5547,
+                    "title": "[3.6] bpo-32720: Fixed the replacement field grammar documentation. (GH-5544)",
+                    "body": "\n\n`arg_name` and `element_index` are defined as `digit`+ instead of `integer`.\n(cherry picked from commit 7a561afd2c79f63a6008843b83733911d07f0119)\n\nCo-authored-by: Mariatta <Mariatta@users.noreply.github.com>",
+                    "labels": [{"name": "CLA signed",}, {"name": "awaiting merge",}],
+                    "issue_url": "/repos/python/cpython/issues/5547",
+                }
+            ],
+        },
+        "https://api.github.com/repos/python/cpython/issues/5547": {
+            "labels": [{"name": "awaiting merge"}],
+            "labels_url": "https://api.github.com/repos/python/cpython/issues/5547/labels{/name}",
+            "pull_request": {
+                "url": "https://api.github.com/repos/python/cpython/pulls/5547",
+            },
+            "comments_url": "https://api.github.com/repos/python/cpython/issues/5547/comments",
+        },
+    }
+    gh = FakeGH(
+        getiter={
+            "https://api.github.com/orgs/python/teams": teams,
+            "https://api.github.com/repos/python/cpython/pulls/5547/reviews": [
+                {"user": {"login": "brettcannon"}, "state": "approved"}
+            ],
+        },
+        getitem=items,
+    )
+    await awaiting.router.dispatch(event, gh)
+
+    # 3 posts:
+    # - change the label
+    # - leave a comment
+    # - re-request review
+    assert len(gh.post_) == 3
+
+    assert (
+        gh.post_[0][0]
+        == "https://api.github.com/repos/python/cpython/issues/5547/labels"
+    )
+    assert gh.post_[0][1] == [awaiting.Blocker.core_review.value]
+
+    assert (
+        gh.post_[1][0]
+        == "https://api.github.com/repos/python/cpython/issues/5547/comments"
+    )
+    assert gh.post_[1][1] == {
+        "body": ACK.format(
+            greeting="There's a new commit after the PR has been approved.",
+            core_devs="@brettcannon",
+        )
+    }
+
+
+async def test_new_commit_pushed_to_not_approved_pr():
+    # There is new commit on approved PR
+    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+    data = {"commits": [{"id": sha}]}
+    event = sansio.Event(data, event="push", delivery_id="12345")
+    items = {
+        f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+            "total_count": 1,
+            "items": [
+                {
+                    "number": 5547,
+                    "title": "[3.6] bpo-32720: Fixed the replacement field grammar documentation. (GH-5544)",
+                    "body": "\n\n`arg_name` and `element_index` are defined as `digit`+ instead of `integer`.\n(cherry picked from commit 7a561afd2c79f63a6008843b83733911d07f0119)\n\nCo-authored-by: Mariatta <Mariatta@users.noreply.github.com>",
+                    "labels": [{"name": "CLA signed",}, {"name": "awaiting review",}],
+                    "issue_url": "/repos/python/cpython/issues/5547",
+                }
+            ],
+        },
+    }
+    gh = FakeGH(getitem=items)
+    await awaiting.router.dispatch(event, gh)
+
+    # no posts
+    assert len(gh.post_) == 0
+
+
+async def test_pushed_without_commits():
+    # There is new commit on approved PR
+    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+    data = {"commits": []}
+    event = sansio.Event(data, event="push", delivery_id="12345")
+    gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+
+    # no posts
+    assert len(gh.post_) == 0

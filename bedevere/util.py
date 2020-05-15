@@ -5,11 +5,12 @@ import gidgethub
 
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
 
+
 @enum.unique
 class StatusState(enum.Enum):
-    SUCCESS = 'success'
-    ERROR = 'error'
-    FAILURE = 'failure'
+    SUCCESS = "success"
+    ERROR = "error"
+    FAILURE = "failure"
 
 
 def create_status(context, state, *, description=None, target_url=None):
@@ -19,13 +20,13 @@ def create_status(context, state, *, description=None, target_url=None):
     context to avoid repeatedly specifying it throughout a module.
     """
     status = {
-        'context': context,
-        'state': state.value,
+        "context": context,
+        "state": state.value,
     }
     if description is not None:
-        status['description'] = description
+        status["description"] = description
     if target_url is not None:
-        status['target_url'] = target_url
+        status["target_url"] = target_url
 
     return status
 
@@ -65,11 +66,11 @@ async def files_for_PR(gh, pull_request):
     files_url = f'{pull_request["url"]}/files'
     data = []
     async for filedata in gh.getiter(files_url):
-        data.append({
-            'file_name': filedata['filename'],
-            'patch': filedata.get('patch', ''),
-        })
+        data.append(
+            {"file_name": filedata["filename"], "patch": filedata.get("patch", ""),}
+        )
     return data
+
 
 async def issue_for_PR(gh, pull_request):
     """Get the issue data for a pull request."""
@@ -106,18 +107,30 @@ def is_news_dir(filename):
 
 def normalize_title(title, body):
     """Normalize the title if it spills over into the PR's body."""
-    if not (title.endswith('…') and body.startswith('…')):
+    if not (title.endswith("…") and body.startswith("…")):
         return title
     else:
         # Being paranoid in case \r\n is used.
-        return title[:-1] + body[1:].partition('\r\n')[0]
+        return title[:-1] + body[1:].partition("\r\n")[0]
 
 
 def no_labels(event_data):
     if "label" not in event_data:
-        print("no 'label' key in payload; "
-              "'unlabeled' event triggered by label deletion?",
-              file=sys.stderr)
+        print(
+            "no 'label' key in payload; "
+            "'unlabeled' event triggered by label deletion?",
+            file=sys.stderr,
+        )
         return True
     else:
         return False
+
+
+async def get_pr_for_commit(gh, sha):
+    """Find the PR containing the specific commit hash."""
+    prs_for_commit = await gh.getitem(
+        f"/search/issues?q=type:pr+repo:python/cpython+sha:{sha}"
+    )
+    if prs_for_commit["total_count"] > 0:  # there should only be one
+        return prs_for_commit["items"][0]
+    return None

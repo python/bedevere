@@ -7,7 +7,7 @@ gidgethub==3.1.0
 multidict==4.7.6
 packaging==19.0
 py==1.8.2
-pyparsing==2.4.0
+pyparsing==2.4.7
 six==1.15.0
 -e git://github.com/python-hyper/uritemplate.git@68064e2e8f60687674071f9c791603b0ae6a76a4#egg=uritemplate
 yarl==1.4.2

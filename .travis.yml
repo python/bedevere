@@ -18,6 +18,6 @@ before_install:
 install:
   - python3 -m pip install -U pip -r dev-requirements.txt
 script:
-  - python3 -m coverage run --branch -m pytest tests/
+  - pytest --cov=tests/ --cov-report=xml
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - codecov

@@ -203,7 +203,10 @@ async def new_review(event, gh, *args, **kwargs):
             )
     else:
         if state == "approved":
-            await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.merge)
+            if pull_request["state"] == "open":
+                await stage(
+                    gh, await util.issue_for_PR(gh, pull_request), Blocker.merge
+                )
         elif state == "changes_requested":
             issue = await util.issue_for_PR(gh, pull_request)
             if Blocker.changes.value in util.labels(issue):

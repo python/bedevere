@@ -124,6 +124,7 @@ async def test_new_review():
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -179,6 +180,7 @@ async def test_new_review():
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -210,6 +212,7 @@ async def test_new_review():
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -232,6 +235,34 @@ async def test_new_review():
     assert post_[0] == "https://api.github.com/labels/42"
     assert post_[1] == [awaiting.Blocker.merge.value]
 
+    # Core dev submits an approving review on an already closed pull request.
+    username = "brettcannon"
+    data = {
+        "action": "submitted",
+        "review": {"user": {"login": username,}, "state": "APPROVED",},
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+            "state": "closed",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.changes.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert not gh.post_
+
     # Core dev requests changes.
     data = {
         "action": "submitted",
@@ -241,6 +272,7 @@ async def test_new_review():
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
             "user": {"login": "miss-islington"},
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -272,6 +304,7 @@ async def test_new_review():
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -287,6 +320,7 @@ async def test_new_review():
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -324,6 +358,7 @@ async def test_non_core_dev_does_not_downgrade():
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
@@ -347,6 +382,7 @@ async def test_non_core_dev_does_not_downgrade():
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
+            "state": "open",
         },
     }
     event = sansio.Event(data, event="pull_request_review", delivery_id="12345")

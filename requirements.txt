@@ -10,5 +10,5 @@ py==1.9.0
 pyparsing==2.4.7
 six==1.15.0
 -e git://github.com/python-hyper/uritemplate.git@68064e2e8f60687674071f9c791603b0ae6a76a4#egg=uritemplate
-yarl==1.6.2
+yarl==1.6.3
 sentry-sdk==0.19.3

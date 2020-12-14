@@ -14,11 +14,11 @@ matrix:
     dist: xenial
   - python: 3.8-dev
     dist: xenial
-  allow_failures:
   - python: 3.9
     dist: xenial
   - python: 3.9-dev
     dist: xenial
+  allow_failures:
   - python: nightly
     dist: xenial
 

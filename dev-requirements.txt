@@ -3,5 +3,5 @@ asynctest==0.13.0
 pytest==6.1.2
 pytest-asyncio==0.14.0
 pytest-aiohttp==0.3.0
-pytest-cov==2.11.0
+pytest-cov==2.11.1
 codecov==2.1.11

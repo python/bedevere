@@ -35,8 +35,6 @@ jobs:
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run Tests
         run: pytest --cov=tests/ --cov-report=xml
-        if: endsWith(matrix.python-version, '-dev') 
-        continue-on-error: true
       - uses: codecov/codecov-action@v1
         if: always()
         with:

@@ -3,7 +3,7 @@ appdirs==1.4.4
 async-timeout==3.0.1
 cachetools==4.2.2
 chardet==4.0.0
-gidgethub==4.2.0
+gidgethub==5.0.1
 multidict==5.1.0
 packaging==20.9
 py==1.10.0

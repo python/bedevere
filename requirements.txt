@@ -11,4 +11,4 @@ pyparsing==2.4.7
 six==1.15.0
 uritemplate==3.0.1
 yarl==1.6.3
-sentry-sdk==0.20.3
+sentry-sdk==1.0.0

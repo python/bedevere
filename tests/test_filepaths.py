@@ -1,3 +1,5 @@
+import pytest
+
 from gidgethub import sansio
 
 from bedevere import filepaths

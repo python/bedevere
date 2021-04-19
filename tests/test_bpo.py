@@ -78,6 +78,7 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
 
 
 @pytest.mark.asyncio
+@pytest.mark.filterwarnings("pytest.PytestUnraisableExceptionWarning")
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
@@ -124,6 +125,7 @@ async def test_set_status_success_issue_found_on_bpo(action):
 
 
 @pytest.mark.asyncio
+@pytest.mark.filterwarnings("pytest.PytestUnraisableExceptionWarning")
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',

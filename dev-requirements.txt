@@ -1,7 +1,7 @@
 -r requirements.txt
 asynctest==0.13.0
 pytest==6.2.3
-pytest-asyncio==0.15.0
+pytest-asyncio==0.15.1
 pytest-aiohttp==0.3.0
 pytest-cov==2.11.1
 codecov==2.1.11

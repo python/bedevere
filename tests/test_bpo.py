@@ -103,6 +103,7 @@ async def test_set_status_success(action, monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_issue_found_on_bpo(action):
     data = {

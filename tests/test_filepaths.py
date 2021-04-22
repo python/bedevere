@@ -1,3 +1,5 @@
+import pytest
+
 from gidgethub import sansio
 
 from bedevere import filepaths
@@ -32,6 +34,7 @@ class FakeGH:
 GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 async def test_news_only():
     filenames = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
                  {'filename': f'Misc/NEWS.d/next/Lib/{GOOD_BASENAME}', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},

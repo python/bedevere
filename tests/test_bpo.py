@@ -10,22 +10,29 @@ from bedevere import bpo
 
 class FakeGH:
 
-    def __init__(self, *, getitem=None):
+    def __init__(self, *, getitem=None, post=None, patch=None):
         self._getitem_return = getitem
         self.patch_url = None
         self.patch_data = None
-        self.data = None
+        self._post_return = post
+        self.post_url = []
+        self.post_data = []
+        self._patch_return = patch
+        self.patch_url = []
+        self.patch_data = []
 
     async def getitem(self, url):
         return self._getitem_return
 
-    async def post(self, url, data):
-        self.url = url
-        self.data = data
+    async def post(self, url, *, data):
+        self.post_url.append(url)
+        self.post_data.append(data)
+        return self._post_return
 
-    async def patch(self, url, data):
-        self.patch_url = url
-        self.patch_data = data
+    async def patch(self, url, *, data):
+        self.patch_url.append(url)
+        self.patch_data.append(data)
+        return self._patch_return
 
 
 @pytest.mark.asyncio
@@ -49,7 +56,7 @@ async def test_set_status_failure(action, monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await bpo.router.dispatch(event, gh, session=None)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://devguide.python.org")
     assert status["context"] == "bedevere/issue-number"
@@ -70,7 +77,7 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
     gh = FakeGH()
     async with aiohttp.ClientSession() as session:
         await bpo.router.dispatch(event, gh, session=session)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "failure"
     assert status["target_url"].startswith("https://bugs.python.org")
     assert status["context"] == "bedevere/issue-number"
@@ -78,7 +85,6 @@ async def test_set_status_failure_via_issue_not_found_on_bpo(action):
 
 
 @pytest.mark.asyncio
-@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
@@ -93,17 +99,16 @@ async def test_set_status_success(action, monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
-    assert "git-sha" in gh.url
+    assert "git-sha" in gh.post_url[0]
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
 @pytest.mark.asyncio
-@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_issue_found_on_bpo(action):
     data = {
@@ -117,16 +122,15 @@ async def test_set_status_success_issue_found_on_bpo(action):
     gh = FakeGH()
     async with aiohttp.ClientSession() as session:
         await bpo.router.dispatch(event, gh, session=session)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue12345")
     assert "12345" in status["description"]
     assert status["context"] == "bedevere/issue-number"
-    assert "git-sha" in gh.url
+    assert "git-sha" in gh.post_url[0]
 
 
 @pytest.mark.asyncio
-@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     monkeypatch.setattr(bpo, '_validate_issue_number',
@@ -147,10 +151,10 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await bpo.router.dispatch(event, gh, session=None)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "success"
     assert status["context"] == "bedevere/issue-number"
-    assert "git-sha" in gh.url
+    assert "git-sha" in gh.post_url[0]
     bpo._validate_issue_number.assert_not_awaited()
 
 
@@ -169,7 +173,7 @@ async def test_edit_title(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    assert gh.data is not None
+    assert len(gh.post_data) == 1
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
@@ -192,8 +196,8 @@ async def test_no_body_when_edit_title(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    assert gh.patch_data is not None
-    assert gh.patch_data["body"] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
+    assert len(gh.patch_data) == 1
+    assert gh.patch_data[0]["body"] == "\n\n<!-- issue-number: bpo-32636 -->\nhttps://bugs.python.org/issue32636\n<!-- /issue-number -->\n"
     bpo._validate_issue_number.assert_awaited_with("32636", session=None)
 
 
@@ -212,7 +216,8 @@ async def test_edit_other_than_title(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    assert gh.data is None
+    assert len(gh.patch_data) == 0
+    assert len(gh.post_data) == 0
     bpo._validate_issue_number.assert_not_awaited()
 
 
@@ -229,8 +234,8 @@ async def test_new_label_skip_issue_no_issue():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert gh.data["state"] == "success"
-    assert "git-sha" in gh.url
+    assert gh.post_data[0]["state"] == "success"
+    assert "git-sha" in gh.post_url[0]
 
 
 @pytest.mark.asyncio
@@ -246,12 +251,12 @@ async def test_new_label_skip_issue_with_issue_number():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
-    assert "git-sha" in gh.url
+    assert "git-sha" in gh.post_url[0]
 
 
 @pytest.mark.asyncio
@@ -266,7 +271,7 @@ async def test_new_label_not_skip_issue():
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert gh.data is None
+    assert len(gh.post_data) == 0
 
 
 @pytest.mark.asyncio
@@ -286,7 +291,7 @@ async def test_removed_label_from_label_deletion(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    assert gh.data is None
+    assert len(gh.post_data) == 0
     bpo._validate_issue_number.assert_not_awaited()
 
 
@@ -305,12 +310,12 @@ async def test_removed_label_skip_issue(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    status = gh.data
+    status = gh.post_data[0]
     assert status["state"] == "success"
     assert status["target_url"].endswith("issue1234")
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
-    assert "git-sha" in gh.url
+    assert "git-sha" in gh.post_url[0]
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
@@ -328,7 +333,7 @@ async def test_removed_label_non_skip_issue(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    assert gh.data is None
+    assert len(gh.post_data) == 0
     bpo._validate_issue_number.assert_not_awaited()
 
 
@@ -348,9 +353,9 @@ async def test_set_body_success(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    status = gh.patch_data
+    status = gh.patch_data[0]
     assert "https://bugs.python.org/issue1234" in status["body"]
-    assert "1347" in gh.patch_url
+    assert "1347" in gh.patch_url[0]
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
@@ -370,8 +375,8 @@ async def test_set_body_failure(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    assert gh.patch_data is None
-    assert gh.patch_url is None
+    assert len(gh.patch_data) == 0
+    assert len(gh.patch_url) == 0
     bpo._validate_issue_number.assert_awaited_with("1234", session=None)
 
 
@@ -405,10 +410,15 @@ async def set_pull_request_body_success_helper(action, monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    body_data = gh.patch_data
-    assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
-    assert "123456" in gh.patch_url
+    assert len(gh.patch_data) > 0
+    body_patched = False
+    for body_data in gh.patch_data:
+        if "[bpo-12345]" in body_data["body"]:
+            body_patched = True
+            assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
+            assert data["pull_request"]["issue_url"] in gh.patch_url
 
+    assert body_patched is True
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("event,action", [("issue_comment", "created"),
@@ -427,9 +437,9 @@ async def test_set_comment_body_success(event, action):
     event = sansio.Event(data, event=event, delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    body_data = gh.patch_data
+    body_data = gh.patch_data[0]
     assert "[bpo-12345](https://bugs.python.org/issue12345)" in body_data["body"]
-    assert "123456" in gh.patch_url
+    assert data["comment"]["url"] in gh.patch_url
 
 
 @pytest.mark.asyncio
@@ -474,8 +484,8 @@ async def test_set_comment_body_without_bpo(event, action):
     event = sansio.Event(data, event=event, delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    assert gh.patch_data is None
-    assert gh.patch_url is None
+    assert len(gh.patch_data) == 0
+    assert len(gh.patch_url) == 0
 
 
 @pytest.mark.asyncio
@@ -518,10 +528,15 @@ async def set_pull_request_body_already_hyperlinked_bpo_helper(action, monkeypat
     event = sansio.Event(data, event="pull_request", delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh, session=None)
-    body_data = gh.patch_data
-    assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
-    assert body_data["body"].count("[something about bpo-123](https://bugs.python.org/issue123)") == 1
-    assert "123456" in gh.patch_url
+    patched = False
+    for body_data in gh.patch_data:
+        if body_data["body"].startswith("[bpo-123]"):
+            patched = True
+            assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
+            assert body_data["body"].count("[something about bpo-123](https://bugs.python.org/issue123)") == 1
+            assert data["pull_request"]["issue_url"] in gh.patch_url
+
+    assert patched is True
 
 
 @pytest.mark.asyncio
@@ -545,7 +560,7 @@ async def test_set_comment_body_already_hyperlinked_bpo(event, action):
     event = sansio.Event(data, event=event, delivery_id="123123")
     gh = FakeGH()
     await bpo.router.dispatch(event, gh)
-    body_data = gh.patch_data
+    body_data = gh.patch_data[0]
     assert body_data["body"].count("[bpo-123](https://bugs.python.org/issue123)") == 2
     assert body_data["body"].count("[something about bpo-123](https://bugs.python.org/issue123)") == 1
-    assert "123456" in gh.patch_url
+    assert data["comment"]["url"] in gh.patch_url

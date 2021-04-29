@@ -138,10 +138,15 @@ async def test_backport_label_removal_success():
     issue_data = getitem_data['https://api.github.com/issue/1234']
     assert gh.delete_url == sansio.format_url(issue_data['labels_url'],
                                               {'name': 'needs backport to 3.6'})
-    post = gh.post_[0]
-    assert post[0] == issue_data['comments_url']
-    message = post[1]['body']
-    assert message == backport.MESSAGE_TEMPLATE.format(branch='3.6', pr='2248')
+    assert len(gh.post_) > 0
+    expected_post = None
+    for post in gh.post_:
+        if post[0] == issue_data['comments_url']:
+            expected_post = post
+            message = post[1]['body']
+            assert message == backport.MESSAGE_TEMPLATE.format(branch='3.6', pr='2248')
+
+    assert expected_post is not None
 
 
 async def test_backport_label_removal_with_leading_space_in_title():
@@ -244,9 +249,14 @@ async def test_label_copying():
     }
     gh = FakeGH(getitem=getitem_data)
     await backport.router.dispatch(event, gh)
-    post = gh.post_[0]
-    assert post[0] == 'https://api.github.com/issue/1234/labels'
-    assert {'skip news', 'type-enhancement', 'sprint'} == frozenset(post[1])
+    assert len(gh.post_) > 0
+    expected_post = None
+    for post in gh.post_:
+        if post[0] == 'https://api.github.com/issue/1234/labels':
+            assert {'skip news', 'type-enhancement', 'sprint'} == frozenset(post[1])
+            expected_post = post
+
+    assert expected_post is not None
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])

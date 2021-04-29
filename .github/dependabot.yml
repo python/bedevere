@@ -1,0 +1,18 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: sentry-sdk
+    versions:
+    - 0.20.0
+    - 0.20.1
+  - dependency-name: gidgethub
+    versions:
+    - 5.0.0
+  - dependency-name: pytest
+    versions:
+    - 6.2.2

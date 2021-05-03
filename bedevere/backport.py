@@ -84,7 +84,7 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
     pull_request = event.data["pull_request"]
     base_branch = pull_request["base"]["ref"]
 
-    if base_branch == "master":
+    if base_branch == "main":
         return
 
     title = util.normalize_title(pull_request["title"],

@@ -45,7 +45,7 @@ async def test_close_invalid_pr_on_open():
                 "label": "python:3.6"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             }
         },
     }
@@ -80,7 +80,7 @@ async def test_close_invalid_pr_on_synchronize():
                 "label": "python:3.6"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             }
         },
     }
@@ -115,7 +115,7 @@ async def test_valid_pr_not_closed():
                 "label": "someuser:bpo-3.6"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             }
         },
     }
@@ -144,7 +144,7 @@ async def test_close_invalid_pr_on_open_not_python_as_head():
                 "label": "username123:3.6"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             }
         },
     }
@@ -173,7 +173,7 @@ async def test_pr_with_head_branch_containing_all_digits_not_closed():
                 "label": "someuser:12345"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             }
         },
     }
@@ -203,7 +203,7 @@ async def test_dismiss_review_request_for_invalid_pr():
                 "label": "python:3.6"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             },
             "requested_reviewers": [
                 {
@@ -246,7 +246,7 @@ async def test_valid_pr_review_request_not_dismissed():
                 "label": "someuser:bpo-3.6"
             },
             "base": {
-                "label": "python:master"
+                "label": "python:main"
             },
             "requested_reviewers": [
                 {

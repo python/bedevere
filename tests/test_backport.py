@@ -329,7 +329,7 @@ async def test_not_valid_maintenance_branch_pr_title(action):
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
-async def test_maintenance_branch_pr_status_not_posted_on_master(action):
+async def test_maintenance_branch_pr_status_not_posted_on_main(action):
     title = 'Fix some typo'
     data = {
         'action': action,
@@ -339,7 +339,7 @@ async def test_maintenance_branch_pr_status_not_posted_on_master(action):
             'body': '',
             'issue_url': 'https://api.github.com/issue/2248',
             'base': {
-                'ref': 'master',
+                'ref': 'main',
             },
             'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
         },

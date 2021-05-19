@@ -18,12 +18,12 @@ If no `Misc/NEWS.d` entry is found or the news entry is formatted incorrectly
 and the issue doesn't have the `skip news` label, the status fails and a relevant 
 description label is added to it.
 - ### Closes invalid PRs
-Closes PRs that try to merge a maintenance branch into the master branch, adds 
+Closes PRs that try to merge a maintenance branch into the main branch, adds 
 `invalid` label, and posts a relevant message.
 - ### Labels PRs for docs
 Labels PRs for documentation as `type-documentation`
-- ### Copies master labels to backport
-Copies labels from master PRs to backport PRs
+- ### Copies main labels to backport
+Copies labels from main PRs to backport PRs
 
 ## *Aside*: where does the name come from?
 Since this bot is about identifying pull requests that need changes,

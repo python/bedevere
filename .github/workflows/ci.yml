@@ -23,12 +23,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - uses: actions/setup-python@v2
-        if: "!endsWith(matrix.python-version, '-dev')"
-        with:
-          python-version: ${{ matrix.python-version }}
-      - uses: deadsnakes/action@v2.1.1
-        if: endsWith(matrix.python-version, '-dev')
+      - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Dependencies

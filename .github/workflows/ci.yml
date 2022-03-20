@@ -1,9 +1,9 @@
 name: Tests
 
-on:
-  pull_request:
-  push:
-    branches: master
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  FORCE_COLOR: 1
 
 jobs:
   test:

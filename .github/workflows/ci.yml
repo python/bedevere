@@ -34,7 +34,7 @@ jobs:
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run Tests
-        run: pytest --cov=tests/ --cov-report=xml
+        run: pytest --cov --cov-report=xml
       - uses: codecov/codecov-action@v1
         if: always()
         with:

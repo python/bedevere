@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          key: ${{ runner.os }}-{{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}-${{ hashFiles('dev-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - uses: actions/setup-python@v2
@@ -35,9 +35,8 @@ jobs:
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run Tests
         run: pytest --cov --cov-report=xml
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v2
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
-

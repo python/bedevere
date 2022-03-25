@@ -4,6 +4,8 @@ from gidgethub import sansio
 
 from bedevere import filepaths
 
+from bedevere.prtype import Category
+
 
 class FakeGH:
 
@@ -82,7 +84,7 @@ async def test_docs_only():
     assert gh.post_url[0] == 'https://api.github.com/some/status'
     assert gh.post_data[0]['state'] == 'failure'
     assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == ['type-documentation']
+    assert gh.post_data[1] == [Category.documentation.value]
 
 
 async def test_tests_only():
@@ -109,7 +111,7 @@ async def test_tests_only():
     assert gh.post_url[0] == 'https://api.github.com/some/status'
     assert gh.post_data[0]['state'] == 'failure'
     assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == ['type-tests']
+    assert gh.post_data[1] == [Category.tests.value]
 
 
 async def test_docs_and_tests():
@@ -137,7 +139,7 @@ async def test_docs_and_tests():
     assert gh.post_url[0] == 'https://api.github.com/some/status'
     assert gh.post_data[0]['state'] == 'success'
     assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == ['type-tests']
+    assert gh.post_data[1] == [Category.tests.value]
 
 
 async def test_news_and_tests():
@@ -166,7 +168,7 @@ async def test_news_and_tests():
     assert gh.post_url[0] == 'https://api.github.com/some/status'
     assert gh.post_data[0]['state'] == 'success'
     assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == ['type-tests']
+    assert gh.post_data[1] == [Category.tests.value]
 
 
 async def test_synchronize():

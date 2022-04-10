@@ -11,11 +11,11 @@ from gidgethub import aiohttp as gh_aiohttp
 from gidgethub import routing
 from gidgethub import sansio
 
-from . import backport, bpo, close_pr, filepaths, follow_up, news, stage
+from . import backport, gh_issue, close_pr, filepaths, follow_up, news, stage
 
 import sentry_sdk
 
-router = routing.Router(backport.router, bpo.router, close_pr.router,
+router = routing.Router(backport.router, gh_issue.router, close_pr.router,
                         filepaths.router, follow_up.router, news.router,
                         stage.router)
 cache = cachetools.LRUCache(maxsize=500)

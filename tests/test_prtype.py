@@ -1,4 +1,5 @@
 from bedevere import prtype
+from bedevere.prtype import Category
 
 
 class FakeGH:
@@ -84,7 +85,7 @@ async def test_docs_no_news():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == ['type-documentation']
+    assert gh.post_data[0] == [Category.documentation.value]
 
 
 async def test_docs_and_news():
@@ -105,7 +106,7 @@ async def test_docs_and_news():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == ['type-documentation']
+    assert gh.post_data[0] == [Category.documentation.value]
 
 
 async def test_tests_only():
@@ -126,7 +127,7 @@ async def test_tests_only():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == ['type-tests']
+    assert gh.post_data[0] == [Category.tests.value]
 
 
 async def test_docs_and_tests():
@@ -148,7 +149,7 @@ async def test_docs_and_tests():
     # Only creates type-tests label.
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == ['type-tests']
+    assert gh.post_data[0] == [Category.tests.value]
 
 
 async def test_leave_existing_type_labels():
@@ -190,7 +191,7 @@ async def test_news_and_tests():
     # Creates type-tests label.
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == ['type-tests']
+    assert gh.post_data[0] == [Category.tests.value]
 
 
 async def test_other_files():

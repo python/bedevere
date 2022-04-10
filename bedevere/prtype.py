@@ -4,18 +4,19 @@ import pathlib
 
 from . import util
 
-LABEL_PREFIX = "type"
+TYPE_LABEL_PREFIX = "type"
 
 
 @enum.unique
 class Category(enum.Enum):
     """Category of Pull Request."""
-    bugfix = f"{LABEL_PREFIX}-bugfix"
-    documentation = f"{LABEL_PREFIX}-documentation"
-    enhancement = f"{LABEL_PREFIX}-enhancement"
-    performance = f"{LABEL_PREFIX}-performance"
-    security = f"{LABEL_PREFIX}-security"
-    tests = f"{LABEL_PREFIX}-tests"
+
+    type_bug = f"{TYPE_LABEL_PREFIX}-bug"
+    documentation = "docs"
+    type_feature = f"{TYPE_LABEL_PREFIX}-feature"
+    performance = "performance"
+    type_security = f"{TYPE_LABEL_PREFIX}-security"
+    tests = "tests"
 
 
 async def add_category(gh, issue, category):

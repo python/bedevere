@@ -30,23 +30,41 @@ class FakeGH:
         return self._post_return
 
 
-GOOD_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
+GOOD_BASENAME = '2017-06-16-20-32-50.gh-1234.nonce.rst'
+BPO_BASENAME = '2017-06-16-20-32-50.bpo-1234.nonce.rst'
+
 
 class TestFilenameRE:
 
     def test_malformed_basename(self):
-        assert news.FILENAME_RE.match('2017-06-16.bpo-1234.rst') is None
+        assert news.FILENAME_RE.match('2017-06-16.gh-1234.rst') is None
 
     def test_success(self):
         assert news.FILENAME_RE.match(GOOD_BASENAME)
-        live_result = '2017-08-14-15-13-50.bpo-1612262.-x_Oyq.rst'
+        live_result = '2017-08-14-15-13-50.gh-1612262.-x_Oyq.rst'
         assert news.FILENAME_RE.match(live_result)
 
     def test_multiple_issue_numbers(self):
-        basename = '2018-01-01.bpo-1234,5678,9012.nonce.rst'
+        basename = '2018-01-01.gh-1234,5678,9012.nonce.rst'
         assert news.FILENAME_RE.match(basename)
 
     def test_date_only(self):
+        basename = '2017-08-14.gh-1234.nonce.rst'
+        assert news.FILENAME_RE.match(basename)
+
+    def test_malformed_basename_bpo(self):
+        assert news.FILENAME_RE.match('2017-06-16.bpo-1234.rst') is None
+
+    def test_success_bpo(self):
+        assert news.FILENAME_RE.match(BPO_BASENAME)
+        live_result = '2017-08-14-15-13-50.bpo-1612262.-x_Oyq.rst'
+        assert news.FILENAME_RE.match(live_result)
+
+    def test_multiple_issue_numbers_bpo(self):
+        basename = '2018-01-01.bpo-1234,5678,9012.nonce.rst'
+        assert news.FILENAME_RE.match(basename)
+
+    def test_date_only_bpo(self):
         basename = '2017-08-14.bpo-1234.nonce.rst'
         assert news.FILENAME_RE.match(basename)
 

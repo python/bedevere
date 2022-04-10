@@ -13,14 +13,14 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.9-dev"]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          key: ${{ runner.os }}-{{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}-${{ hashFiles('dev-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - uses: actions/setup-python@v2
@@ -34,10 +34,9 @@ jobs:
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run Tests
-        run: pytest --cov=tests/ --cov-report=xml
-      - uses: codecov/codecov-action@v1
+        run: pytest --cov --cov-report=xml
+      - uses: codecov/codecov-action@v2
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
-

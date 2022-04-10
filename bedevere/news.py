@@ -17,9 +17,9 @@ BLURB_IT_URL = 'https://blurb-it.herokuapp.com'
 
 FILENAME_RE = re.compile(r"""# YYYY-mm-dd or YYYY-mm-dd-HH-MM-SS
                              \d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\.
-                             bpo-\d+(?:,\d+)*\.       # Issue number(s)
-                             [A-Za-z0-9_=-]+\.        # Nonce (URL-safe base64)
-                             rst                      # File extension""",
+                             (?:bpo|gh)-\d+(?:,\d+)*\. # Issue number(s)
+                             [A-Za-z0-9_=-]+\.         # Nonce (URL-safe base64)
+                             rst                       # File extension""",
                          re.VERBOSE)
 
 SKIP_NEWS_LABEL = util.skip_label("news")

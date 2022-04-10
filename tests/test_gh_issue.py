@@ -159,6 +159,30 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypatch):
+    monkeypatch.setattr(gh_issue, '_validate_issue_number',
+                        mock.AsyncMock(return_value=True))
+    data = {
+        "action": action,
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "GH-12345: an issue!",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    async with aiohttp.ClientSession() as session:
+        await gh_issue.router.dispatch(event, gh, session=session)
+    status = gh.post_data[0]
+    assert status["state"] == "success"
+    assert status["target_url"] == "https://github.com/python/cpython/issues/12345"
+    assert "12345" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
+    assert "git-sha" in gh.post_url[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     monkeypatch.setattr(gh_issue, '_validate_issue_number',
                         mock.AsyncMock(return_value=True))
@@ -281,6 +305,26 @@ async def test_new_label_skip_issue_with_issue_number():
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
 
+
+@pytest.mark.asyncio
+async def test_new_label_skip_issue_with_issue_number_ignore_case():
+    data = {
+        "action": "labeled",
+        "label": {"name": "skip issue"},
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "Revert Gh-1234: revert an easy fix",
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH()
+    await gh_issue.router.dispatch(event, gh)
+    status = gh.post_data[0]
+    assert status["state"] == "success"
+    assert status["target_url"] == "https://github.com/python/cpython/issues/1234"
+    assert "1234" in status["description"]
+    assert status["context"] == "bedevere/issue-number"
+    assert "git-sha" in gh.post_url[0]
 
 @pytest.mark.asyncio
 async def test_new_label_not_skip_issue():

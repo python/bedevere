@@ -13,7 +13,7 @@ class FakeGH:
         self._post_return = post
         self.getitem_url = None
         self.getiter_url = None
-        self.post_url = self.post_data = None
+        self.post_url = self.post_data = []
 
     async def getitem(self, url):
         self.getitem_url = url
@@ -25,8 +25,8 @@ class FakeGH:
             yield item
 
     async def post(self, url, *, data):
-        self.post_url = url
-        self.post_data = data
+        self.post_url.append(url)
+        self.post_data.append(data)
         return self._post_return
 
 
@@ -165,13 +165,20 @@ async def test_empty_news_file(action):
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+            'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
         },
     }
     await news.check_news(gh, event_data['pull_request'])
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
-    assert gh.post_url == 'https://api.github.com/some/status'
-    assert gh.post_data['state'] == 'failure'
-    assert gh.post_data['target_url'] == news.BLURB_IT_URL
+    assert len(gh.post_url) == 2
+    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
+    assert gh.post_url[1] == 'https://api.github.com/some/status'
+    assert len(gh.post_data) == 2
+    assert gh.post_data[0]['body'] == news.HELP
+    assert gh.post_data[1]['state'] == 'failure'
+    assert gh.post_data[1]['target_url'] == news.BLURB_IT_URL
+
+    должно вывести сообщение
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])

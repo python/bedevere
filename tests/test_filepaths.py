@@ -2,7 +2,7 @@ import pytest
 
 from gidgethub import sansio
 
-from bedevere import filepaths
+from bedevere import news, filepaths
 
 from bedevere.prtype import Category
 
@@ -74,17 +74,20 @@ async def test_docs_only():
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+            'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/some/status'
-    assert gh.post_data[0]['state'] == 'failure'
-    assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Category.documentation.value]
+    assert len(gh.post_url) == 3
+    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
+    assert gh.post_data[0]['body'] == news.HELP
+    assert gh.post_url[1] == 'https://api.github.com/some/status'
+    assert gh.post_data[1]['state'] == 'failure'
+    assert gh.post_url[2] == 'https://api.github.com/some/label'
+    assert gh.post_data[2] == [Category.documentation.value]
 
 
 async def test_tests_only():
@@ -101,17 +104,20 @@ async def test_tests_only():
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+            'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/some/status'
-    assert gh.post_data[0]['state'] == 'failure'
-    assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Category.tests.value]
+    assert len(gh.post_url) == 3
+    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
+    assert gh.post_data[0]['body'] == news.HELP
+    assert gh.post_url[1] == 'https://api.github.com/some/status'
+    assert gh.post_data[1]['state'] == 'failure'
+    assert gh.post_url[2] == 'https://api.github.com/some/label'
+    assert gh.post_data[2] == [Category.tests.value]
 
 
 async def test_docs_and_tests():

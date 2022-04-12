@@ -20,7 +20,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          key: ${{ runner.os }}-{{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}-${{ hashFiles('dev-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - uses: actions/setup-python@v3
@@ -40,10 +40,9 @@ jobs:
           # https://github.com/aio-libs/yarl/issues/680
           YARL_NO_EXTENSIONS: 1
       - name: Run Tests
-        run: pytest --cov=tests/ --cov-report=xml
-      - uses: codecov/codecov-action@v1
+        run: pytest --cov --cov-report=xml
+      - uses: codecov/codecov-action@v2
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
-

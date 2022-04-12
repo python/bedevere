@@ -6,6 +6,9 @@ from bedevere import news, filepaths
 
 from bedevere.prtype import Category
 
+from .test_news import (MISSSING_NEWS_EVENT_PACK_SIZE,
+                        check_missing_news_event_pack)
+
 
 class FakeGH:
 
@@ -81,11 +84,8 @@ async def test_docs_only():
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 3
-    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
-    assert gh.post_data[0]['body'] == news.HELP
-    assert gh.post_url[1] == 'https://api.github.com/some/status'
-    assert gh.post_data[1]['state'] == 'failure'
+    assert len(gh.post_url) == 1 + MISSSING_NEWS_EVENT_PACK_SIZE
+    check_missing_news_event_pack(gh)
     assert gh.post_url[2] == 'https://api.github.com/some/label'
     assert gh.post_data[2] == [Category.documentation.value]
 
@@ -111,11 +111,8 @@ async def test_tests_only():
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 3
-    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
-    assert gh.post_data[0]['body'] == news.HELP
-    assert gh.post_url[1] == 'https://api.github.com/some/status'
-    assert gh.post_data[1]['state'] == 'failure'
+    assert len(gh.post_url) == 1 + MISSSING_NEWS_EVENT_PACK_SIZE
+    check_missing_news_event_pack(gh)
     assert gh.post_url[2] == 'https://api.github.com/some/label'
     assert gh.post_data[2] == [Category.tests.value]
 

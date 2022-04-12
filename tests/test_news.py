@@ -5,6 +5,17 @@ from gidgethub import sansio
 from bedevere import news
 
 
+MISSSING_NEWS_EVENT_PACK_SIZE = 2
+
+def check_missing_news_event_pack(gh):
+    # The first two events must be a human readable note and a check below
+    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
+    assert gh.post_data[0]['body'] == news.HELP
+    assert gh.post_url[1] == 'https://api.github.com/some/status'
+    assert gh.post_data[1]['state'] == 'failure'
+    assert gh.post_data[1]['target_url'] == news.BLURB_IT_URL
+
+
 class FakeGH:
 
     def __init__(self, *, getiter=None, getitem=None, post=None):
@@ -89,12 +100,8 @@ async def failure_testing(path, action):
     await news.check_news(gh, event_data['pull_request'])
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
-    assert gh.post_data[0]['body'] == news.HELP
-    assert gh.post_url[1] == 'https://api.github.com/some/status'
-    assert gh.post_data[1]['state'] == 'failure'
-    assert gh.post_data[1]['target_url'] == news.BLURB_IT_URL
+    assert len(gh.post_url) == MISSSING_NEWS_EVENT_PACK_SIZE
+    check_missing_news_event_pack(gh)
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -175,12 +182,8 @@ async def test_empty_news_file(action):
     }
     await news.check_news(gh, event_data['pull_request'])
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
-    assert gh.post_data[0]['body'] == news.HELP
-    assert gh.post_url[1] == 'https://api.github.com/some/status'
-    assert gh.post_data[1]['state'] == 'failure'
-    assert gh.post_data[1]['target_url'] == news.BLURB_IT_URL
+    assert len(gh.post_url) == MISSSING_NEWS_EVENT_PACK_SIZE
+    check_missing_news_event_pack(gh)
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -270,10 +273,8 @@ async def test_removing_skip_news_label():
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
-    assert gh.post_data[0]['body'] == news.HELP
-    assert gh.post_data[1]["state"] == "failure"
+    assert len(gh.post_url) == MISSSING_NEWS_EVENT_PACK_SIZE
+    check_missing_news_event_pack(gh)
 
 
 async def test_removing_benign_label():

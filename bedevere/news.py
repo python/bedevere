@@ -18,7 +18,7 @@ BLURB_PYPI_URL = 'https://pypi.org/project/blurb/'
 
 FILENAME_RE = re.compile(r"""# YYYY-mm-dd or YYYY-mm-dd-HH-MM-SS
                              \d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\.
-                             (?:bpo|gh)-\d+(?:,\d+)*\. # Issue number(s)
+                             (?:bpo|gh-issue)-\d+(?:,\d+)*\. # Issue number(s)
                              [A-Za-z0-9_=-]+\.         # Nonce (URL-safe base64)
                              rst                       # File extension""",
                          re.VERBOSE)

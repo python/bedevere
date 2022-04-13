@@ -5,15 +5,14 @@ from gidgethub import sansio
 from bedevere import news
 
 
-MISSSING_NEWS_EVENT_PACK_SIZE = 2
-
-def check_missing_news_event_pack(gh):
-    # The first two events must be a human readable note and a check below
-    assert gh.post_url[0] == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
-    assert gh.post_data[0]['body'] == news.HELP
-    assert gh.post_url[1] == 'https://api.github.com/some/status'
-    assert gh.post_data[1]['state'] == 'failure'
-    assert gh.post_data[1]['target_url'] == news.BLURB_IT_URL
+def check_n_pop_nonews_events(gh, expect_help):
+    if expect_help:
+        assert gh.post_url.pop(0) == 'https://api.github.com/repos/cpython/python/issue/1234/comments'
+        assert gh.post_data.pop(0)['body'] == news.HELP
+    assert gh.post_url.pop(0) == 'https://api.github.com/some/status'
+    post_data = gh.post_data.pop(0)
+    assert post_data['state'] == 'failure'
+    assert post_data['target_url'] == news.BLURB_IT_URL
 
 
 class FakeGH:
@@ -82,7 +81,7 @@ class TestFilenameRE:
         assert news.FILENAME_RE.match(basename)
 
 
-async def failure_testing(path, action):
+async def failure_testing(path, action, author_association):
     files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
              {'filename': path, 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'},
              ]
@@ -96,25 +95,27 @@ async def failure_testing(path, action):
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
             'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
+            'author_association': author_association,
         },
     }
     await news.check_news(gh, event_data['pull_request'])
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == MISSSING_NEWS_EVENT_PACK_SIZE
-    check_missing_news_event_pack(gh)
+    check_n_pop_nonews_events(gh, author_association == 'NONE')
+    assert not gh.post_url
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
-async def test_bad_news_entry(action):
+@pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])
+async def test_bad_news_entry(action, author_association):
     # Not in Misc/NEWS.d.
-    await failure_testing(f'some/other/dir/{GOOD_BASENAME}', action)
+    await failure_testing(f'some/other/dir/{GOOD_BASENAME}', action, author_association)
     # Not in next/.
-    await failure_testing(f'Misc/NEWS.d/{GOOD_BASENAME}', action)
+    await failure_testing(f'Misc/NEWS.d/{GOOD_BASENAME}', action, author_association)
     # Not in a classifying subdirectory.
-    await failure_testing(f'Misc/NEWS.d/next/{GOOD_BASENAME}', action)
+    await failure_testing(f'Misc/NEWS.d/next/{GOOD_BASENAME}', action, author_association)
     # Missing the nonce.
-    await failure_testing(f'Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst', action)
+    await failure_testing(f'Misc/NEWS.d/next/Library/2017-06-16.bpo-1234.rst', action, author_association)
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -165,7 +166,8 @@ async def test_news_file(action):
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
-async def test_empty_news_file(action):
+@pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])
+async def test_empty_news_file(action, author_association):
     files = [{'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
              {'filename': f'Misc/NEWS.d/next/Library/{GOOD_BASENAME}'},
              ]
@@ -179,12 +181,13 @@ async def test_empty_news_file(action):
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
             'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
+            'author_association': author_association,
         },
     }
     await news.check_news(gh, event_data['pull_request'])
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
-    assert len(gh.post_url) == MISSSING_NEWS_EVENT_PACK_SIZE
-    check_missing_news_event_pack(gh)
+    check_n_pop_nonews_events(gh, author_association == 'NONE')
+    assert not gh.post_url
 
 
 @pytest.mark.parametrize('action', ['opened', 'reopened', 'synchronize'])
@@ -253,7 +256,8 @@ async def test_deleting_label():
     assert len(gh.post_data) == 0
 
 
-async def test_removing_skip_news_label():
+@pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])
+async def test_removing_skip_news_label(author_association):
     files = [
         {'filename': 'README', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
         {'filename': f'Misc/NEWS.d/next/{GOOD_BASENAME}', 'patch': '@@ -0,0 +1 @@ +Fix inspect.getsourcelines for module level frames/tracebacks'},
@@ -270,12 +274,13 @@ async def test_removing_skip_news_label():
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
             'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
+            'author_association': author_association,
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await news.router.dispatch(event, gh)
-    assert len(gh.post_url) == MISSSING_NEWS_EVENT_PACK_SIZE
-    check_missing_news_event_pack(gh)
+    check_n_pop_nonews_events(gh, author_association == 'NONE')
+    assert not gh.post_url
 
 
 async def test_removing_benign_label():

@@ -31,6 +31,7 @@ async def set_status(event, gh, *args, session, **kwargs):
         issue_number = issue_number_found.group("issue")
         issue_number_on_gh = await _validate_issue_number(gh, issue_number)
         if issue_number_on_gh:
+            await util.patch_body(gh, event, issue_number)
             status = create_success_status(issue_number)
         else:
             status = create_failure_status_issue_not_on_gh(issue_number)

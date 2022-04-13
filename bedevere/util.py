@@ -65,7 +65,7 @@ async def files_for_PR(gh, pull_request):
     # payload.
     files_url = f'{pull_request["url"]}/files'
     data = []
-    async for filedata in gh.getiter(files_url):
+    async for filedata in gh.getiter(files_url):  # pragma: no cover
         data.append(
             {"file_name": filedata["filename"], "patch": filedata.get("patch", ""),}
         )
@@ -82,7 +82,7 @@ async def is_core_dev(gh, username):
     org_teams = "/orgs/python/teams"
     team_name = "python core"
     async for team in gh.getiter(org_teams):
-        if team["name"].lower() == team_name:
+        if team["name"].lower() == team_name:  # pragma: no cover
             break
     else:
         raise ValueError(f"{team_name!r} not found at {org_teams!r}")

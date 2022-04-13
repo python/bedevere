@@ -92,7 +92,7 @@ async def patch_body(gh, event, issue_number):
 
     Does nothing if the 'body' key already exists on the PR.
     """
-    if "body" in event.data["pull_request"]:
+    if "body" in event.data["pull_request"] and issue_number in event.data["pull_request"]["body"]:
         return
     await gh.patch(event.data["pull_request"]["url"], data=BODY.format(body=DEFAULT_BODY, issue_number=issue_number))
 

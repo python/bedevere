@@ -60,7 +60,7 @@ async def check_news(gh, pull_request, files=None):
         if util.skip("news", issue):
             status = SKIP_LABEL_STATUS
         else:
-            await gh.post(pull_request['issue_comment_url'],
+            await gh.post(f"{pull_request['issue_url']}/comments",
                           data={'body': HELP})
             if not in_next_dir:
                 description = f'No news entry in {util.NEWS_NEXT_DIR} or "skip news" label found'

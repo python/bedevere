@@ -49,6 +49,7 @@ async def test_set_status_failure(action, monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",
             "issue_url": "issue URL",
+            "url": "url",
         },
     }
     issue_data = {
@@ -77,6 +78,8 @@ async def test_set_status_failure_via_issue_not_found_on_github(action, monkeypa
         "pull_request": {
              "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-123: Invalid issue number",
+            "issue_url": "issue URL",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -101,6 +104,7 @@ async def test_set_status_failure_if_bpo_number(action, monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "bpo-12345: An issue on b.p.o",
             "issue_url": "issue URL",
+            "url": "url",
         },
     }
     issue_data = {
@@ -127,6 +131,7 @@ async def test_set_status_success(action, monkeypatch):
         "action": action,
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "url": "",
             "title": "[3.6] gh-1234: an issue!",
         },
     }
@@ -152,6 +157,7 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch):
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-12345: an issue!",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -176,6 +182,7 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "GH-12345: an issue!",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -201,6 +208,7 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "No issue in title",
             "issue_url": "issue URL",
+            "url": "url",
         },
     }
     issue_data = {
@@ -226,6 +234,7 @@ async def test_edit_title(monkeypatch):
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-1234: an issue!",
+            "url": "url",
         },
         "action": "edited",
         "changes": {"title": "thingy"},
@@ -266,6 +275,7 @@ async def test_edit_other_than_title(monkeypatch):
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "bpo-1234: an issue!",
+            "url": "url",
         },
         "action": "edited",
         "changes": {"stuff": "thingy"},
@@ -285,6 +295,7 @@ async def test_new_label_skip_issue_no_issue():
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "An easy fix",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -302,6 +313,7 @@ async def test_new_label_skip_issue_with_issue_number():
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "Revert gh-1234: revert an easy fix",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -323,6 +335,7 @@ async def test_new_label_skip_issue_with_issue_number_ignore_case():
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "Revert Gh-1234: revert an easy fix",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -342,6 +355,7 @@ async def test_new_label_not_skip_issue():
         "label": {"name": "non-trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -362,6 +376,7 @@ async def test_removed_label_from_label_deletion(monkeypatch):
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-1234: an issue!",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -381,6 +396,7 @@ async def test_removed_label_skip_issue(monkeypatch):
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-1234: an issue!",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -404,6 +420,7 @@ async def test_removed_label_non_skip_issue(monkeypatch):
         "label": {"name": "non-trivial"},
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "url": "url",
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
@@ -426,7 +443,7 @@ async def test_validate_issue_number_is_pr():
 
     gh = FakeGH(getitem={
         "number": 123,
-        "pull_request": {"html_url": "https://github.com/python/cpython/pull/123"}
+        "pull_request": {"html_url": "https://github.com/python/cpython/pull/123", "url": "url",}
     })
     response = await gh_issue._validate_issue_number(gh, 123)
     assert response is False

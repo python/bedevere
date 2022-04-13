@@ -1,4 +1,3 @@
-from asyncio import Future
 import enum
 import sys
 

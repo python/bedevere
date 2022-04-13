@@ -17,6 +17,8 @@ class FakeGH:
         self._post_return = post
         self.post_url = []
         self.post_data = []
+        self.patch_url = []
+        self.patch_data = []
 
     async def getitem(self, url):
         if isinstance(self._getitem_return, Exception):
@@ -27,6 +29,13 @@ class FakeGH:
         self.post_url.append(url)
         self.post_data.append(data)
         return self._post_return
+
+    async def patch(self, url, *, data):
+        self.patch_url.append(url)
+        self.patch_data.append(data)
+        return self._post_return
+
+
 
 
 @pytest.mark.asyncio

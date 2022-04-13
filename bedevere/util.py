@@ -11,7 +11,7 @@ NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
 CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
 BODY = f"""\
 {{body}}
-<!-- {TAG_NAME}: gh-{{issue_number}} -->
+gh-{{issue_number}}
 https://bugs.python.org/issue{{issue_number}}
 {CLOSING_TAG}
 """
@@ -87,14 +87,14 @@ async def issue_for_PR(gh, pull_request):
     """Get the issue data for a pull request."""
     return await gh.getitem(pull_request["issue_url"])
 
-async def patch_body(gh, event, issue_number):
+async def patch_body(gh, pull_request, issue_number):
     """Updates the description of a PR with the gh issue number if it exists.
 
-    Does nothing if the 'body' key already exists on the PR.
+    returns if body exists with issue_number
     """
-    if "body" in event.data["pull_request"] and issue_number in event.data["pull_request"]["body"]:
+    if "body" in pull_request and pull_request["body"] is not None and issue_number in pull_request["body"]:
         return
-    await gh.patch(event.data["pull_request"]["url"], data=BODY.format(body=DEFAULT_BODY, issue_number=issue_number))
+    await gh.patch(pull_request["url"], data=BODY.format(body=DEFAULT_BODY, issue_number=issue_number))
 
 
 async def is_core_dev(gh, username):

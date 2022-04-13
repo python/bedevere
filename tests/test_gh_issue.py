@@ -12,9 +12,10 @@ from bedevere import gh_issue
 
 class FakeGH:
 
-    def __init__(self, *, getitem=None, post=None):
+    def __init__(self, *, getitem=None, post=None, patch=None):
         self._getitem_return = getitem
         self._post_return = post
+        self._patch_return = patch
         self.post_url = []
         self.post_data = []
         self.patch_url = []
@@ -33,7 +34,7 @@ class FakeGH:
     async def patch(self, url, *, data):
         self.patch_url.append(url)
         self.patch_data.append(data)
-        return self._post_return
+        return self._patch_return
 
 
 

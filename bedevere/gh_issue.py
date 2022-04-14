@@ -117,7 +117,6 @@ async def _validate_issue_number(
     kind: IssueKind = "gh"
 ) -> bool:
     """Ensure the GitHub Issue number is valid."""
-
     if kind == "bpo":
         url = f"https://bugs.python.org/issue{issue_number}"
         async with session.head(url) as res:

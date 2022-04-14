@@ -409,7 +409,6 @@ async def test_validate_issue_number_valid_on_github():
 
 @pytest.mark.asyncio
 async def test_validate_issue_number_valid_on_bpo():
-
     gh = FakeGH(getitem={"number": 1234})
     async with aiohttp.ClientSession() as session:
         response = await gh_issue._validate_issue_number(
@@ -440,3 +439,13 @@ async def test_validate_issue_number_is_not_valid():
     async with aiohttp.ClientSession() as session:
         response = await gh_issue._validate_issue_number(gh, 123, session=session)
     assert response is False
+
+
+@pytest.mark.asyncio
+async def test_validate_issue_number_coverage100():
+    gh = FakeGH(getitem={"number": 1234})
+    async with aiohttp.ClientSession() as session:
+        with pytest.raises(ValueError):
+            await gh_issue._validate_issue_number(
+                gh, 123, session=session, kind="invalid"  # type: ignore
+            )

@@ -9,7 +9,7 @@ from . import util
 
 router = routing.Router()
 
-ISSUE_RE = re.compile(r"gh-(?P<issue>\d{1,6})", re.I)
+ISSUE_RE = re.compile(r"gh-(?P<issue>\d+)", re.I)
 SKIP_ISSUE_LABEL = util.skip_label("issue")
 STATUS_CONTEXT = "bedevere/issue-number"
 # Try to keep descriptions at or below 50 characters, else GitHub's CSS will truncate it.

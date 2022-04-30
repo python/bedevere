@@ -1,0 +1,8 @@
+# PR commenting is disabled in the Python org's global YAML:
+# https://app.codecov.io/account/gh/python/yaml
+# To enable commenting in this repo, we need some 'comment'
+# config here to override the global one.
+# And due to a Codecov bug, it can't be 'comment: false'.
+# For more info see https://github.com/python/bedevere/issues/441
+comment:
+  layout: "reach, diff, flags, files"

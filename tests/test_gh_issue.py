@@ -91,14 +91,12 @@ async def test_set_status_failure_via_issue_not_found_on_github(action, monkeypa
     assert status["state"] == "failure"
     assert status["target_url"] == "https://github.com/python/cpython/issues/123"
     assert status["context"] == "bedevere/issue-number"
-    assert status["description"] == "GitHub Issue #123 is not valid."
+    assert status["description"] == "GH Issue #123 is not valid."
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_failure_if_bpo_number(action, monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+async def test_set_status_success_issue_found_on_bpo(action):
     data = {
         "action": action,
         "pull_request": {
@@ -108,19 +106,16 @@ async def test_set_status_failure_if_bpo_number(action, monkeypatch):
             "url": "url",
         },
     }
-    issue_data = {
-        "labels": [
-            {"name": "non-trivial"},
-        ]
-    }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH(getitem=issue_data)
-    await gh_issue.router.dispatch(event, gh, session=None)
+    gh = FakeGH()
+    async with aiohttp.ClientSession() as session:
+        await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
-    assert status["state"] == "failure"
-    assert status["target_url"].startswith("https://devguide.python.org")
+    assert status["state"] == "success"
+    assert status["target_url"].endswith("bpo=12345")
+    assert "12345" in status["description"]
     assert status["context"] == "bedevere/issue-number"
-    gh_issue._validate_issue_number.assert_not_awaited()
+    assert "git-sha" in gh.post_url[0]
 
 
 @pytest.mark.asyncio
@@ -145,7 +140,7 @@ async def test_set_status_success(action, monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
-    gh_issue._validate_issue_number.assert_awaited_with(gh, "1234")
+    gh_issue._validate_issue_number.assert_awaited_with(gh, 1234, session=None, kind="gh")
 
 
 @pytest.mark.asyncio
@@ -244,7 +239,7 @@ async def test_edit_title(monkeypatch):
     gh = FakeGH()
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 1
-    gh_issue._validate_issue_number.assert_awaited_with(gh, "1234")
+    gh_issue._validate_issue_number.assert_awaited_with(gh, 1234, session=None, kind="gh")
 
 @pytest.mark.asyncio
 async def test_no_body_when_edit_title(monkeypatch):
@@ -265,7 +260,7 @@ async def test_no_body_when_edit_title(monkeypatch):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await gh_issue.router.dispatch(event, gh, session=None)
-    gh_issue._validate_issue_number.assert_awaited_with(gh, "32636")
+    gh_issue._validate_issue_number.assert_awaited_with(gh, 32636, session=None, kind="gh")
 
 
 @pytest.mark.asyncio
@@ -409,7 +404,7 @@ async def test_removed_label_skip_issue(monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
-    gh_issue._validate_issue_number.assert_awaited_with(gh, "1234")
+    gh_issue._validate_issue_number.assert_awaited_with(gh, 1234, session=None, kind="gh")
 
 
 @pytest.mark.asyncio
@@ -432,21 +427,33 @@ async def test_removed_label_non_skip_issue(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_validate_issue_number_valid():
+async def test_validate_issue_number_valid_on_github():
 
     gh = FakeGH(getitem={"number": 123})
-    response = await gh_issue._validate_issue_number(gh, 123)
+    async with aiohttp.ClientSession() as session:
+        response = await gh_issue._validate_issue_number(gh, 123, session=session)
     assert response is True
 
 
 @pytest.mark.asyncio
-async def test_validate_issue_number_is_pr():
+async def test_validate_issue_number_valid_on_bpo():
+    gh = FakeGH(getitem={"number": 1234})
+    async with aiohttp.ClientSession() as session:
+        response = await gh_issue._validate_issue_number(
+            gh, 1234, kind="bpo", session=session
+        )
+    assert response is True
+
+
+@pytest.mark.asyncio
+async def test_validate_issue_number_is_pr_on_github():
 
     gh = FakeGH(getitem={
         "number": 123,
         "pull_request": {"html_url": "https://github.com/python/cpython/pull/123", "url": "url",}
     })
-    response = await gh_issue._validate_issue_number(gh, 123)
+    async with aiohttp.ClientSession() as session:
+        response = await gh_issue._validate_issue_number(gh, 123, session=session)
     assert response is False
 
 
@@ -457,5 +464,16 @@ async def test_validate_issue_number_is_not_valid():
             status_code=http.HTTPStatus(404)
         )
     )
-    response = await gh_issue._validate_issue_number(gh, 123)
+    async with aiohttp.ClientSession() as session:
+        response = await gh_issue._validate_issue_number(gh, 123, session=session)
     assert response is False
+
+
+@pytest.mark.asyncio
+async def test_validate_issue_number_coverage100():
+    gh = FakeGH(getitem={"number": 1234})
+    async with aiohttp.ClientSession() as session:
+        with pytest.raises(ValueError):
+            await gh_issue._validate_issue_number(
+                gh, 123, session=session, kind="invalid"  # type: ignore
+            )

@@ -14,6 +14,7 @@ router = gidgethub.routing.Router()
 create_status = functools.partial(util.create_status, 'bedevere/news')
 
 BLURB_IT_URL = 'https://blurb-it.herokuapp.com'
+BLURB_PYPI_URL = 'https://pypi.org/project/blurb/'
 
 FILENAME_RE = re.compile(r"""# YYYY-mm-dd or YYYY-mm-dd-HH-MM-SS
                              \d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\.
@@ -26,6 +27,12 @@ SKIP_NEWS_LABEL = util.skip_label("news")
 SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
                                   description='"skip news" label found')
 
+HELP = f"""\
+Every change to Python [requires a NEWS entry]\
+(https://devguide.python.org/committing/#updating-news-and-what-s-new-in-python).
+
+Please, add it using the [blurb_it]({BLURB_IT_URL}) Web app or the [blurb]\
+({BLURB_PYPI_URL}) command-line tool."""
 
 async def check_news(gh, pull_request, files=None):
     """Check for a news entry.
@@ -52,6 +59,9 @@ async def check_news(gh, pull_request, files=None):
         if util.skip("news", issue):
             status = SKIP_LABEL_STATUS
         else:
+            if pull_request['author_association'] == 'NONE':
+                await gh.post(f"{pull_request['issue_url']}/comments",
+                              data={'body': HELP})
             if not in_next_dir:
                 description = f'No news entry in {util.NEWS_NEXT_DIR} or "skip news" label found'
             elif not file_found:

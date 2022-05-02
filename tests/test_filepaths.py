@@ -2,9 +2,11 @@ import pytest
 
 from gidgethub import sansio
 
-from bedevere import filepaths
+from bedevere import news, filepaths
 
 from bedevere.prtype import Category
+
+from .test_news import check_n_pop_nonews_events
 
 
 class FakeGH:
@@ -60,7 +62,8 @@ async def test_news_only():
     assert gh.post_data[0]['state'] == 'success'
 
 
-async def test_docs_only():
+@pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])
+async def test_docs_only(author_association):
     filenames = [{'filename': '/path/to/docs1.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
                  {'filename': 'docs2.rst', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
                  ]
@@ -74,20 +77,22 @@ async def test_docs_only():
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+            'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
+            'author_association': author_association,
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/some/status'
-    assert gh.post_data[0]['state'] == 'failure'
-    assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Category.documentation.value]
+    check_n_pop_nonews_events(gh, author_association == 'NONE')
+    assert len(gh.post_url) == 1
+    assert gh.post_url[0] == 'https://api.github.com/some/label'
+    assert gh.post_data[0] == [Category.documentation.value]
 
 
-async def test_tests_only():
+@pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])
+async def test_tests_only(author_association):
     filenames = [{'filename': '/path/to/test_docs1.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
                  {'filename': 'test_docs2.py', 'patch': '@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.'},
                  ]
@@ -101,17 +106,18 @@ async def test_tests_only():
             'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
             'statuses_url': 'https://api.github.com/some/status',
             'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+            'issue_comment_url': 'https://api.github.com/repos/cpython/python/issue/1234/comments',
+            'author_association': author_association,
         },
     }
     event = sansio.Event(event_data, event='pull_request', delivery_id='1')
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/some/status'
-    assert gh.post_data[0]['state'] == 'failure'
-    assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Category.tests.value]
+    check_n_pop_nonews_events(gh, author_association == 'NONE')
+    assert len(gh.post_url) == 1
+    assert gh.post_url[0] == 'https://api.github.com/some/label'
+    assert gh.post_data[0] == [Category.tests.value]
 
 
 async def test_docs_and_tests():

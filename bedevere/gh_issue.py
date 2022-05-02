@@ -1,26 +1,37 @@
 """Check if a GitHub issue number is specified in the pull request's title."""
 import re
+from typing import Dict, Literal
 
+from aiohttp import ClientSession
 import gidgethub
 from gidgethub import routing
+from gidgethub.abc import GitHubAPI
 
 from . import util
 
 
 router = routing.Router()
 
-ISSUE_RE = re.compile(r"gh-(?P<issue>\d+)", re.IGNORECASE)
+IssueKind = Literal["gh", "bpo"]
+
+ISSUE_RE = re.compile(r"(?P<kind>bpo|gh)-(?P<issue>\d+)", re.IGNORECASE)
 SKIP_ISSUE_LABEL = util.skip_label("issue")
 STATUS_CONTEXT = "bedevere/issue-number"
 # Try to keep descriptions at or below 50 characters, else GitHub's CSS will truncate it.
 SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                                        description="Issue report skipped")
+ISSUE_URL: Dict[IssueKind, str] = {
+    "gh": "https://github.com/python/cpython/issues/{issue_number}",
+    "bpo": "https://bugs.python.org/issue?@action=redirect&bpo={issue_number}"
+}
 
 
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 @router.register("pull_request", action="reopened")
-async def set_status(event, gh, *args, session, **kwargs):
+async def set_status(
+    event, gh: GitHubAPI, *args, session: ClientSession, **kwargs
+):
     """Set the issue number status on the pull request."""
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
@@ -28,13 +39,18 @@ async def set_status(event, gh, *args, session, **kwargs):
         status = (SKIP_ISSUE_STATUS if util.skip("issue", issue)
                                     else create_failure_status_no_issue())
     else:
-        issue_number = issue_number_found.group("issue")
-        issue_number_on_gh = await _validate_issue_number(gh, issue_number)
-        if issue_number_on_gh:
-            await util.patch_body(gh, event.data["pull_request"], issue_number)
-            status = create_success_status(issue_number)
+        issue_number = int(issue_number_found.group("issue"))
+        issue_kind = issue_number_found.group("kind").lower()
+        issue_found = await _validate_issue_number(
+            gh, issue_number, session=session, kind=issue_kind
+        )
+        if issue_found:
+            status = create_success_status(issue_number, kind=issue_kind)
+
         else:
-            status = create_failure_status_issue_not_on_gh(issue_number)
+            status = create_failure_status_issue_not_present(
+                issue_number, kind=issue_kind
+            )
     await util.post_status(gh, event, status)
 
 
@@ -68,18 +84,18 @@ async def removed_label(event, gh, *args, session, **kwargs):
         await set_status(event, gh, session=session)
 
 
-def create_success_status(issue_number):
+def create_success_status(issue_number: int, *, kind: IssueKind = "gh"):
     """Create a success status for when an issue number was found in the title."""
-    url = f"https://github.com/python/cpython/issues/{issue_number}"
+    url = ISSUE_URL[kind].format(issue_number=issue_number)
     return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
                               description=f"Issue number {issue_number} found",
                               target_url=url)
 
 
-def create_failure_status_issue_not_on_gh(issue_number):
+def create_failure_status_issue_not_present(issue_number: int, *, kind: IssueKind = "gh"):
     """Create a failure status for when an issue does not exist on the GitHub issue tracker."""
-    description = f"GitHub Issue #{issue_number} is not valid."
-    url = f"https://github.com/python/cpython/issues/{issue_number}"
+    url = ISSUE_URL[kind].format(issue_number=issue_number)
+    description = f"{kind.upper()} Issue #{issue_number} is not valid."
     return util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
                               description=description,
                               target_url=url)
@@ -94,8 +110,21 @@ def create_failure_status_no_issue():
                               target_url=url)
 
 
-async def _validate_issue_number(gh, issue_number):
+async def _validate_issue_number(
+    gh: GitHubAPI,
+    issue_number: int,
+    *,
+    session: ClientSession,
+    kind: IssueKind = "gh"
+) -> bool:
     """Ensure the GitHub Issue number is valid."""
+    if kind == "bpo":
+        url = f"https://bugs.python.org/issue{issue_number}"
+        async with session.head(url) as res:
+            return res.status != 404
+
+    if kind != "gh":
+        raise ValueError(f"Unknown issue kind {kind}")
 
     url = f"/repos/python/cpython/issues/{issue_number}"
     try:

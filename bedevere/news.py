@@ -28,7 +28,7 @@ SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
                                   description='"skip news" label found')
 
 HELP = f"""\
-Almost every change to Python [requires a NEWS entry]\
+Most changes to Python [requires a NEWS entry]\
 (https://devguide.python.org/committing/#updating-news-and-what-s-new-in-python).
 
 Please add it using the [blurb_it]({BLURB_IT_URL}) web app or the [blurb]\

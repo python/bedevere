@@ -2,6 +2,7 @@ import http
 
 import gidgethub
 import pytest
+from unittest.mock import patch
 
 from bedevere import util
 
@@ -157,3 +158,30 @@ async def test_get_pr_for_commit_not_found():
     result = await util.get_pr_for_commit(gh, sha)
 
     assert result is None
+
+
+async def test_patch_body_adds_issue_if_not_present():
+    """Updates the description of a PR with the gh issue number if it exists.
+
+    returns if body exists with issue_number
+    """
+    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+    gh = FakeGH(
+        getitem={
+            f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+                "total_count": 0,
+                "items": [],
+            }
+        }
+    )
+    vals = {}
+    vals["url"] = "https://fake.com"
+    vals["body"] = "GH-1234\n"
+
+    with patch.object(gh, "patch") as mock:
+        await util.patch_body(gh, vals, "1234")
+        mock.assert_not_called()
+    with patch.object(gh, "patch") as mock:
+        vals["body"] = None
+        await util.patch_body(gh, vals, "1234")
+        mock.assert_called_once()

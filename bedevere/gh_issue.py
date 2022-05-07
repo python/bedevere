@@ -46,7 +46,6 @@ async def set_status(
         )
         if issue_found:
             status = create_success_status(issue_number, kind=issue_kind)
-
         else:
             status = create_failure_status_issue_not_present(
                 issue_number, kind=issue_kind

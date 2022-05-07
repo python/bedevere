@@ -90,7 +90,7 @@ async def patch_body(gh, pull_request, issue_number):
 
     returns if body exists with issue_number
     """
-    if "body" in pull_request and pull_request["body"] is not None and issue_number in pull_request["body"]:
+    if "body" in pull_request and pull_request["body"] is not None and f"GH-{issue_number}\n" in pull_request["body"]:
         return
     await gh.patch(pull_request["url"], data=BODY.format(body=DEFAULT_BODY, issue_number=issue_number))
 

@@ -36,9 +36,6 @@ class FakeGH:
         self.patch_data.append(data)
         return self._patch_return
 
-
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_failure(action, monkeypatch):

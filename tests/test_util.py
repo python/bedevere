@@ -185,3 +185,8 @@ async def test_patch_body_adds_issue_if_not_present():
         vals["body"] = None
         await util.patch_body(gh, vals, "1234")
         mock.assert_called_once()
+    with patch.object(gh, "patch") as mock:
+        vals["body"] = ""
+        await util.patch_body(gh, vals, "1234")
+        data = "\ngh-1234\n<!-- /issue-number -->\n"
+        mock.assert_called_once_with("https://fake.com", data=data)

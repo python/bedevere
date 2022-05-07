@@ -11,7 +11,6 @@ CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
 BODY = f"""\
 {{body}}
 gh-{{issue_number}}
-https://bugs.python.org/issue{{issue_number}}
 {CLOSING_TAG}
 """
 

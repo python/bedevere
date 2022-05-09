@@ -31,11 +31,6 @@ class FakeGH:
         self.post_data.append(data)
         return self._post_return
 
-    async def patch(self, url, *, data):
-        self.patch_url.append(url)
-        self.patch_data.append(data)
-        return self._patch_return
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_failure(action, monkeypatch):

@@ -1,31 +1,38 @@
+
+
 Contributing and Maintenance Guide
 ==================================
 
-Deploying bedevere
-------------------
-
 Bedevere web service is deployed to Heroku, which is managed by The PSF.
 
-Changes are supposed to be deployed to Heroku immediately after the PR gets merged,
-however, due to recent `security incident`_,
-the Heroku GitHub integration is broken.
+Deployment
+----------
 
-Until this gets resolved, maintainers have to deploy bedevere to Heroku manually.
+There are two ways to have bedevere deployed: automatic deployment, and
+manual deployment.
 
-Who can deploy to Heroku
-~~~~~~~~~~~~~~~~~~~~~~~~
+Automatic Deployment (currently broken)
+'''''''''''''''''''''''''''''''''''''''
 
-People listed as Collaborator/Member on the ``bedevere`` Heroku app can deploy to Heroku.
-Additionally, Heroku admins can also do it.
+When the automatic deployment is enabled (on Heroku side), any merged PR
+will automatically be deployed to Heroku. This process takes less than 5 minutes.
 
-Collaborators/members:
+If after 10 minutes you did not see the changes reflected, please ping one
+of the collaborators listed below.
 
-- @Mariatta
-- @ambv
-- @brettcannon
 
-How to deploy manually to Heroku
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. note::
+
+   Due to recent `security incident`_, the Heroku GitHub integration is broken.
+   Automatic deployment does not currently work. Until this gets resolved,
+   maintainers have to deploy bedevere to Heroku manually.
+
+
+Manual Deployment
+'''''''''''''''''
+
+The app can be deployed manually to Heroku by collaborators and members of the ``bedevere`` app on Heroku.
+Heroku admins can do it too.
 
 #. Install Heroku CLI
 
@@ -65,6 +72,13 @@ How to deploy manually to Heroku
   
   
 Afther a successful push, the deployment will begin.
+
+Heroku app collaborators and members
+''''''''''''''''''''''''''''''''''''
+
+- @Mariatta
+- @ambv
+- @brettcannon
 
 .. _security incident: https://status.heroku.com/incidents/2413
 .. _GitHub CLI: https://cli.github.com/

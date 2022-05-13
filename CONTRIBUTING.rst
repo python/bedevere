@@ -69,7 +69,7 @@ Heroku admins can do it too.
       git push heroku main
   
   
-Afther a successful push, the deployment will begin.
+After a successful push, the deployment will begin.
 
 Heroku app collaborators and members
 ''''''''''''''''''''''''''''''''''''

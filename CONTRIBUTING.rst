@@ -1,5 +1,3 @@
-
-
 Contributing and Maintenance Guide
 ==================================
 

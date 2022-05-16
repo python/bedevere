@@ -1,7 +1,7 @@
 aiohttp==3.8.1
 appdirs==1.4.4
 async-timeout==4.0.2
-cachetools==5.0.0
+cachetools==5.1.0
 chardet==4.0.0
 gidgethub==5.1.0
 multidict==6.0.2

@@ -190,3 +190,4 @@ async def test_patch_body_adds_issue_if_not_present():
         await util.patch_body(gh, vals, "1234")
         data = "\ngh-1234\n<!-- /issue-number -->\n"
         mock.assert_called_once_with("https://fake.com", data=data)
+    assert await gh.patch(vals["url"], data=vals) == None

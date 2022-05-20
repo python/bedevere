@@ -26,7 +26,8 @@ To enable Automatic deployment:
 - Check the "Wait for CI to pass before deploy" button
 - Press the "Enable automatic deploys" button.
 
-Once done, merging a PR against the ``main`` branch will trigger a new deployment.
+Once done, merging a PR against the ``main`` branch will trigger a new
+deployment using a webhook that is already set up in the repo settings.
 
 
 .. note::

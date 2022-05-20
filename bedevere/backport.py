@@ -27,7 +27,10 @@ async def _copy_over_labels(gh, original_issue, backport_issue):
     labels = list(filter(lambda x: x.startswith(label_prefixes),
                     util.labels_(original_issue)))
     if labels:
-        await gh.post(backport_issue["labels_url"], data=labels)
+        response = await gh.post(backport_issue["labels_url"], data=labels)
+        return response
+    return "no labels"
+
 
 
 async def _remove_backport_label(gh, original_issue, branch, backport_pr_number):
@@ -40,7 +43,8 @@ async def _remove_backport_label(gh, original_issue, branch, backport_pr_number)
         return
     await gh.delete(original_issue['labels_url'], {'name': backport_label})
     message = MESSAGE_TEMPLATE.format(branch=branch, pr=backport_pr_number)
-    await gh.post(original_issue['comments_url'], data={'body': message})
+    response = await gh.post(original_issue['comments_url'], data={'body': message})
+    return response
 
 async def manage_labels(gh, *args, **kwargs):
     with open(os.environ["GITHUB_EVENT_PATH"]) as f:

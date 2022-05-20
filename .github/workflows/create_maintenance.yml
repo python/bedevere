@@ -3,13 +3,12 @@
 name: backport
 
 on:
-  pull_request:
-    types: [opened, reopened, edited, synchronize]
+  create
 
 
 jobs:
-  backport:
-    name: Check and update backport label of PR
+  create_maintenance:
+    name: Create the `needs backport label` when the maintenance branch is created
 
     runs-on: ubuntu-latest
 
@@ -35,5 +34,5 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
-      # - name: Run code
-      #   run: python3 -m bedevere backport.py validate_maintenance_branch_pr
+      - name: Run code
+        run: python3 bedevere/create_maintenance.py

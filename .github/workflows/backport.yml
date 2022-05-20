@@ -4,8 +4,10 @@ name: backport
 
 on:
   pull_request:
-    types: [opened, edited]
+    types: [opened, reopened, edited, synchronize]
 
+env:
+  GH_AUTH: ${{ secrets.GH_AUTH }}
 
 jobs:
   backport:
@@ -15,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.9-dev"]
+        python-version: ["3.8"] #, "3.9", "3.9-dev"]
 
     steps:
       - uses: actions/checkout@v2
@@ -36,4 +38,6 @@ jobs:
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run code
-        run: python3 bedevere/backport.py
+        run: python3 -m bedevere.backport
+      
+  

@@ -1,6 +1,4 @@
-
-
-name: backport
+name: Backport
 
 on:
   pull_request:
@@ -15,10 +13,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: ["3.9"]
-
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v1
@@ -27,14 +21,9 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - uses: actions/setup-python@v2
-        if: "!endsWith(matrix.python-version, '-dev')"
+      - uses: actions/setup-python@v3
         with:
-          python-version: ${{ matrix.python-version }}
-      - uses: deadsnakes/action@v2.1.1
-        if: endsWith(matrix.python-version, '-dev')
-        with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.x'
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run code

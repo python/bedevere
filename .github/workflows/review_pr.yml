@@ -1,0 +1,41 @@
+name: Dissmiss review on invalid PR
+
+on:
+  pull_request:
+    types: [review_requested]
+
+env:
+  GH_AUTH: ${{ secrets.GH_AUTH }}
+
+jobs:
+  review_invalid_pr:
+    name: Check and update backport label of PR
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.8"] #, "3.9", "3.9-dev"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - uses: actions/setup-python@v2
+        if: "!endsWith(matrix.python-version, '-dev')"
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: deadsnakes/action@v2.1.1
+        if: endsWith(matrix.python-version, '-dev')
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Dependencies
+        run: python3 -m pip install coverage -U pip -r dev-requirements.txt
+      - name: Run code
+        run: python3 -m bedevere.review_pr
+      
+  

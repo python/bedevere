@@ -7,6 +7,7 @@ import traceback
 
 import aiohttp
 from gidgethub.aiohttp import GitHubAPI
+# import gidgethub.routing
 
 
 PYTHON_MAINT_BRANCH_RE = re.compile(r'^\w+:\d+\.\d+$')
@@ -18,8 +19,9 @@ If you were attempting to report a bug, please go to bugs.python.org; \
 see devguide.python.org for further instruction as needed."""
 
 
-async def close_invalid_pr(gh, *args, **kwargs):
-    """Close the invalid PR, add 'invalid' label, and post a message.
+# @router.register("pull_request", action="review_requested")
+async def dismiss_invalid_pr_review_request(gh, *args, **kwargs):
+    """Dismiss review request from the invalid PR.
 
     PR is considered invalid if:
     * base_label is 'python:main'
@@ -31,23 +33,18 @@ async def close_invalid_pr(gh, *args, **kwargs):
         base_label = event["pull_request"]["base"]["label"]
 
     if PYTHON_MAINT_BRANCH_RE.match(head_label) and \
-        base_label == "python:main":
-        data = {'state': 'closed'}
-        await gh.patch(event["pull_request"]["url"], data=data)
-        await gh.post(
-            f'{event["pull_request"]["issue_url"]}/labels',
-            data=["invalid"]
-        )
-        await gh.post(
-            f'{event["pull_request"]["issue_url"]}/comments',
-            data={'body': INVALID_PR_COMMENT}
-        )
+            base_label == "python:main":
+        data = {"reviewers": [reviewer["login"] for reviewer in event["pull_request"]["requested_reviewers"]],
+                "team_reviewers": [team["name"] for team in event["pull_request"]["requested_teams"]]
+                }
+        await gh.delete(f'{event["pull_request"]["url"]}/requested_reviewers',
+                        data=data)
 
 async def main():
     try:
         async with aiohttp.ClientSession() as session:
             gh = GitHubAPI(session, "sabderemane", oauth_token=os.getenv("GH_AUTH"))
-            await close_invalid_pr(gh)  
+            await dismiss_invalid_pr_review_request(gh)  
     except Exception:
         traceback.print_exc()
 

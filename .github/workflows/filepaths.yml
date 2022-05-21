@@ -1,17 +1,17 @@
 
 
-name: close PR
+name: filepaths
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, reopened, edited]
 
 env:
   GH_AUTH: ${{ secrets.GH_AUTH }}
 
 jobs:
-  close_pr:
-    name: close invalid PR
+  filepaths:
+    name: Checks filepaths on a PR
 
     runs-on: ubuntu-latest
 
@@ -38,6 +38,6 @@ jobs:
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run code
-        run: python3 -m bedevere.close_pr
+        run: python3 -m bedevere.filepaths
       
   

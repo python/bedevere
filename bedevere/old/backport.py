@@ -4,7 +4,7 @@ import re
 
 import gidgethub.routing
 
-from . import util
+from .. import util
 
 create_status = functools.partial(util.create_status, 'bedevere/maintenance-branch-pr')
 

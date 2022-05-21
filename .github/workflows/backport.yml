@@ -4,7 +4,7 @@ name: backport
 
 on:
   pull_request:
-    types: [opened, reopened, edited, synchronize]
+    types: [opened, reopened, edited]
 
 env:
   GH_AUTH: ${{ secrets.GH_AUTH }}
@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8"] #, "3.9", "3.9-dev"]
+        python-version: ["3.8", "3.9", "3.9-dev"]
 
     steps:
       - uses: actions/checkout@v2

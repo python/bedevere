@@ -13,17 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11.0-alpha - 3.11.0"]
-        include:
-        # Include new variables for Codecov
-        - python-version: "3.8"
-          codecov-flag: Python_3.8
-        - python-version: "3.9"
-          codecov-flag: Python_3.9
-        - python-version: "3.10"
-          codecov-flag: Python_3.10
-        - python-version: "3.11.0-alpha - 3.11.0"
-          codecov-flag: Python_3.11
+        python-version: ["3.8", "3.9", "3.10", "3.11-dev"]
 
     steps:
       - uses: actions/checkout@v3
@@ -56,4 +46,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
-          flags: ${{ matrix.codecov-flag }}
+          flags: Python_${{ matrix.python-version }}

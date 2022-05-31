@@ -26,9 +26,9 @@ jobs:
             dev-requirements.txt
       - name: Install Dependencies
         run: |
-          python3 -m pip install coverage -U pip
-          python3 -m pip install coverage -U wheel
-          python3 -m pip install coverage -U -r dev-requirements.txt
+          python3 -m pip install -U pip
+          python3 -m pip install -U wheel
+          python3 -m pip install -U -r dev-requirements.txt
         env:
           # TEMP for 3.11
           # https://github.com/aio-libs/aiohttp/issues/6600

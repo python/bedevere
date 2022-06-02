@@ -17,20 +17,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-{{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}-${{ hashFiles('dev-requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
       - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            dev-requirements.txt
       - name: Install Dependencies
         run: |
-          python3 -m pip install coverage -U pip
-          python3 -m pip install coverage -U wheel
-          python3 -m pip install coverage -U -r dev-requirements.txt
+          python3 -m pip install -U pip
+          python3 -m pip install -U wheel
+          python3 -m pip install -U -r dev-requirements.txt
         env:
           # TEMP for 3.11
           # https://github.com/aio-libs/aiohttp/issues/6600

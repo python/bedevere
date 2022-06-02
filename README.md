@@ -6,8 +6,8 @@
 This bot is meant to help identify issues with a CPython pull request.
 
 ## What the bot does:
-- ### Identifies missing bugs.python.org issue numbers in the title
-If no b.p.o issue number is found the status fails and the
+- ### Identifies missing GitHub issue numbers in the title
+If no GitHub issue number is found the status fails and the
 "Details" link points to the relevant
 [section of the devguide](https://devguide.python.org/pullrequest/#submitting).
 - ### Links to bugs.python.org

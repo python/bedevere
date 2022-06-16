@@ -5,12 +5,14 @@ import gidgethub
 
 
 DEFAULT_BODY = ""
-TAG_NAME = "issue-number"
+TAG_NAME = "gh-issue-number"
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
 CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
 BODY = f"""\
 {{body}}
-gh-{{issue_number}}
+
+<!-- {TAG_NAME}: gh-{{issue_number}} --> 
+* gh-{{issue_number}}
 {CLOSING_TAG}
 """
 

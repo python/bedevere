@@ -11,7 +11,7 @@ CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
 BODY = f"""\
 {{body}}
 
-<!-- {TAG_NAME}: gh-{{issue_number}} --> 
+<!-- {TAG_NAME}: gh-{{issue_number}} -->
 * gh-{{issue_number}}
 {CLOSING_TAG}
 """

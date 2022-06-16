@@ -3,7 +3,18 @@ import sys
 
 import gidgethub
 
+
+DEFAULT_BODY = ""
+TAG_NAME = "gh-issue-number"
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
+CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
+BODY = f"""\
+{{body}}
+
+<!-- {TAG_NAME}: gh-{{issue_number}} -->
+* gh-{{issue_number}}
+{CLOSING_TAG}
+"""
 
 
 @enum.unique
@@ -67,7 +78,10 @@ async def files_for_PR(gh, pull_request):
     data = []
     async for filedata in gh.getiter(files_url):  # pragma: no branch
         data.append(
-            {"file_name": filedata["filename"], "patch": filedata.get("patch", ""),}
+            {
+                "file_name": filedata["filename"],
+                "patch": filedata.get("patch", ""),
+            }
         )
     return data
 
@@ -75,6 +89,24 @@ async def files_for_PR(gh, pull_request):
 async def issue_for_PR(gh, pull_request):
     """Get the issue data for a pull request."""
     return await gh.getitem(pull_request["issue_url"])
+
+
+async def patch_body(gh, pull_request, issue_number):
+    """Updates the description of a PR with the gh issue number if it exists.
+
+    returns if body exists with issue_number
+    """
+    if "body" not in pull_request or pull_request["body"] is None:
+        return await gh.patch(
+            pull_request["url"],
+            data=BODY.format(body=DEFAULT_BODY, issue_number=issue_number),
+        )
+    if f"GH-{issue_number}\n" not in pull_request["body"]:
+        return await gh.patch(
+            pull_request["url"],
+            data=BODY.format(body=pull_request["body"], issue_number=issue_number),
+        )
+    return
 
 
 async def is_core_dev(gh, username):

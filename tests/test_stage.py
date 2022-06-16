@@ -18,6 +18,7 @@ class FakeGH:
         self.getitem_url = None
         self.delete_url = None
         self.post_ = []
+        self.patch_ = []
 
     async def getiter(self, url, url_vars={}):
         self.getiter_url = sansio.format_url(url, url_vars)
@@ -39,6 +40,10 @@ class FakeGH:
     async def post(self, url, url_vars={}, *, data):
         post_url = sansio.format_url(url, url_vars)
         self.post_.append((post_url, data))
+
+    async def patch(self, url, url_vars={}, *, data):
+        patch_url = sansio.format_url(url, url_vars)
+        self.patch_.append((patch_url, data))
 
 
 async def test_stage():
@@ -73,7 +78,12 @@ async def test_opened_pr():
     issue_url = "https://api.github.com/issue/42"
     data = {
         "action": "opened",
-        "pull_request": {"user": {"login": username,}, "issue_url": issue_url,},
+        "pull_request": {
+            "user": {
+                "login": username,
+            },
+            "issue_url": issue_url,
+        },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     teams = [{"name": "python core", "id": 6}]
@@ -95,7 +105,12 @@ async def test_opened_pr():
     issue_url = "https://api.github.com/issue/42"
     data = {
         "action": "opened",
-        "pull_request": {"user": {"login": username,}, "issue_url": issue_url,},
+        "pull_request": {
+            "user": {
+                "login": username,
+            },
+            "issue_url": issue_url,
+        },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     teams = [{"name": "python core", "id": 6}]
@@ -120,7 +135,12 @@ async def test_new_review():
     username = "andreamcinnes"
     data = {
         "action": "submitted",
-        "review": {"state": "approved", "user": {"login": username,},},
+        "review": {
+            "state": "approved",
+            "user": {
+                "login": username,
+            },
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -176,7 +196,12 @@ async def test_new_review():
     # First comment review from a non-core dev.
     data = {
         "action": "submitted",
-        "review": {"state": "comment", "user": {"login": username,},},
+        "review": {
+            "state": "comment",
+            "user": {
+                "login": username,
+            },
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -208,7 +233,12 @@ async def test_new_review():
     username = "brettcannon"
     data = {
         "action": "submitted",
-        "review": {"user": {"login": username,}, "state": "APPROVED",},
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "APPROVED",
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -239,7 +269,12 @@ async def test_new_review():
     username = "brettcannon"
     data = {
         "action": "submitted",
-        "review": {"user": {"login": username,}, "state": "APPROVED",},
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "APPROVED",
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -266,7 +301,12 @@ async def test_new_review():
     # Core dev requests changes.
     data = {
         "action": "submitted",
-        "review": {"user": {"login": username,}, "state": "changes_requested".upper(),},
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "changes_requested".upper(),
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -299,7 +339,12 @@ async def test_new_review():
     # Comment reviews do nothing.
     data = {
         "action": "submitted",
-        "review": {"user": {"login": username,}, "state": "commented".upper(),},
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "commented".upper(),
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -315,7 +360,12 @@ async def test_new_review():
     # Skip commenting if "awaiting changes" is already set.
     data = {
         "action": "submitted",
-        "review": {"user": {"login": username,}, "state": "changes_requested".upper(),},
+        "review": {
+            "user": {
+                "login": username,
+            },
+            "state": "changes_requested".upper(),
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -354,7 +404,12 @@ async def test_non_core_dev_does_not_downgrade():
     # Approval from a core dev changes the state to "Awaiting merge".
     data = {
         "action": "submitted",
-        "review": {"state": "approved", "user": {"login": core_dev,},},
+        "review": {
+            "state": "approved",
+            "user": {
+                "login": core_dev,
+            },
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -378,7 +433,12 @@ async def test_non_core_dev_does_not_downgrade():
     # Non-comment review from a non-core dev doesn't "downgrade" the PR's state.
     data = {
         "action": "submitted",
-        "review": {"state": "approved", "user": {"login": non_core_dev,},},
+        "review": {
+            "state": "approved",
+            "user": {
+                "login": non_core_dev,
+            },
+        },
         "pull_request": {
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
@@ -515,7 +575,9 @@ async def test_change_requested_for_core_dev():
     data = {
         "action": "submitted",
         "review": {
-            "user": {"login": "gvanrossum",},
+            "user": {
+                "login": "gvanrossum",
+            },
             "state": "changes_requested".upper(),
         },
         "pull_request": {
@@ -561,7 +623,9 @@ async def test_change_requested_for_non_core_dev():
     data = {
         "action": "submitted",
         "review": {
-            "user": {"login": "gvanrossum",},
+            "user": {
+                "login": "gvanrossum",
+            },
             "state": "changes_requested".upper(),
         },
         "pull_request": {
@@ -621,7 +685,10 @@ async def test_awaiting_label_removed_when_pr_merged(label):
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
-        "pull_request": {"merged": True, "issue_url": issue_url,},
+        "pull_request": {
+            "merged": True,
+            "issue_url": issue_url,
+        },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
 
@@ -657,7 +724,10 @@ async def test_awaiting_label_not_removed_when_pr_not_merged(label):
     issue_url = "https://api.github.com/repos/org/proj/issues/3749"
     data = {
         "action": "closed",
-        "pull_request": {"merged": False, "issue_url": issue_url,},
+        "pull_request": {
+            "merged": False,
+            "issue_url": issue_url,
+        },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
 
@@ -699,7 +769,14 @@ async def test_new_commit_pushed_to_approved_pr():
                     "number": 5547,
                     "title": "[3.6] bpo-32720: Fixed the replacement field grammar documentation. (GH-5544)",
                     "body": "\n\n`arg_name` and `element_index` are defined as `digit`+ instead of `integer`.\n(cherry picked from commit 7a561afd2c79f63a6008843b83733911d07f0119)\n\nCo-authored-by: Mariatta <Mariatta@users.noreply.github.com>",
-                    "labels": [{"name": "CLA signed",}, {"name": "awaiting merge",}],
+                    "labels": [
+                        {
+                            "name": "CLA signed",
+                        },
+                        {
+                            "name": "awaiting merge",
+                        },
+                    ],
                     "issue_url": "/repos/python/cpython/issues/5547",
                 }
             ],
@@ -761,7 +838,14 @@ async def test_new_commit_pushed_to_not_approved_pr():
                     "number": 5547,
                     "title": "[3.6] bpo-32720: Fixed the replacement field grammar documentation. (GH-5544)",
                     "body": "\n\n`arg_name` and `element_index` are defined as `digit`+ instead of `integer`.\n(cherry picked from commit 7a561afd2c79f63a6008843b83733911d07f0119)\n\nCo-authored-by: Mariatta <Mariatta@users.noreply.github.com>",
-                    "labels": [{"name": "CLA signed",}, {"name": "awaiting review",}],
+                    "labels": [
+                        {
+                            "name": "CLA signed",
+                        },
+                        {
+                            "name": "awaiting review",
+                        },
+                    ],
                     "issue_url": "/repos/python/cpython/issues/5547",
                 }
             ],

@@ -36,6 +36,9 @@ jobs:
           # https://github.com/aio-libs/yarl/issues/680
           YARL_NO_EXTENSIONS: 1
       - name: Run Tests
+        env:
+          # run against the current Python interpreter
+          TOXENV=python
         run: tox
       - uses: codecov/codecov-action@v2
         if: always()

@@ -67,6 +67,21 @@ async def manage_labels(event, gh, *args, **kwargs):
     await _copy_over_labels(gh, original_issue, backport_issue)
 
 
+def is_maintenance_branch(ref):
+    """
+    Return True if the ref refers to a maintenance branch.
+
+    >>> is_maintenance_branch("3.11")
+    True
+    >>> is_maintenance_branch("main")
+    False
+    >>> is_maintenance_branch("gh-1234/something-completely-different")
+    False
+    """
+    maintenance_branch_pattern = r'\d+\.\d+'
+    return bool(re.fullmatch(maintenance_branch_pattern, ref))
+
+
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="reopened")
 @router.register("pull_request", action="edited")
@@ -84,7 +99,7 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
     pull_request = event.data["pull_request"]
     base_branch = pull_request["base"]["ref"]
 
-    if base_branch == "main":
+    if not is_maintenance_branch(base_branch):
         return
 
     title = util.normalize_title(pull_request["title"],

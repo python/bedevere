@@ -358,6 +358,40 @@ async def test_maintenance_branch_pr_status_not_posted_on_main(action):
     assert len(gh.post_) == 0
 
 
+@pytest.mark.parametrize('action', ['opened', 'reopened', 'edited', 'synchronize'])
+async def test_not_maintenance_branch_pr_status_not_posted_alt_base(action):
+    """
+    When a PR is proposed against a non-maintenance branch, such
+    as another PR, it pass without status (same as with main). See
+    #381 for a detailed justification.
+    """
+    title = 'Fix some typo'
+    data = {
+        'action': action,
+        'number': 2248,
+        'pull_request': {
+            'title': title,
+            'body': '',
+            'issue_url': 'https://api.github.com/issue/2248',
+            'base': {
+                'ref': 'gh-1234/dependent-change',
+            },
+            'statuses_url': 'https://api.github.com/repos/python/cpython/statuses/somehash',
+        },
+        'repository': {'issues_url': 'https://api.github.com/issue{/number}'},
+        'changes': {'title': title},
+    }
+    event = sansio.Event(data, event='pull_request', delivery_id='1')
+    getitem = {
+        'https://api.github.com/issue/1234':
+            {'labels': [{'name': 'CLA signed'}]},
+        'https://api.github.com/issue/2248': {},
+    }
+    gh = FakeGH(getitem=getitem)
+    await backport.router.dispatch(event, gh)
+    assert not gh.post_
+
+
 @pytest.mark.parametrize('ref', ['3.9', '4.0', '3.10'])
 async def test_maintenance_branch_created(ref):
     event_data = {

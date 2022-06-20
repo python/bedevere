@@ -38,7 +38,7 @@ jobs:
       - name: Run Tests
         env:
           # run against the current Python interpreter
-          TOXENV=python
+          TOXENV: python
         run: tox
       - uses: codecov/codecov-action@v2
         if: always()

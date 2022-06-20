@@ -24,11 +24,9 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             dev-requirements.txt
-      - name: Install Dependencies
+      - name: Install tox
         run: |
-          python3 -m pip install -U pip
-          python3 -m pip install -U wheel
-          python3 -m pip install -U -r dev-requirements.txt
+          python -m pip install tox
         env:
           # TEMP for 3.11
           # https://github.com/aio-libs/aiohttp/issues/6600
@@ -38,7 +36,10 @@ jobs:
           # https://github.com/aio-libs/yarl/issues/680
           YARL_NO_EXTENSIONS: 1
       - name: Run Tests
-        run: pytest --cov --cov-report=term --cov-report=xml
+        env:
+          # run against the current Python interpreter
+          TOXENV=python
+        run: tox
       - uses: codecov/codecov-action@v2
         if: always()
         with:

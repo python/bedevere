@@ -1,4 +1,5 @@
 import enum
+import re
 import sys
 
 import gidgethub
@@ -101,7 +102,8 @@ async def patch_body(gh, pull_request, issue_number):
             pull_request["url"],
             data={"body": BODY.format(body=DEFAULT_BODY, issue_number=issue_number)},
         )
-    if f"GH-{issue_number}\n" not in pull_request["body"]:
+
+    if not re.search(rf"(^|\b)(GH-|gh-|#){issue_number}\b", pull_request["body"]):
         return await gh.patch(
             pull_request["url"],
             data={"body": BODY.format(body=pull_request["body"], issue_number=issue_number)},

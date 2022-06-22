@@ -182,6 +182,18 @@ async def test_patch_body_adds_issue_if_not_present():
         await util.patch_body(gh, vals, "1234")
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
+        vals["body"] = "Multiple\nlines\nwith gh-1234 in some prose"
+        await util.patch_body(gh, vals, "1234")
+        mock.assert_not_called()
+    with patch.object(gh, "patch") as mock:
+        vals["body"] = "#1234 in some prose"
+        await util.patch_body(gh, vals, "1234")
+        mock.assert_not_called()
+    with patch.object(gh, "patch") as mock:
+        vals["body"] = "Some prose mentioning gh-12345 but not our issue"
+        await util.patch_body(gh, vals, "1234")
+        mock.assert_called_once()
+    with patch.object(gh, "patch") as mock:
         vals["body"] = None
         await util.patch_body(gh, vals, "1234")
         mock.assert_called_once()

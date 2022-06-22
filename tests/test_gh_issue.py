@@ -174,7 +174,7 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_n
     assert "git-sha" in gh.post_url[0]
 
     assert len(gh.patch_data) > 0
-    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]
+    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
     assert len(gh.patch_url) == 1
     assert gh.patch_url[0] == data["pull_request"]["url"]
 
@@ -204,7 +204,7 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
     assert "git-sha" in gh.post_url[0]
 
     assert len(gh.patch_data) > 0
-    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]
+    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
     assert len(gh.patch_url) == 1
     assert gh.patch_url[0] == data["pull_request"]["url"]
 
@@ -282,7 +282,7 @@ async def test_no_body_when_edit_title(monkeypatch, issue_number):
     gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
 
     assert len(gh.patch_data) > 0
-    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]
+    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
     assert len(gh.patch_url) == 1
     assert gh.patch_url[0] == data["pull_request"]["url"]
 

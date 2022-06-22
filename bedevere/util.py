@@ -99,12 +99,12 @@ async def patch_body(gh, pull_request, issue_number):
     if "body" not in pull_request or pull_request["body"] is None:
         return await gh.patch(
             pull_request["url"],
-            data=BODY.format(body=DEFAULT_BODY, issue_number=issue_number),
+            data={"body": BODY.format(body=DEFAULT_BODY, issue_number=issue_number)},
         )
     if f"GH-{issue_number}\n" not in pull_request["body"]:
         return await gh.patch(
             pull_request["url"],
-            data=BODY.format(body=pull_request["body"], issue_number=issue_number),
+            data={"body": BODY.format(body=pull_request["body"], issue_number=issue_number)},
         )
     return
 

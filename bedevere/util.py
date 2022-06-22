@@ -12,7 +12,7 @@ BODY = f"""\
 {{body}}
 
 <!-- {TAG_NAME}: gh-{{issue_number}} -->
-* gh-{{issue_number}}
+* Issue: gh-{{issue_number}}
 {CLOSING_TAG}
 """
 

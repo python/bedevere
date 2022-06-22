@@ -46,6 +46,8 @@ async def set_status(
         )
         if issue_found:
             status = create_success_status(issue_number, kind=issue_kind)
+            if issue_kind == "gh":
+                await util.patch_body(gh, event.data["pull_request"], issue_number)
         else:
             status = create_failure_status_issue_not_present(
                 issue_number, kind=issue_kind

@@ -31,6 +31,17 @@ class FakeGH:
         self.post_data.append(data)
         return self._post_return
 
+    async def patch(self, url, *, data):
+        self.patch_url.append(url)
+        self.patch_data.append(data)
+        return self._patch_return
+
+
+@pytest.fixture
+async def issue_number():
+    return 1234
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_failure(action, monkeypatch):
@@ -69,7 +80,7 @@ async def test_set_status_failure_via_issue_not_found_on_github(action, monkeypa
     data = {
         "action": action,
         "pull_request": {
-             "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-123: Invalid issue number",
             "issue_url": "issue URL",
             "url": "url",
@@ -109,6 +120,9 @@ async def test_set_status_success_issue_found_on_bpo(action):
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
 
+    assert len(gh.patch_data) == 0
+    assert len(gh.patch_url) == 0
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
@@ -137,14 +151,14 @@ async def test_set_status_success(action, monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success_issue_found_on_gh(action, monkeypatch):
+async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_number):
     monkeypatch.setattr(gh_issue, '_validate_issue_number',
                         mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
-            "title": "gh-12345: an issue!",
+            "title": f"gh-{issue_number}: an issue!",
             "url": "url",
         },
     }
@@ -154,22 +168,27 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch):
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
     assert status["state"] == "success"
-    assert status["target_url"] == "https://github.com/python/cpython/issues/12345"
-    assert "12345" in status["description"]
+    assert status["target_url"] == f"https://github.com/python/cpython/issues/{issue_number}"
+    assert str(issue_number) in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
+
+    assert len(gh.patch_data) > 0
+    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]
+    assert len(gh.patch_url) == 1
+    assert gh.patch_url[0] == data["pull_request"]["url"]
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypatch):
+async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypatch, issue_number):
     monkeypatch.setattr(gh_issue, '_validate_issue_number',
                         mock.AsyncMock(return_value=True))
     data = {
         "action": action,
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
-            "title": "GH-12345: an issue!",
+            "title": f"GH-{issue_number}: an issue!",
             "url": "url",
         },
     }
@@ -179,10 +198,15 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
     assert status["state"] == "success"
-    assert status["target_url"] == "https://github.com/python/cpython/issues/12345"
-    assert "12345" in status["description"]
+    assert status["target_url"] == f"https://github.com/python/cpython/issues/{issue_number}"
+    assert str(issue_number) in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
+
+    assert len(gh.patch_data) > 0
+    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]
+    assert len(gh.patch_url) == 1
+    assert gh.patch_url[0] == data["pull_request"]["url"]
 
 
 @pytest.mark.asyncio
@@ -213,15 +237,18 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     assert "git-sha" in gh.post_url[0]
     gh_issue._validate_issue_number.assert_not_awaited()
 
+    assert len(gh.patch_data) == 0
+    assert len(gh.patch_url) == 0
+
 
 @pytest.mark.asyncio
-async def test_edit_title(monkeypatch):
+async def test_edit_title(monkeypatch, issue_number):
     monkeypatch.setattr(gh_issue, '_validate_issue_number',
                         mock.AsyncMock(return_value=True))
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
-            "title": "gh-1234: an issue!",
+            "title": f"gh-{issue_number}: an issue!",
             "url": "url",
         },
         "action": "edited",
@@ -231,28 +258,33 @@ async def test_edit_title(monkeypatch):
     gh = FakeGH()
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 1
-    gh_issue._validate_issue_number.assert_awaited_with(gh, 1234, session=None, kind="gh")
+    gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
 
 @pytest.mark.asyncio
-async def test_no_body_when_edit_title(monkeypatch):
+async def test_no_body_when_edit_title(monkeypatch, issue_number):
     monkeypatch.setattr(gh_issue, '_validate_issue_number',
                         mock.AsyncMock(return_value=True))
     data = {
         "action": "edited",
         "pull_request": {
             "url": "https://api.github.com/repos/python/cpython/pulls/5291",
-            "title": "gh-32636: Fix @asyncio.coroutine debug mode bug",
+            "title": f"gh-{issue_number}: Fix @asyncio.coroutine debug mode bug",
             "body": None,
             "statuses_url": "https://api.github.com/repos/python/cpython/statuses/98d60953c85df9f0f28e04322a4c4ebec7b180f4",
         },
         "changes": {
-            "title": "gh-32636: Fix @asyncio.coroutine debug mode bug exposed by #5250."
+            "title": f"gh-{issue_number}: Fix @asyncio.coroutine debug mode bug exposed by #5250."
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await gh_issue.router.dispatch(event, gh, session=None)
-    gh_issue._validate_issue_number.assert_awaited_with(gh, 32636, session=None, kind="gh")
+    gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
+
+    assert len(gh.patch_data) > 0
+    assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]
+    assert len(gh.patch_url) == 1
+    assert gh.patch_url[0] == data["pull_request"]["url"]
 
 
 @pytest.mark.asyncio
@@ -273,6 +305,9 @@ async def test_edit_other_than_title(monkeypatch):
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 0
     gh_issue._validate_issue_number.assert_not_awaited()
+
+    assert len(gh.patch_data) == 0
+    assert len(gh.patch_url) == 0
 
 
 @pytest.mark.asyncio

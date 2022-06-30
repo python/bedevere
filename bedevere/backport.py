@@ -11,7 +11,7 @@ create_status = functools.partial(util.create_status, 'bedevere/maintenance-bran
 
 router = gidgethub.routing.Router()
 
-TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)')
+TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)', re.IGNORECASE)
 MAINTENANCE_BRANCH_TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+')
 MAINTENANCE_BRANCH_RE = re.compile(r'\s*(?P<branch>\d+\.\d+)')
 BACKPORT_LABEL = 'needs backport to {branch}'

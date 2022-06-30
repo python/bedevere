@@ -27,6 +27,11 @@ class FakeGH:
         self.post_.append((post_url, data))
 
 
+@pytest.fixture(params=['gh', 'GH'])
+def pr_prefix(request):
+    return request.param
+
+
 async def test_edit_not_title():
     data = {
         'action': 'edited',
@@ -106,7 +111,6 @@ async def test_missing_backport_label():
     assert gh.delete_url is None
 
 
-@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
 async def test_backport_label_removal_success(pr_prefix):
     event_data = {
         'action': 'opened',
@@ -150,7 +154,6 @@ async def test_backport_label_removal_success(pr_prefix):
     assert expected_post is not None
 
 
-@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
 async def test_backport_label_removal_with_leading_space_in_title(pr_prefix):
     event_data = {
         'action': 'opened',
@@ -185,7 +188,6 @@ async def test_backport_label_removal_with_leading_space_in_title(pr_prefix):
                                               {'name': 'needs backport to 3.6'})
 
 
-@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
 async def test_backport_label_removal_with_parentheses_in_title(pr_prefix):
     event_data = {
         'action': 'opened',
@@ -220,7 +222,6 @@ async def test_backport_label_removal_with_parentheses_in_title(pr_prefix):
                                               {'name': 'needs backport to 3.6'})
 
 
-@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
 async def test_label_copying(pr_prefix):
     event_data = {
         'action': 'opened',

@@ -106,13 +106,14 @@ async def test_missing_backport_label():
     assert gh.delete_url is None
 
 
-async def test_backport_label_removal_success():
+@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
+async def test_backport_label_removal_success(pr_prefix):
     event_data = {
         'action': 'opened',
         'number': 2248,
         'pull_request': {
             'title': '[3.6] Backport this …',
-            'body': '…(GH-1234)',
+            'body': f'…({pr_prefix}-1234)',
             'issue_url': 'https://api.github.com/issue/2248',
             'base': {
                 'ref': '3.6',
@@ -149,12 +150,13 @@ async def test_backport_label_removal_success():
     assert expected_post is not None
 
 
-async def test_backport_label_removal_with_leading_space_in_title():
+@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
+async def test_backport_label_removal_with_leading_space_in_title(pr_prefix):
     event_data = {
         'action': 'opened',
         'number': 2248,
         'pull_request': {
-            'title': '  [3.6] Backport this (GH-1234)',
+            'title': f'  [3.6] Backport this ({pr_prefix}-1234)',
             'body': '…',
             'issue_url': 'https://api.github.com/issue/2248',
             'base': {
@@ -183,12 +185,13 @@ async def test_backport_label_removal_with_leading_space_in_title():
                                               {'name': 'needs backport to 3.6'})
 
 
-async def test_backport_label_removal_with_parentheses_in_title():
+@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
+async def test_backport_label_removal_with_parentheses_in_title(pr_prefix):
     event_data = {
         'action': 'opened',
         'number': 2248,
         'pull_request': {
-            'title': '[3.6] Backport (0.9.6) this (more bpo-1234) (GH-1234)',
+            'title': f'[3.6] Backport (0.9.6) this (more bpo-1234) ({pr_prefix}-1234)',
             'body': '…',
             'issue_url': 'https://api.github.com/issue/2248',
             'base': {
@@ -217,12 +220,13 @@ async def test_backport_label_removal_with_parentheses_in_title():
                                               {'name': 'needs backport to 3.6'})
 
 
-async def test_label_copying():
+@pytest.mark.parametrize('pr_prefix', ['GH', 'gh'])
+async def test_label_copying(pr_prefix):
     event_data = {
         'action': 'opened',
         'number': 2248,
         'pull_request': {
-            'title': '[3.6] Backport this (GH-1234)',
+            'title': f'[3.6] Backport this ({pr_prefix}-1234)',
             'body': 'N/A',
             'issue_url': 'https://api.github.com/issue/2248',
             'base': {

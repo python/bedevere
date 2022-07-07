@@ -12,7 +12,7 @@ class Labels(enum.Enum):
     """Labels that can be applied to a Pull Request."""
 
     type_bug = f"{TYPE_LABEL_PREFIX}-bug"
-    documentation = "docs"
+    docs = "docs"
     type_feature = f"{TYPE_LABEL_PREFIX}-feature"
     performance = "performance"
     type_security = f"{TYPE_LABEL_PREFIX}-security"
@@ -49,5 +49,5 @@ async def classify_by_filepaths(gh, pull_request, filenames):
     if tests:
         await add_label(gh, issue, Labels.tests)
     elif docs:
-        await add_label(gh, issue, Labels.documentation)
+        await add_label(gh, issue, Labels.docs)
     return

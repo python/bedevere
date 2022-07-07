@@ -62,7 +62,7 @@ async def test_news_only():
     }
     await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    # News only .rst does not add a type-documentation label.
+    # News only .rst does not add a type-docs label.
     assert len(gh.post_url) == 0
     assert len(gh.post_data) == 0
 
@@ -85,7 +85,7 @@ async def test_docs_no_news():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == [Labels.documentation.value]
+    assert gh.post_data[0] == [Labels.docs.value]
 
 
 async def test_docs_and_news():
@@ -106,7 +106,7 @@ async def test_docs_and_news():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == [Labels.documentation.value]
+    assert gh.post_data[0] == [Labels.docs.value]
 
 
 async def test_tests_only():

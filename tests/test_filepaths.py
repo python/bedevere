@@ -4,7 +4,7 @@ from gidgethub import sansio
 
 from bedevere import filepaths
 
-from bedevere.prtype import Category
+from bedevere.prtype import Labels
 
 from .test_news import check_n_pop_nonews_events
 
@@ -88,7 +88,7 @@ async def test_docs_only(author_association):
     check_n_pop_nonews_events(gh, author_association == 'NONE')
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == [Category.documentation.value]
+    assert gh.post_data[0] == [Labels.documentation.value]
 
 
 @pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])
@@ -117,7 +117,7 @@ async def test_tests_only(author_association):
     check_n_pop_nonews_events(gh, author_association == 'NONE')
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == [Category.tests.value]
+    assert gh.post_data[0] == [Labels.tests.value]
 
 
 async def test_docs_and_tests():
@@ -145,7 +145,7 @@ async def test_docs_and_tests():
     assert gh.post_url[0] == 'https://api.github.com/some/status'
     assert gh.post_data[0]['state'] == 'success'
     assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Category.tests.value]
+    assert gh.post_data[1] == [Labels.tests.value]
 
 
 async def test_news_and_tests():
@@ -174,7 +174,7 @@ async def test_news_and_tests():
     assert gh.post_url[0] == 'https://api.github.com/some/status'
     assert gh.post_data[0]['state'] == 'success'
     assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Category.tests.value]
+    assert gh.post_data[1] == [Labels.tests.value]
 
 
 async def test_synchronize():

@@ -2,7 +2,7 @@ import pytest
 
 from gidgethub import sansio
 
-from bedevere import news, filepaths
+from bedevere import filepaths
 
 from bedevere.prtype import Category
 

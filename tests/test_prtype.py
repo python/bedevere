@@ -62,7 +62,7 @@ async def test_news_only():
     }
     await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    # News only .rst does not add a type-docs label.
+    # News only .rst does not add a docs label.
     assert len(gh.post_url) == 0
     assert len(gh.post_data) == 0
 

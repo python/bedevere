@@ -17,13 +17,15 @@ class Labels(enum.Enum):
     performance = "performance"
     type_security = f"{TYPE_LABEL_PREFIX}-security"
     tests = "tests"
+    skip_news = "skip news"
 
 
-async def add_label(gh, issue, label):
+async def add_label(gh, issue, labels):
     """Apply this type label if there aren't any type labels on the PR."""
     if any(label.startswith("type") for label in util.labels(issue)):
         return
-    await gh.post(issue["labels_url"], data=[label.value])
+    label_names = [c.value for c in labels]
+    await gh.post(issue["labels_url"], data=label_names)
 
 
 async def classify_by_filepaths(gh, pull_request, filenames):
@@ -35,10 +37,10 @@ async def classify_by_filepaths(gh, pull_request, filenames):
     The routing is handled by the filepaths module.
     """
     issue = await util.issue_for_PR(gh, pull_request)
-    docs = tests = False
+    news = docs = tests = False
     for filename in filenames:
         if util.is_news_dir(filename):
-            continue
+            news = True
         filepath = pathlib.PurePath(filename)
         if filepath.suffix == '.rst':
             docs = True
@@ -47,7 +49,10 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         else:
             return
     if tests:
-        await add_label(gh, issue, Labels.tests)
+        await add_label(gh, issue, [Labels.tests])
     elif docs:
-        await add_label(gh, issue, Labels.docs)
+        if news:
+            await add_label(gh, issue, [Labels.docs])
+        else:
+            await add_label(gh, issue, [Labels.docs, Labels.skip_news])
     return

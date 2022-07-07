@@ -88,7 +88,7 @@ async def test_docs_only(author_association):
     check_n_pop_nonews_events(gh, author_association == 'NONE')
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == [Labels.docs.value]
+    assert gh.post_data[0] == [Labels.docs.value, Labels.skip_news.value]
 
 
 @pytest.mark.parametrize('author_association', ['OWNER', 'MEMBER', 'CONTRIBUTOR', 'NONE'])

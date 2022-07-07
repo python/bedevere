@@ -19,11 +19,11 @@ class Labels(enum.Enum):
     tests = "tests"
 
 
-async def add_label(gh, issue, category):
+async def add_label(gh, issue, label):
     """Apply this type label if there aren't any type labels on the PR."""
     if any(label.startswith("type") for label in util.labels(issue)):
         return
-    await gh.post(issue["labels_url"], data=[category.value])
+    await gh.post(issue["labels_url"], data=[label.value])
 
 
 async def classify_by_filepaths(gh, pull_request, filenames):

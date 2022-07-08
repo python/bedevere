@@ -86,8 +86,9 @@ async def test_set_status_failure_via_issue_not_found_on_github(action, monkeypa
             "url": "url",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
@@ -109,8 +110,9 @@ async def test_set_status_success_issue_found_on_bpo(action):
             "url": "url",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
@@ -135,10 +137,12 @@ async def test_set_status_success(action, monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "url": "",
             "title": "[3.6] gh-1234: an issue!",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     status = gh.post_data[0]
     assert status["state"] == "success"
@@ -160,10 +164,12 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_n
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": f"gh-{issue_number}: an issue!",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
@@ -190,10 +196,12 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": f"GH-{issue_number}: an issue!",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
@@ -240,6 +248,37 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     assert len(gh.patch_data) == 0
     assert len(gh.patch_url) == 0
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+async def test_set_status_success_via_skip_issue_label_pr_in_title(action, monkeypatch):
+    monkeypatch.setattr(gh_issue, '_validate_issue_number',
+                        mock.AsyncMock(return_value=False))
+    data = {
+        "action": action,
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": "GH-93644: An issue with a PR as issue number",
+            "issue_url": "issue URL",
+            "url": "url",
+        },
+    }
+    issue_data = {
+        "labels": [
+            {"name": "skip issue"},
+        ]
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH(getitem=issue_data)
+    await gh_issue.router.dispatch(event, gh, session=None)
+    status = gh.post_data[0]
+    assert status["state"] == "success"
+    assert status["context"] == "bedevere/issue-number"
+    assert "git-sha" in gh.post_url[0]
+    gh_issue._validate_issue_number.assert_not_awaited()
+
+    assert len(gh.patch_data) == 0
+    assert len(gh.patch_url) == 0
+
 
 @pytest.mark.asyncio
 async def test_edit_title(monkeypatch, issue_number):
@@ -250,12 +289,14 @@ async def test_edit_title(monkeypatch, issue_number):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": f"gh-{issue_number}: an issue!",
             "url": "url",
+            "issue_url": "issue URL",
         },
         "action": "edited",
         "changes": {"title": "thingy"},
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 1
     gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
@@ -270,14 +311,16 @@ async def test_no_body_when_edit_title(monkeypatch, issue_number):
             "url": "https://api.github.com/repos/python/cpython/pulls/5291",
             "title": f"gh-{issue_number}: Fix @asyncio.coroutine debug mode bug",
             "body": None,
+            "issue_url": "issue URL",
             "statuses_url": "https://api.github.com/repos/python/cpython/statuses/98d60953c85df9f0f28e04322a4c4ebec7b180f4",
         },
         "changes": {
             "title": f"gh-{issue_number}: Fix @asyncio.coroutine debug mode bug exposed by #5250."
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
 
@@ -296,12 +339,14 @@ async def test_edit_other_than_title(monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "bpo-1234: an issue!",
             "url": "url",
+            "issue_url": "issue URL",
         },
         "action": "edited",
         "changes": {"stuff": "thingy"},
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 0
     gh_issue._validate_issue_number.assert_not_awaited()
@@ -319,10 +364,12 @@ async def test_new_label_skip_issue_no_issue():
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "An easy fix",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
     assert gh.post_data[0]["state"] == "success"
     assert "git-sha" in gh.post_url[0]
@@ -337,10 +384,12 @@ async def test_new_label_skip_issue_with_issue_number():
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "Revert gh-1234: revert an easy fix",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
     status = gh.post_data[0]
     assert status["state"] == "success"
@@ -359,10 +408,12 @@ async def test_new_label_skip_issue_with_issue_number_ignore_case():
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "Revert Gh-1234: revert an easy fix",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
     status = gh.post_data[0]
     assert status["state"] == "success"
@@ -379,10 +430,12 @@ async def test_new_label_not_skip_issue():
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
     assert len(gh.post_data) == 0
 
@@ -400,10 +453,12 @@ async def test_removed_label_from_label_deletion(monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-1234: an issue!",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 0
     gh_issue._validate_issue_number.assert_not_awaited()
@@ -420,10 +475,12 @@ async def test_removed_label_skip_issue(monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "title": "gh-1234: an issue!",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     status = gh.post_data[0]
     assert status["state"] == "success"
@@ -444,10 +501,12 @@ async def test_removed_label_non_skip_issue(monkeypatch):
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "url": "url",
+            "issue_url": "issue URL",
         },
     }
+    issue_data = {"labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
-    gh = FakeGH()
+    gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 0
     gh_issue._validate_issue_number.assert_not_awaited()

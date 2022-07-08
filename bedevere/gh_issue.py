@@ -33,11 +33,14 @@ async def set_status(
     event, gh: GitHubAPI, *args, session: ClientSession, **kwargs
 ):
     """Set the issue number status on the pull request."""
+    issue = await util.issue_for_PR(gh, event.data["pull_request"])
+    if util.skip("issue", issue):
+        await util.post_status(gh, event, SKIP_ISSUE_STATUS)
+        return
+
     issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
     if not issue_number_found:
-        issue = await util.issue_for_PR(gh, event.data["pull_request"])
-        status = (SKIP_ISSUE_STATUS if util.skip("issue", issue)
-                                    else create_failure_status_no_issue())
+        status = create_failure_status_no_issue()
     else:
         issue_number = int(issue_number_found.group("issue"))
         issue_kind = issue_number_found.group("kind").lower()

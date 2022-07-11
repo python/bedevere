@@ -8,22 +8,22 @@ TYPE_LABEL_PREFIX = "type"
 
 
 @enum.unique
-class Category(enum.Enum):
-    """Category of Pull Request."""
+class Labels(enum.Enum):
+    """Labels that can be applied to a Pull Request."""
 
     type_bug = f"{TYPE_LABEL_PREFIX}-bug"
-    documentation = "docs"
+    docs = "docs"
     type_feature = f"{TYPE_LABEL_PREFIX}-feature"
     performance = "performance"
     type_security = f"{TYPE_LABEL_PREFIX}-security"
     tests = "tests"
 
 
-async def add_category(gh, issue, category):
+async def add_label(gh, issue, label):
     """Apply this type label if there aren't any type labels on the PR."""
     if any(label.startswith("type") for label in util.labels(issue)):
         return
-    await gh.post(issue["labels_url"], data=[category.value])
+    await gh.post(issue["labels_url"], data=[label.value])
 
 
 async def classify_by_filepaths(gh, pull_request, filenames):
@@ -47,7 +47,7 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         else:
             return
     if tests:
-        await add_category(gh, issue, Category.tests)
+        await add_label(gh, issue, Labels.tests)
     elif docs:
-        await add_category(gh, issue, Category.documentation)
+        await add_label(gh, issue, Labels.docs)
     return

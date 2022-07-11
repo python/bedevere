@@ -4,6 +4,7 @@ import sys
 
 import gidgethub
 
+
 DEFAULT_BODY = ""
 TAG_NAME = "gh-issue-number"
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"

@@ -154,7 +154,7 @@ async def test_docs_and_tests():
 
 async def test_leave_existing_type_labels():
     filenames = {'/path/to/docs.rst', 'test_docs2.py'}
-    issue = {'labels': [{'name': 'skip news'}, {'name': 'type-documentation'}],
+    issue = {'labels': [{'name': 'skip news'}, {'name': 'docs'}],
              'labels_url': 'https://api.github.com/some/label'}
     gh = FakeGH(getiter=filenames, getitem=issue)
     event_data = {
@@ -168,11 +168,30 @@ async def test_leave_existing_type_labels():
     }
     await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    # Only creates type-tests label.
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/label"
+    # This should only add the tests label as the docs label is already applied
     assert gh.post_data[0] == [Labels.tests.value]
 
+
+async def test_do_not_post_if_nothing_to_apply():
+    filenames = {'/path/to/docs.rst'}
+    issue = {'labels': [{'name': 'skip news'}, {'name': 'docs'}],
+             'labels_url': 'https://api.github.com/some/label'}
+    gh = FakeGH(getiter=filenames, getitem=issue)
+    event_data = {
+        'action': 'opened',
+        'number': 1234,
+        'pull_request': {
+            'url': 'https://api.github.com/repos/cpython/python/pulls/1234',
+            'statuses_url': 'https://api.github.com/some/status',
+            'issue_url': 'https://api.github.com/repos/cpython/python/issue/1234',
+        },
+    }
+    await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
+    assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
+    # This should not post anything as docs is already applied
+    assert len(gh.post_url) == 0
 
 
 async def test_news_and_tests():

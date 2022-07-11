@@ -4,7 +4,6 @@ import sys
 
 import gidgethub
 
-
 DEFAULT_BODY = ""
 TAG_NAME = "gh-issue-number"
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
@@ -88,7 +87,11 @@ async def files_for_PR(gh, pull_request):
 
 
 async def issue_for_PR(gh, pull_request):
-    """Get the issue data for a pull request."""
+    """Get the issue_url for a pull request.
+
+    The issue_url is the API endpoint for the given pull_request.
+    This terminology follows the official Github API and its documentation.
+    """
     return await gh.getitem(pull_request["issue_url"])
 
 
@@ -106,7 +109,11 @@ async def patch_body(gh, pull_request, issue_number):
     if not re.search(rf"(^|\b)(GH-|gh-|#){issue_number}\b", pull_request["body"]):
         return await gh.patch(
             pull_request["url"],
-            data={"body": BODY.format(body=pull_request["body"], issue_number=issue_number)},
+            data={
+                "body": BODY.format(
+                    body=pull_request["body"], issue_number=issue_number
+                )
+            },
         )
     return
 

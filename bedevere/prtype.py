@@ -20,12 +20,12 @@ class Labels(enum.Enum):
     skip_news = "skip news"
 
 
-async def add_label(gh, issue, labels):
-    """Apply this type label if there aren't any type labels on the PR."""
-    if any(label.startswith("type") for label in util.labels(issue)):
-        return
-    label_names = [c.value for c in labels]
-    await gh.post(issue["labels_url"], data=label_names)
+async def add_labels(gh, issue, labels):
+    """Add the specified labels to the PR."""
+    current_labels = util.labels(issue)
+    label_names = [c.value for c in labels if c.value not in current_labels]
+    if label_names:
+        await gh.post(issue["labels_url"], data=label_names)
 
 
 async def classify_by_filepaths(gh, pull_request, filenames):
@@ -49,10 +49,10 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         else:
             return
     if tests:
-        await add_label(gh, issue, [Labels.tests])
+        await add_labels(gh, issue, [Labels.tests])
     elif docs:
         if news:
-            await add_label(gh, issue, [Labels.docs])
+            await add_labels(gh, issue, [Labels.docs])
         else:
-            await add_label(gh, issue, [Labels.docs, Labels.skip_news])
+            await add_labels(gh, issue, [Labels.docs, Labels.skip_news])
     return

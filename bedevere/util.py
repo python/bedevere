@@ -110,11 +110,7 @@ async def patch_body(gh, pull_request, issue_number):
     if not re.search(rf"(^|\b)(GH-|gh-|#){issue_number}\b", pull_request["body"]):
         return await gh.patch(
             pull_request["url"],
-            data={
-                "body": BODY.format(
-                    body=pull_request["body"], issue_number=issue_number
-                )
-            },
+            data={"body": BODY.format(body=pull_request["body"], issue_number=issue_number)},
         )
     return
 

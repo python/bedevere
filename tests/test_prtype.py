@@ -169,7 +169,10 @@ async def test_leave_existing_type_labels():
     await prtype.classify_by_filepaths(gh, event_data['pull_request'], filenames)
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
-    assert len(gh.post_url) == 0
+    assert len(gh.post_url) == 1
+    assert gh.post_url[0] == "https://api.github.com/some/label"
+    assert gh.post_data[0] == [Labels.tests.value]
+
 
 
 async def test_news_and_tests():

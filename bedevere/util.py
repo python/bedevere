@@ -88,11 +88,8 @@ async def files_for_PR(gh, pull_request):
 
 
 async def issue_for_PR(gh, pull_request):
-    """Get the issue_url for a pull request.
-
-    The issue_url is the API endpoint for the given pull_request.
-    This terminology follows the official Github API and its documentation.
-    """
+    """Return a dict with data about the given PR."""
+    # "issue_url" is the API endpoint for the given pull_request (despite the name)
     return await gh.getitem(pull_request["issue_url"])
 
 

@@ -102,9 +102,11 @@ async def test_missing_backport_label():
     event = sansio.Event(data, event='pull_request',
                         delivery_id='1')
     getitem = {
-        'https://api.github.com/issue/1234':
-            {'labels': [{'name': 'CLA signed'}]},
-        'https://api.github.com/issue/2248': {},
+        "https://api.github.com/issue/1234": {
+            "labels": [{"name": "CLA signed"}],
+            "comments_url": "https://api.github.com/issue/1234/comments",
+        },
+        "https://api.github.com/issue/2248": {},
     }
     gh = FakeGH(getitem=getitem)
     await backport.router.dispatch(event, gh)
@@ -151,6 +153,46 @@ async def test_backport_label_removal_success(pr_prefix):
             message = post[1]['body']
             assert message == backport.MESSAGE_TEMPLATE.format(branch='3.6', pr='2248')
 
+    assert expected_post is not None
+
+
+async def test_backport_link_comment_without_label(pr_prefix):
+    event_data = {
+        "action": "opened",
+        "number": 2248,
+        "pull_request": {
+            "title": f"[3.6] Backport this ({pr_prefix}-1234)",
+            "body": "",
+            "issue_url": "https://api.github.com/issue/2248",
+            "base": {
+                "ref": "3.6",
+            },
+            "statuses_url": "https://api.github.com/repos/python/cpython/statuses/somehash",
+        },
+        "repository": {
+            "issues_url": "https://api.github.com/issue{/number}",
+        },
+    }
+    event = sansio.Event(event_data, event="pull_request", delivery_id="1")
+    getitem_data = {
+        "https://api.github.com/issue/1234": {
+            "labels": [],
+            "comments_url": "https://api.github.com/issue/1234/comments",
+        },
+        "https://api.github.com/issue/2248": {},
+    }
+    gh = FakeGH(getitem=getitem_data)
+    await backport.router.dispatch(event, gh)
+    issue_data = getitem_data["https://api.github.com/issue/1234"]
+    assert gh.delete_url is None
+    assert len(gh.post_) > 0
+    expected_post = None
+    for post in gh.post_:
+        if post[0] == issue_data["comments_url"]:
+            expected_post = post
+            message = post[1]["body"]
+            assert message == backport.MESSAGE_TEMPLATE.format(branch="3.6", pr="2248")
+    
     assert expected_post is not None
 
 

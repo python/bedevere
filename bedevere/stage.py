@@ -37,9 +37,7 @@ digraph "PR stages" {
 }
 """
 
-import datetime
 import enum
-import operator
 import random
 
 import gidgethub.routing

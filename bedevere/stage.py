@@ -178,6 +178,17 @@ async def core_dev_reviewers(gh, pull_request_url):
             yield reviewer
 
 
+async def reviewers(gh, pull_request_url):
+    """Find any type of reviewers."""
+    # Unfortunately the reviews URL is not contained in a pull request's data.
+    async for review in gh.getiter(pull_request_url + "/reviews"):
+        reviewer = util.user_login(review)
+        # Ignoring "comment" reviews.
+        actual_review = review["state"].lower() in {"approved", "changes_requested"}
+        if actual_review:
+            yield reviewer
+
+
 @router.register("pull_request_review", action="submitted")
 async def new_review(event, gh, *args, **kwargs):
     """Update the stage based on the latest review."""
@@ -223,6 +234,27 @@ async def new_review(event, gh, *args, **kwargs):
             await gh.post(pull_request["comments_url"], data={"body": comment})
         else:  # pragma: no cover
             raise ValueError(f"unexpected review state: {state!r}")
+
+
+@router.register("pull_request_review", action="dismissed")
+async def dismissed_review(event, gh, *args, **kwargs):
+    """Update the stage based on a dismissed review."""
+    pull_request = event.data["pull_request"]
+
+    # Poor-man's asynchronous any().
+    async for _ in core_dev_reviewers(gh, pull_request["url"]):
+        # No need to update the label as there is still a core dev review.
+        return
+    else:
+        async for _ in reviewers(gh, pull_request["url"]):
+            # Request review from core dev
+            await stage(
+                gh, await util.issue_for_PR(gh, pull_request), Blocker.core_review
+            )
+            return
+        else:
+            # Waiting for anybody to leave a review.
+            await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.review)
 
 
 @router.register("issue_comment", action="created")

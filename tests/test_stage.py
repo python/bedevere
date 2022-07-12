@@ -386,6 +386,233 @@ async def test_new_review():
     assert not len(gh.post_)
 
 
+async def test_dismissed_review():
+    # Last non-core review is dismissed > downgrade
+    username = "andreamcinnes"
+    data = {
+        "action": "dismissed",
+        "review": {
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.core_review.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "commented"}
+        ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels/42"
+    assert post_[1] == [awaiting.Blocker.review.value]
+
+    # Non-core review is dismissed, but core review remains > no change
+    username = "andreamcinnes"
+    data = {
+        "action": "dismissed",
+        "review": {
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.merge.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "approved"}
+        ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 0
+
+    # Non-core review is dismissed, but non-core review remains > no change
+    username = "andreamcinnes"
+    data = {
+        "action": "dismissed",
+        "review": {
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        f"https://api.github.com/teams/6/memberships/notbrettcannon": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.core_review.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "notbrettcannon"}, "state": "approved"}
+        ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 0
+
+    # Last core review is dismissed > double downgrade
+    username = "brettcannon"
+    data = {
+        "action": "dismissed",
+        "review": {
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        f"https://api.github.com/teams/6/memberships/notbrettcannon": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.merge.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "notbrettcannon"}, "state": "commented"}
+        ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels/42"
+    assert post_[1] == [awaiting.Blocker.review.value]
+
+    # Last core review is dismissed, non-core remains > downgrade
+    username = "brettcannon"
+    data = {
+        "action": "dismissed",
+        "review": {
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        f"https://api.github.com/teams/6/memberships/notbrettcannon": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.merge.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "notbrettcannon"}, "state": "approved"}
+        ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels/42"
+    assert post_[1] == [awaiting.Blocker.core_review.value]
+
+    # Core review is dismissed, but one core remains > no change
+    username = "brettcannon"
+    data = {
+        "action": "dismissed",
+        "review": {
+            "user": {
+                "login": username,
+            },
+        },
+        "pull_request": {
+            "url": "https://api.github.com/pr/42",
+            "issue_url": "https://api.github.com/issue/42",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": True,
+        f"https://api.github.com/teams/6/memberships/brettcannonalias": True,
+        "https://api.github.com/issue/42": {
+            "labels": [{"name": awaiting.Blocker.merge.value}],
+            "labels_url": "https://api.github.com/labels/42",
+        },
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": teams,
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannonalias"}, "state": "approved"}
+        ],
+    }
+    gh = FakeGH(getiter=iterators, getitem=items)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 0
+
+
 async def test_non_core_dev_does_not_downgrade():
     core_dev = "brettcannon"
     non_core_dev = "andreamcinnes"

@@ -88,7 +88,8 @@ async def files_for_PR(gh, pull_request):
 
 
 async def issue_for_PR(gh, pull_request):
-    """Get the issue data for a pull request."""
+    """Return a dict with data about the given PR."""
+    # "issue_url" is the API endpoint for the given pull_request (despite the name)
     return await gh.getitem(pull_request["issue_url"])
 
 

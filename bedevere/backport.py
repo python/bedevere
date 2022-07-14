@@ -55,16 +55,16 @@ async def _remove_backport_label(gh, original_issue, branch, backport_pr_number)
 async def manage_labels(gh, *args, **kwargs):
     with open(os.environ["GITHUB_EVENT_PATH"]) as f:
         event = json.load(f)
-        if event.get("action") == "edited" and "title" not in event.get("changes"):
-            return
-        pull_request = event["pull_request"]
-        title = util.normalize_title(pull_request['title'],
-                                 pull_request['body'])
-        title_match = TITLE_RE.match(title)
-        if title_match is None:
-            return
-        branch = title_match.group('branch')
-        original_pr_number = title_match.group('pr')
+    if event.get("action") == "edited" and "title" not in event.get("changes"):
+        return
+    pull_request = event["pull_request"]
+    title = util.normalize_title(pull_request['title'],
+                                pull_request['body'])
+    title_match = TITLE_RE.match(title)
+    if title_match is None:
+        return
+    branch = title_match.group('branch')
+    original_pr_number = title_match.group('pr')
     
     original_issue = await gh.getitem(event['repository']['issues_url'],
                                     {'number': original_pr_number})
@@ -84,26 +84,26 @@ async def validate_maintenance_branch_pr(gh, *args, **kwargs):
     """
     with open(os.environ["GITHUB_EVENT_PATH"]) as f:
         event = json.load(f)
-        if event.get("action") == "edited" and "title" not in event.get("changes"):
-            return
-        pull_request = event["pull_request"]
-        base_branch = pull_request["base"]["ref"]
+    if event.get("action") == "edited" and "title" not in event.get("changes"):
+        return
+    pull_request = event["pull_request"]
+    base_branch = pull_request["base"]["ref"]
 
-        if base_branch == "main":
-            return
+    if base_branch == "main":
+        return
 
-        title = util.normalize_title(pull_request["title"],
-                                    pull_request["body"])
-        title_match = MAINTENANCE_BRANCH_TITLE_RE.match(title)
+    title = util.normalize_title(pull_request["title"],
+                                pull_request["body"])
+    title_match = MAINTENANCE_BRANCH_TITLE_RE.match(title)
 
-        if title_match is None:
-            status = create_status(util.StatusState.FAILURE,
-                                description="Not a valid maintenance branch PR title.",
-                                target_url=BACKPORT_TITLE_DEVGUIDE_URL)
-        else:
-            status = create_status(util.StatusState.SUCCESS,
-                               description="Valid maintenance branch PR title.")
-        await util.post_status(gh, event, status)
+    if title_match is None:
+        status = create_status(util.StatusState.FAILURE,
+                            description="Not a valid maintenance branch PR title.",
+                            target_url=BACKPORT_TITLE_DEVGUIDE_URL)
+    else:
+        status = create_status(util.StatusState.SUCCESS,
+                            description="Valid maintenance branch PR title.")
+    await util.post_status(gh, event, status)
 
 async def maintenance_branch_created(gh, *args, **kwargs):
     """Create the `needs backport label` when the maintenance branch is created.

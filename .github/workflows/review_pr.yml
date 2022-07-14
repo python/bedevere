@@ -28,5 +28,3 @@ jobs:
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
       - name: Run code
         run: python3 -m bedevere.review_pr
-      
-  

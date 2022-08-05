@@ -36,6 +36,7 @@ async def classify_by_filepaths(gh, pull_request, filenames):
 
     The routing is handled by the filepaths module.
     """
+    pr_labels = []
     issue = await util.issue_for_PR(gh, pull_request)
     news = docs = tests = False
     for filename in filenames:
@@ -47,12 +48,13 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         elif filepath.name.startswith('test_'):
             tests = True
         else:
-            return
+            return pr_labels
     if tests:
-        await add_labels(gh, issue, [Labels.tests])
+        pr_labels = [Labels.tests]
     elif docs:
         if news:
-            await add_labels(gh, issue, [Labels.docs])
+            pr_labels = [Labels.docs]
         else:
-            await add_labels(gh, issue, [Labels.docs, Labels.skip_news])
-    return
+            pr_labels = [Labels.docs, Labels.skip_news]
+    await add_labels(gh, issue, pr_labels)
+    return pr_labels

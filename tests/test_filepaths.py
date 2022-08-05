@@ -85,7 +85,6 @@ async def test_docs_only(author_association):
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
-    check_n_pop_nonews_events(gh, author_association == 'NONE')
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == 'https://api.github.com/some/label'
     assert gh.post_data[0] == [Labels.docs.value, Labels.skip_news.value]
@@ -114,10 +113,10 @@ async def test_tests_only(author_association):
     await filepaths.router.dispatch(event, gh)
     assert gh.getiter_url == 'https://api.github.com/repos/cpython/python/pulls/1234/files'
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
+    assert len(gh.post_url) == 3 if author_association == 'NONE' else 2
+    assert gh.post_url.pop(0) == 'https://api.github.com/some/label'
+    assert gh.post_data.pop(0) == [Labels.tests.value]
     check_n_pop_nonews_events(gh, author_association == 'NONE')
-    assert len(gh.post_url) == 1
-    assert gh.post_url[0] == 'https://api.github.com/some/label'
-    assert gh.post_data[0] == [Labels.tests.value]
 
 
 async def test_docs_and_tests():
@@ -142,10 +141,10 @@ async def test_docs_and_tests():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
     assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/some/status'
-    assert gh.post_data[0]['state'] == 'success'
-    assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Labels.tests.value]
+    assert gh.post_url[0] == 'https://api.github.com/some/label'
+    assert gh.post_data[0] == [Labels.tests.value]
+    assert gh.post_url[1] == 'https://api.github.com/some/status'
+    assert gh.post_data[1]['state'] == 'success'
 
 
 async def test_news_and_tests():
@@ -171,10 +170,10 @@ async def test_news_and_tests():
     assert gh.getitem_url == 'https://api.github.com/repos/cpython/python/issue/1234'
     # Only creates type-tests label.
     assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/some/status'
-    assert gh.post_data[0]['state'] == 'success'
-    assert gh.post_url[1] == 'https://api.github.com/some/label'
-    assert gh.post_data[1] == [Labels.tests.value]
+    assert gh.post_url[0] == 'https://api.github.com/some/label'
+    assert gh.post_data[0] == [Labels.tests.value]
+    assert gh.post_url[1] == 'https://api.github.com/some/status'
+    assert gh.post_data[1]['state'] == 'success'
 
 
 async def test_synchronize():

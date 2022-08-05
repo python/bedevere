@@ -16,7 +16,9 @@ async def check_file_paths(event, gh, *args, **kwargs):
     pull_request = event.data['pull_request']
     files = await util.files_for_PR(gh, pull_request)
     filenames = [file['file_name'] for file in files]
-    await news.check_news(gh, pull_request, files)
     if event.data['action'] == 'opened':
-        await prtype.classify_by_filepaths(gh, pull_request, filenames)
-
+        labels = await prtype.classify_by_filepaths(gh, pull_request, filenames)
+        if prtype.Labels.skip_news not in labels:
+            await news.check_news(gh, pull_request, files)
+    else:
+        await news.check_news(gh, pull_request, files)

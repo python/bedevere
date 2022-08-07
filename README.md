@@ -36,6 +36,11 @@ blocking the PR from moving forward:
 * Green: core developers
 * Blue: anyone
 
+<!--
+  Changes to the labels in this flowchart should be reflected
+  in the devguide: https://devguide.python.org/triage/labels/
+-->
+
 ```mermaid
 flowchart TD
     A([New PR]):::creator
@@ -48,6 +53,7 @@ flowchart TD
 classDef creator stroke:#CC0;
 classDef anyone stroke:#00C;
 classDef coredev stroke:#0C0;
+classDef triager stroke:#C0C;
 linkStyle 0,1,7 stroke:#CC0,color:auto;
 linkStyle 2,3 stroke:#00C,color:auto;
 linkStyle 4,5,6,8,9,10 stroke:#0C0,color:auto;

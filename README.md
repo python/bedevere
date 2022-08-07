@@ -25,6 +25,34 @@ Labels PRs for documentation as `type-documentation`
 - ### Copies main labels to backport
 Copies labels from main PRs to backport PRs
 
+## PR State Machine
+
+This diagram represent the state machine for pull requests, and the labels
+applied by Bedevere.
+
+The colors represent who can make a state change or who is currently
+blocking the PR from moving forward:
+* Yellow: the PR creator
+* Green: core developers
+* Blue: anyone
+
+```mermaid
+flowchart TD
+    A([New PR]):::creator
+    A -- by contributor --> B[Awaiting review]:::anyone
+    A -- by core dev --> C[Awaiting core review]:::coredev
+    B & C -- new review by\nanother contributor --> C
+    C & B & E  -- new core review\nrequests changes --> D[Awaiting changes]:::creator
+    D -- changes by contributor --> E[Awaiting change review]:::coredev
+    C & E & B -- new core review\napproves ---> F[Awaiting merge]:::coredev
+classDef creator stroke:#CC0;
+classDef anyone stroke:#00C;
+classDef coredev stroke:#0C0;
+linkStyle 0,1,7 stroke:#CC0,color:auto;
+linkStyle 2,3 stroke:#00C,color:auto;
+linkStyle 4,5,6,8,9,10 stroke:#0C0,color:auto;
+```
+
 ## *Aside*: where does the name come from?
 Since this bot is about identifying pull requests that need changes,
 it seemed fitting to name it after Sir Bedevere who knew

@@ -4,7 +4,7 @@
 # documented with a Mermaid graph in the README.
 # The graph replaces a previous version (written as
 # a DOT file) that was included here.
-# 
+#
 # Changes to this file should be reflected in the README.
 
 import datetime

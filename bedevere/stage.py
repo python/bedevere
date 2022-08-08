@@ -1,41 +1,11 @@
 """Label a pull request based on what its waiting on."""
 
-# The following is the state machine for the flow of a PR
-# (written as a DOT file; you can use Graphviz or
-# http://www.webgraphviz.com/ to view the graph):
-"""
-digraph "PR stages" {
-  /* Colours represent who can make a state change or who is currently
-     blocking the PR from moving forward.
-
-     Blue: Anyone
-     Orange: PR creator
-     Green: Core developer
-     Purple: Triager Actions
-  */
-
-  "New PR" [color=orange]
-  "Awaiting review" [shape=box, color=blue]
-  "Awaiting core review" [shape=box, color=green]
-  "Awaiting changes" [shape=box, color=orange]
-  "Awaiting change review" [shape=box, color=green]
-  "Awaiting merge" [shape=box, color=green]
-
-  "New PR" -> "Awaiting review" [label="New PR by a contributor", color=orange]
-  "Awaiting review" -> "Awaiting core review" [label="New review by another contributor", color=blue]
-  "Awaiting core review" -> "Awaiting core review" [label="New review by another contributor", color=blue]
-  "Awaiting core review" -> "Awaiting changes" [label="New core review requests changes", color=green]
-  "Awaiting changes" -> "Awaiting change review" [label="Changes are done by contributor\nBedevere requests review from core-dev", color=orange]
-  "Awaiting change review" -> "Awaiting changes" [label="New core review requests changes", color=green]
-  "Awaiting change review" -> "Awaiting merge" [label="New core review approves", color=green]
-
-  "Awaiting review" -> "Awaiting merge" [label="New core review approves", color=green]
-  "Awaiting review" -> "Awaiting changes" [label="New core review requests changes", color=green]
-  "Awaiting core review" -> "Awaiting merge" [label="New core review approves", color=green]
-
-  "New PR" -> "Awaiting core review" [label="New PR by core devs", color=green]
-}
-"""
+# The state machine for the flow of a PR is currently
+# documented with a Mermaid graph in the README.
+# The graph replaces a previous version (written as
+# a DOT file) that was included here.
+#
+# Changes to this file should be reflected in the README.
 
 import datetime
 import enum

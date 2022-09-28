@@ -17,7 +17,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        id: python-install
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -37,4 +39,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
-          flags: Python_${{ matrix.python-version }}
+          flags: Python_${{ steps.python-install.outputs.python-version }}

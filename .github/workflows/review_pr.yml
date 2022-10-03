@@ -14,17 +14,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
+          python-version: "3.x"
+          cache: pip
+          cache-dependency-path: "*requirements.txt"
       - name: Install Dependencies
         run: python3 -m pip install coverage -U pip -r dev-requirements.txt
-      - name: Run code
+      - name: Run review_pr.py file
         run: python3 -m bedevere.review_pr

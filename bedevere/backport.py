@@ -21,7 +21,7 @@ MESSAGE_TEMPLATE = ('[GH-{pr}](https://github.com/python/cpython/pull/{pr}) is '
                     'a backport of this pull request to the '
                     '[{branch} branch](https://github.com/python/cpython/tree/{branch}).')
 
-BACKPORT_TITLE_DEVGUIDE_URL = "https://devguide.python.org/committing/#backport-pr-title"
+BACKPORT_TITLE_DEVGUIDE_URL = "https://devguide.python.org/core-developers/committing/#backport-pr-title"
 
 async def issue_for_PR(gh, pull_request):
     """Get the issue data for a pull request."""

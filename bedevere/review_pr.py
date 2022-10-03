@@ -30,16 +30,16 @@ async def dismiss_invalid_pr_review_request(gh, *args, **kwargs):
     """
     with open(os.environ["GITHUB_EVENT_PATH"]) as f:
         event = json.load(f)
-        head_label = event["pull_request"]["head"]["label"]
-        base_label = event["pull_request"]["base"]["label"]
+    head_label = event["pull_request"]["head"]["label"]
+    base_label = event["pull_request"]["base"]["label"]
 
-    if PYTHON_MAINT_BRANCH_RE.match(head_label) and \
-            base_label == "python:main":
-        data = {"reviewers": [reviewer["login"] for reviewer in event["pull_request"]["requested_reviewers"]],
-                "team_reviewers": [team["name"] for team in event["pull_request"]["requested_teams"]]
-                }
+    if (PYTHON_MAINT_BRANCH_RE.match(head_label) and
+        base_label == "python:main"):
+        pr = event["pull_request"]
+        reviewers = [reviewer["login"] for reviewer in pr["requested_reviewers"]
+        team_reviewers = [team["name"] for team in pr["requested_teams"]
         await gh.delete(f'{event["pull_request"]["url"]}/requested_reviewers',
-                        data=data)
+                        data=dict(reviewers=reviewers, team_reviewers=team_reviewers))
 
 async def main():
     try:

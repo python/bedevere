@@ -15,7 +15,7 @@ from . import util
 async def check_file_paths(gh, *args, **kwargs):
     with open(os.environ["GITHUB_EVENT_PATH"]) as f:
         event = json.load(f)
-        pull_request = event['pull_request']
+    pull_request = event['pull_request']
     files = await util.files_for_PR(gh, pull_request)
     filenames = [file['file_name'] for file in files]
     if event['action'] == 'opened':

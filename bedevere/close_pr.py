@@ -15,8 +15,8 @@ INVALID_PR_COMMENT = """\
 PRs attempting to merge a maintenance branch into the \
 main branch are deemed to be spam and automatically closed. \
 If you were attempting to report a bug, please go to \
-	https://github.com/python/cpython/issues; \
-	see devguide.python.org for further instruction as needed."""
+https://github.com/python/cpython/issues; \
+see devguide.python.org for further instruction as needed."""
 
 async def close_invalid_pr(gh, *args, **kwargs):
     """Close the invalid PR, add 'invalid' label, and post a message.
@@ -27,8 +27,8 @@ async def close_invalid_pr(gh, *args, **kwargs):
     """
     with open(os.environ["GITHUB_EVENT_PATH"]) as f:
         event = json.load(f)
-        head_label = event["pull_request"]["head"]["label"]
-        base_label = event["pull_request"]["base"]["label"]
+    head_label = event["pull_request"]["head"]["label"]
+    base_label = event["pull_request"]["base"]["label"]
 
     if PYTHON_MAINT_BRANCH_RE.match(head_label) and \
         base_label == "python:main":

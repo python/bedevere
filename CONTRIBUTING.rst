@@ -3,7 +3,7 @@ Contributing and Maintenance Guide
 
 Bedevere web service is launched with GitHub Actions, which is managed by The PSF.
 
-All actions are listed in actions tab of the repository:  https://github.com/python/bedevere/actions
+All actions are listed in the `Actions`_ tab of this repository.
 
 
 App collaborators and members
@@ -14,5 +14,4 @@ App collaborators and members
 - @brettcannon
 - @sabderemane
 
-.. _GitHub CLI: https://cli.github.com/
-.. _GitHub Actions: https://github.com/python/bedevere/actions
+.. _Actions: https://github.com/python/bedevere/actions

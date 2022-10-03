@@ -55,4 +55,3 @@ if __name__ == "__main__":  # pragma: no cover
     if port is not None:
         port = int(port)
     web.run_app(app, port=port)
-    

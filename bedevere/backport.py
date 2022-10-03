@@ -13,7 +13,7 @@ from . import util
 create_status = functools.partial(util.create_status, 'bedevere/maintenance-branch-pr')
 
 
-TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)')
+TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+\((?:GH-|#)(?P<pr>\d+)\)', re.IGNORECASE)
 MAINTENANCE_BRANCH_TITLE_RE = re.compile(r'\s*\[(?P<branch>\d+\.\d+)\].+')
 MAINTENANCE_BRANCH_RE = re.compile(r'\s*(?P<branch>\d+\.\d+)')
 BACKPORT_LABEL = 'needs backport to {branch}'
@@ -33,9 +33,7 @@ async def _copy_over_labels(gh, original_issue, backport_issue):
     labels = list(filter(lambda x: x.startswith(label_prefixes),
                     util.labels(original_issue)))
     if labels:
-        response = await gh.post(backport_issue["labels_url"], data=labels)
-        return response
-    return "no labels"
+        await gh.post(backport_issue["labels_url"], data=labels)
 
 
 
@@ -74,6 +72,20 @@ async def manage_labels(gh, *args, **kwargs):
     backport_issue = await issue_for_PR(gh, pull_request)
     await _copy_over_labels(gh, original_issue, backport_issue)
 
+def is_maintenance_branch(ref):
+    """
+    Return True if the ref refers to a maintenance branch.
+
+    >>> is_maintenance_branch("3.11")
+    True
+    >>> is_maintenance_branch("main")
+    False
+    >>> is_maintenance_branch("gh-1234/something-completely-different")
+    False
+    """
+    maintenance_branch_pattern = r'\d+\.\d+'
+    return bool(re.fullmatch(maintenance_branch_pattern, ref))
+
 async def validate_maintenance_branch_pr(gh, *args, **kwargs):
     """Check the PR title for maintenance branch pull requests.
 
@@ -89,7 +101,7 @@ async def validate_maintenance_branch_pr(gh, *args, **kwargs):
     pull_request = event["pull_request"]
     base_branch = pull_request["base"]["ref"]
 
-    if base_branch == "main":
+    if not is_maintenance_branch(base_branch):
         return
 
     title = util.normalize_title(pull_request["title"],

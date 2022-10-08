@@ -9,7 +9,7 @@ This bot is meant to help identify issues with a CPython pull request.
 - ### Identifies missing GitHub issue numbers in the title
 If no GitHub issue number is found the status fails and the
 "Details" link points to the relevant
-[section of the devguide](https://devguide.python.org/pullrequest/#submitting).
+[section of the devguide](https://devguide.python.org/getting-started/pull-request-lifecycle.html#submitting).
 - ### Links to bugs.python.org
 If an issue number is found then the "Details" link points to the relevant issue 
 itself, making it easier to navigate from PR to issue.

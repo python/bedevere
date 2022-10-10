@@ -37,11 +37,11 @@ async def _remove_backport_label(gh, original_issue, branch, backport_pr_number)
     Also leave a comment on the original PR referencing the backport PR.
     """
     backport_label = BACKPORT_LABEL.format(branch=branch)
+    message = MESSAGE_TEMPLATE.format(branch=branch, pr=backport_pr_number)
+    await gh.post(original_issue['comments_url'], data={'body': message})
     if backport_label not in util.labels(original_issue):
         return
     await gh.delete(original_issue['labels_url'], {'name': backport_label})
-    message = MESSAGE_TEMPLATE.format(branch=branch, pr=backport_pr_number)
-    await gh.post(original_issue['comments_url'], data={'body': message})
 
 
 @router.register("pull_request", action="opened")

@@ -1,7 +1,7 @@
 import enum
 import re
 import sys
-from typing import Any
+from typing import Any, Dict, Union
 
 import gidgethub
 from gidgethub.abc import GitHubAPI
@@ -96,10 +96,10 @@ async def issue_for_PR(gh, pull_request):
 
 async def patch_body(
     gh: GitHubAPI,
-    pr_or_issue: dict[str, Any],
+    pr_or_issue: Dict[str, Any],
     pr_or_issue_number: int,
     key: str
-) -> bytes | None:
+) -> Union[bytes, None]:
     """Updates the description of a PR/Issue with the gh issue/pr number if it exists.
 
     returns if body exists with issue/pr number

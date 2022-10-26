@@ -1,19 +1,20 @@
 import enum
 import re
 import sys
+from typing import Any
 
 import gidgethub
-
+from gidgethub.abc import GitHubAPI
 
 DEFAULT_BODY = ""
-TAG_NAME = "gh-issue-number"
+TAG_NAME = f"gh-{{tag_type}}-number"
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
 CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
 BODY = f"""\
 {{body}}
 
-<!-- {TAG_NAME}: gh-{{issue_number}} -->
-* Issue: gh-{{issue_number}}
+<!-- {TAG_NAME}: gh-{{pr_or_issue_number}} -->
+* {{key}}: gh-{{pr_or_issue_number}}
 {CLOSING_TAG}
 """
 
@@ -93,23 +94,32 @@ async def issue_for_PR(gh, pull_request):
     return await gh.getitem(pull_request["issue_url"])
 
 
-async def patch_body(gh, pull_request, issue_number):
-    """Updates the description of a PR with the gh issue number if it exists.
+async def patch_body(
+    gh: GitHubAPI,
+    pr_or_issue: dict[str, Any],
+    pr_or_issue_number: int,
+    key: str
+) -> bytes | None:
+    """Updates the description of a PR/Issue with the gh issue/pr number if it exists.
 
-    returns if body exists with issue_number
+    returns if body exists with issue/pr number
     """
-    if "body" not in pull_request or pull_request["body"] is None:
-        return await gh.patch(
-            pull_request["url"],
-            data={"body": BODY.format(body=DEFAULT_BODY, issue_number=issue_number)},
-        )
+    body = pr_or_issue.get("body", DEFAULT_BODY)
+    body_search_pattern = rf"(^|\b)(GH-|gh-|#){pr_or_issue_number}\b"
 
-    if not re.search(rf"(^|\b)(GH-|gh-|#){issue_number}\b", pull_request["body"]):
+    if not body or not re.search(body_search_pattern, body):
         return await gh.patch(
-            pull_request["url"],
-            data={"body": BODY.format(body=pull_request["body"], issue_number=issue_number)},
+            pr_or_issue["url"],
+            data={
+                "body": BODY.format(
+                    body=body,
+                    pr_or_issue_number=pr_or_issue_number,
+                    key=key,
+                    tag_type=key.lower(),
+                )
+            },
         )
-    return
+    return None
 
 
 async def is_core_dev(gh, username):

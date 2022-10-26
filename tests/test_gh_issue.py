@@ -54,9 +54,11 @@ async def test_set_status_failure(action, monkeypatch):
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "url",
+            "number": 1234,
         },
     }
     issue_data = {
+        "url": "url",
         "labels": [
             {"name": "non-trivial"},
         ]
@@ -84,9 +86,10 @@ async def test_set_status_failure_via_issue_not_found_on_github(action, monkeypa
             "title": "gh-123: Invalid issue number",
             "issue_url": "issue URL",
             "url": "url",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
@@ -108,9 +111,10 @@ async def test_set_status_success_issue_found_on_bpo(action):
             "title": "bpo-12345: An issue on b.p.o",
             "issue_url": "issue URL",
             "url": "url",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
@@ -138,9 +142,10 @@ async def test_set_status_success(action, monkeypatch):
             "url": "",
             "title": "[3.6] gh-1234: an issue!",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -165,9 +170,10 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_n
             "title": f"gh-{issue_number}: an issue!",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
@@ -181,8 +187,10 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_n
 
     assert len(gh.patch_data) > 0
     assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
-    assert len(gh.patch_url) == 1
+    assert f"<!-- gh-pr-number: gh-{issue_number} -->" in gh.patch_data[1]["body"]
+    assert len(gh.patch_url) == 2
     assert gh.patch_url[0] == data["pull_request"]["url"]
+    assert gh.patch_url[1] == issue_data["url"]
 
 
 @pytest.mark.asyncio
@@ -197,9 +205,10 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
             "title": f"GH-{issue_number}: an issue!",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     async with aiohttp.ClientSession() as session:
@@ -213,8 +222,10 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
 
     assert len(gh.patch_data) > 0
     assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
-    assert len(gh.patch_url) == 1
+    assert f"<!-- gh-pr-number: gh-{issue_number} -->" in gh.patch_data[1]["body"]
+    assert len(gh.patch_url) == 2
     assert gh.patch_url[0] == data["pull_request"]["url"]
+    assert gh.patch_url[1] == issue_data["url"]
 
 
 @pytest.mark.asyncio
@@ -229,9 +240,11 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "url",
+            "number": 1234,
         },
     }
     issue_data = {
+        "url": "url",
         "labels": [
             {"name": "skip issue"},
         ]
@@ -260,9 +273,11 @@ async def test_set_status_success_via_skip_issue_label_pr_in_title(action, monke
             "title": "GH-93644: An issue with a PR as issue number",
             "issue_url": "issue URL",
             "url": "url",
+            "number": 1234,
         },
     }
     issue_data = {
+        "url": "url",
         "labels": [
             {"name": "skip issue"},
         ]
@@ -290,11 +305,12 @@ async def test_edit_title(monkeypatch, issue_number):
             "title": f"gh-{issue_number}: an issue!",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
         "action": "edited",
         "changes": {"title": "thingy"},
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -313,12 +329,13 @@ async def test_no_body_when_edit_title(monkeypatch, issue_number):
             "body": None,
             "issue_url": "issue URL",
             "statuses_url": "https://api.github.com/repos/python/cpython/statuses/98d60953c85df9f0f28e04322a4c4ebec7b180f4",
+            "number": 1234,
         },
         "changes": {
             "title": f"gh-{issue_number}: Fix @asyncio.coroutine debug mode bug exposed by #5250."
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -326,8 +343,10 @@ async def test_no_body_when_edit_title(monkeypatch, issue_number):
 
     assert len(gh.patch_data) > 0
     assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
-    assert len(gh.patch_url) == 1
+    assert f"<!-- gh-pr-number: gh-{issue_number} -->" in gh.patch_data[1]["body"]
+    assert len(gh.patch_url) == 2
     assert gh.patch_url[0] == data["pull_request"]["url"]
+    assert gh.patch_url[1] == issue_data["url"]
 
 
 @pytest.mark.asyncio
@@ -340,11 +359,12 @@ async def test_edit_other_than_title(monkeypatch):
             "title": "bpo-1234: an issue!",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
         "action": "edited",
         "changes": {"stuff": "thingy"},
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -365,9 +385,10 @@ async def test_new_label_skip_issue_no_issue():
             "title": "An easy fix",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
@@ -385,9 +406,10 @@ async def test_new_label_skip_issue_with_issue_number():
             "title": "Revert gh-1234: revert an easy fix",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
@@ -409,9 +431,10 @@ async def test_new_label_skip_issue_with_issue_number_ignore_case():
             "title": "Revert Gh-1234: revert an easy fix",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
@@ -431,9 +454,10 @@ async def test_new_label_not_skip_issue():
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh)
@@ -454,9 +478,10 @@ async def test_removed_label_from_label_deletion(monkeypatch):
             "title": "gh-1234: an issue!",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -476,9 +501,10 @@ async def test_removed_label_skip_issue(monkeypatch):
             "title": "gh-1234: an issue!",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -502,9 +528,10 @@ async def test_removed_label_non_skip_issue(monkeypatch):
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
             "url": "url",
             "issue_url": "issue URL",
+            "number": 1234,
         },
     }
-    issue_data = {"labels": []}
+    issue_data = {"url": "url", "labels": []}
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
@@ -536,7 +563,11 @@ async def test_validate_issue_number_is_pr_on_github():
 
     gh = FakeGH(getitem={
         "number": 123,
-        "pull_request": {"html_url": "https://github.com/python/cpython/pull/123", "url": "url",}
+        "pull_request": {
+            "html_url": "https://github.com/python/cpython/pull/123",
+            "url": "url",
+            "number": 1234,
+        }
     })
     async with aiohttp.ClientSession() as session:
         response = await gh_issue._validate_issue_number(gh, 123, session=session)

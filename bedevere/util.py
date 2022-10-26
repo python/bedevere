@@ -104,7 +104,7 @@ async def patch_body(
 
     returns if body exists with issue/pr number
     """
-    body = pr_or_issue.get("body", DEFAULT_BODY)
+    body = pr_or_issue.get("body", None) or DEFAULT_BODY
     body_search_pattern = rf"(^|\b)(GH-|gh-|#){pr_or_issue_number}\b"
 
     if not body or not re.search(body_search_pattern, body):

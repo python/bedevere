@@ -50,6 +50,7 @@ flowchart TD
     C & B & E  -- new core review\nrequests changes --> D[Awaiting changes]:::creator
     D -- changes by contributor --> E[Awaiting change review]:::coredev
     C & E & B -- new core review\napproves ---> F[Awaiting merge]:::coredev
+    G[When a review is dismissed\nthe highest remaining state is restored\nbased on the remaining reviews]
 classDef creator stroke:#CC0;
 classDef anyone stroke:#00C;
 classDef coredev stroke:#0C0;

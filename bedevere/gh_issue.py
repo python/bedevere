@@ -24,6 +24,10 @@ ISSUE_URL: Dict[IssueKind, str] = {
     "gh": "https://github.com/python/cpython/issues/{issue_number}",
     "bpo": "https://bugs.python.org/issue?@action=redirect&bpo={issue_number}"
 }
+ISSUE_CHECK_URL: Dict[IssueKind, str] = {
+    "gh": "https://api.github.com/repos/python/cpython/issues/{issue_number}",
+    "bpo": "https://bugs.python.org/issue{issue_number}"
+}
 
 
 @router.register("pull_request", action="opened")
@@ -33,12 +37,15 @@ async def set_status(
     event, gh: GitHubAPI, *args, session: ClientSession, **kwargs
 ):
     """Set the issue number status on the pull request."""
-    issue = await util.issue_for_PR(gh, event.data["pull_request"])
+    pull_request = event.data["pull_request"]
+    issue = await util.issue_for_PR(gh, pull_request)
+
     if util.skip("issue", issue):
         await util.post_status(gh, event, SKIP_ISSUE_STATUS)
         return
 
-    issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
+    issue_number_found = ISSUE_RE.search(pull_request["title"])
+
     if not issue_number_found:
         status = create_failure_status_no_issue()
     else:
@@ -50,7 +57,16 @@ async def set_status(
         if issue_found:
             status = create_success_status(issue_number, kind=issue_kind)
             if issue_kind == "gh":
-                await util.patch_body(gh, event.data["pull_request"], issue_number)
+                # Add the issue number to the pull request's body
+                await util.patch_body(gh, pull_request, issue_number, "Issue")
+                # Get GitHub Issue data
+                issue_data = await gh.getitem(
+                    ISSUE_CHECK_URL[issue_kind].format(issue_number=issue_number)
+                )
+                # Add the pull request number to the issue's body
+                await util.patch_body(
+                    gh, issue_data, pull_request["number"], "PR"
+                )
         else:
             status = create_failure_status_issue_not_present(
                 issue_number, kind=issue_kind
@@ -123,14 +139,14 @@ async def _validate_issue_number(
 ) -> bool:
     """Ensure the GitHub Issue number is valid."""
     if kind == "bpo":
-        url = f"https://bugs.python.org/issue{issue_number}"
+        url = ISSUE_CHECK_URL[kind].format(issue_number=issue_number)
         async with session.head(url) as res:
             return res.status != 404
 
     if kind != "gh":
         raise ValueError(f"Unknown issue kind {kind}")
 
-    url = f"/repos/python/cpython/issues/{issue_number}"
+    url = ISSUE_CHECK_URL[kind].format(issue_number=issue_number)
     try:
         response = await gh.getitem(url)
     except gidgethub.BadRequest:

@@ -827,7 +827,7 @@ async def test_pull_request_review_comment():
     await awaiting.router.dispatch(event, gh)
     assert not len(gh.post_)
 
-    # Everything is right with the world.
+    # Comment with BORING_TRIGGER_PHRASE
     data = {
         "action": "created",
         "pull_request": {
@@ -850,7 +850,6 @@ async def test_pull_request_review_comment():
             "user": {"login": "andreamcinnes"},
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
-            "url": "https://api.github.com/issue/42",
             "pull_request": {"url": "https://api.github.com/pr/42"},
             "comments_url": "https://api.github.com/comments/42",
         }
@@ -880,7 +879,7 @@ async def test_pull_request_review_comment():
     assert "gvanrossum" in requested_reviewers
     assert "not-core-dev" not in requested_reviewers
 
-    # All is right with the Monty Python world.
+    # Comment with FUN_TRIGGER_PHRASE
     data = {
         "action": "created",
         "pull_request": {
@@ -892,7 +891,7 @@ async def test_pull_request_review_comment():
             "body": awaiting.FUN_TRIGGER_PHRASE,
         },
     }
-    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    event = sansio.Event(data, event="pull_request_review_comment", delivery_id="12345")
     gh = FakeGH(getitem=items, getiter=iterators)
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 3

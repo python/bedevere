@@ -798,6 +798,119 @@ async def test_new_comment():
     assert "not-core-dev" not in requested_reviewers
 
 
+async def test_pull_request_review_comment():
+    # Comment not from PR author.
+    data = {
+        "action": "created",
+        "pull_request": {"user": {"login": "andreamcinnes"}},
+        "comment": {
+            "user": {"login": "brettcannon"},
+            "body": awaiting.BORING_TRIGGER_PHRASE,
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review_comment", delivery_id="12345")
+    gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+
+    # Comment from PR author but missing trigger phrase.
+    data = {
+        "action": "created",
+        "pull_request": {"user": {"login": "andreamcinnes"}},
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": "I DID expect the Spanish Inquisition",
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review_comment", delivery_id="12345")
+    gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+
+    # Everything is right with the world.
+    data = {
+        "action": "created",
+        "pull_request": {
+            "user": {"login": "andreamcinnes"},
+            "issue_url": "https://api.github.com/issue/42",
+        },
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": awaiting.BORING_TRIGGER_PHRASE,
+        },
+    }
+    event = sansio.Event(data, event="pull_request_review_comment", delivery_id="12345")
+    items = {
+        "https://api.github.com/teams/6/memberships/brettcannon": True,
+        "https://api.github.com/teams/6/memberships/gvanrossum": True,
+        "https://api.github.com/teams/6/memberships/not-core-dev": gidgethub.BadRequest(
+            status_code=http.HTTPStatus(404)
+        ),
+        "https://api.github.com/issue/42": {
+            "user": {"login": "andreamcinnes"},
+            "labels": [],
+            "labels_url": "https://api.github.com/labels/42",
+            "url": "https://api.github.com/issue/42",
+            "pull_request": {"url": "https://api.github.com/pr/42"},
+            "comments_url": "https://api.github.com/comments/42",
+        }
+    }
+    iterators = {
+        "https://api.github.com/orgs/python/teams": [{"name": "python core", "id": 6}],
+        "https://api.github.com/pr/42/reviews": [
+            {"user": {"login": "brettcannon"}, "state": "approved"},
+            {"user": {"login": "gvanrossum"}, "state": "changes_requested"},
+            {"user": {"login": "not-core-dev"}, "state": "approved"},
+        ],
+    }
+    gh = FakeGH(getitem=items, getiter=iterators)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 3
+    labeling, comment, review_request = gh.post_
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.change_review.value]
+    assert comment[0] == "https://api.github.com/comments/42"
+    comment_body = comment[1]["body"]
+    assert "@brettcannon" in comment_body
+    assert "@gvanrossum" in comment_body
+    assert "not-core-dev" not in comment_body
+    assert review_request[0] == "https://api.github.com/pr/42/requested_reviewers"
+    requested_reviewers = review_request[1]["reviewers"]
+    assert "brettcannon" in requested_reviewers
+    assert "gvanrossum" in requested_reviewers
+    assert "not-core-dev" not in requested_reviewers
+
+    # All is right with the Monty Python world.
+    data = {
+        "action": "created",
+        "pull_request": {
+            "user": {"login": "andreamcinnes"},
+            "issue_url": "https://api.github.com/issue/42",
+        },
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": awaiting.FUN_TRIGGER_PHRASE,
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    gh = FakeGH(getitem=items, getiter=iterators)
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 3
+    labeling, comment, review_request = gh.post_
+    assert labeling[0] == "https://api.github.com/labels/42"
+    assert labeling[1] == [awaiting.Blocker.change_review.value]
+    assert comment[0] == "https://api.github.com/comments/42"
+    comment_body = comment[1]["body"]
+    assert "@brettcannon" in comment_body
+    assert "@gvanrossum" in comment_body
+    assert "not-core-dev" not in comment_body
+    assert review_request[0] == "https://api.github.com/pr/42/requested_reviewers"
+    requested_reviewers = review_request[1]["reviewers"]
+    assert "brettcannon" in requested_reviewers
+    assert "gvanrossum" in requested_reviewers
+    assert "not-core-dev" not in requested_reviewers
+
+
 async def test_change_requested_for_core_dev():
     data = {
         "action": "submitted",

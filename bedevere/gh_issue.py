@@ -58,14 +58,14 @@ async def set_status(
             status = create_success_status(issue_number, kind=issue_kind)
             if issue_kind == "gh":
                 # Add the issue number to the pull request's body
-                await util.patch_body(gh, pull_request, issue_number, "Issue")
+                await util.patch_body(gh, util.PR, pull_request, issue_number)
                 # Get GitHub Issue data
                 issue_data = await gh.getitem(
                     ISSUE_CHECK_URL[issue_kind].format(issue_number=issue_number)
                 )
                 # Add the pull request number to the issue's body
                 await util.patch_body(
-                    gh, issue_data, pull_request["number"], "PR"
+                    gh, util.ISSUE, issue_data, pull_request["number"]
                 )
         else:
             status = create_failure_status_issue_not_present(

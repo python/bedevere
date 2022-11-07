@@ -1,7 +1,7 @@
 import enum
 import re
 import sys
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 import gidgethub
 from gidgethub.abc import GitHubAPI
@@ -25,7 +25,7 @@ PR_BODY_TEMPLATE = f"""\
 ISSUE_BODY_TAG_NAME = f"gh-linked-{PR}s"
 ISSUE_BODY_OPENING_TAG = f'<!-- {ISSUE_BODY_TAG_NAME} -->'
 ISSUE_BODY_CLOSING_TAG = f'<!-- /{ISSUE_BODY_TAG_NAME} -->'
-ISSUE_BODY_TEMPLATE = f"""\n
+ISSUE_BODY_TASK_LIST_TEMPLATE = f"""\n
 {ISSUE_BODY_OPENING_TAG}
 ```[tasklist]
 ### Linked PRs
@@ -145,7 +145,7 @@ def build_issue_body(pr_number: int, body: str) -> str:
 
     if not result:
         # If the body doesn't contain a tasklist, we add one using the template
-        body += ISSUE_BODY_TEMPLATE.format(pr_number=pr_number)
+        body += ISSUE_BODY_TASK_LIST_TEMPLATE.format(pr_number=pr_number)
         return body
 
     # If the body already contains a tasklist, only add the new PR to the list

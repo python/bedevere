@@ -36,8 +36,9 @@ ISSUE_BODY_TASK_LIST_TEMPLATE = f"""\n
 
 # Regex pattern to search for tasklist in the issue body
 ISSUE_BODY_TASK_LIST_PATTERN = re.compile(
-    rf"(?P<start>{ISSUE_BODY_OPENING_TAG}\s*```\[tasklist]\s*)"
-    rf"(?P<tasks>.*?)(?P<end>\s*```\s*{ISSUE_BODY_CLOSING_TAG})",
+    rf"(?P<start>{ISSUE_BODY_OPENING_TAG}\s{{1,2}}```\[tasklist\])"
+    rf"(?P<tasks>.*?)"
+    rf"(?P<end>```\s{{1,2}}{ISSUE_BODY_CLOSING_TAG})",
     flags=re.DOTALL
 )
 
@@ -150,7 +151,7 @@ def build_issue_body(pr_number: int, body: str) -> str:
 
     # If the body already contains a tasklist, only add the new PR to the list
     return ISSUE_BODY_TASK_LIST_PATTERN.sub(
-        fr"\g<start>\g<tasks>\n- [ ] gh-{pr_number}\g<end>",
+        fr"\g<start>\g<tasks>- [ ] gh-{pr_number}\n\g<end>",
         body
     )
 

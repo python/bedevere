@@ -149,7 +149,7 @@ def build_issue_body(pr_number: int, body: str) -> str:
         body += ISSUE_BODY_TASK_LIST_TEMPLATE.format(pr_number=pr_number)
         return body
 
-    # If the body already contains a tasklist, only add the new PR to the list
+    # If the body already contains a tasklist, only append the new PR to the list
     return ISSUE_BODY_TASK_LIST_PATTERN.sub(
         fr"\g<start>\g<tasks>- [ ] gh-{pr_number}\n\g<end>",
         body
@@ -175,7 +175,7 @@ async def patch_body(
             if content_type == ISSUE
             else build_pr_body(pr_or_issue_number, body)
         )
-        return await gh.patch( pr_or_issue["url"], data={"body": updated_body})
+        return await gh.patch(pr_or_issue["url"], data={"body": updated_body})
     return None
 
 

@@ -38,7 +38,7 @@ ISSUE_BODY_TASK_LIST_TEMPLATE = f"""\n
 ISSUE_BODY_TASK_LIST_PATTERN = re.compile(
     rf"(?P<start>{ISSUE_BODY_OPENING_TAG}\r?\n```\[tasklist\])"
     rf"(?P<tasks>.*?)"
-    rf"(?P<end>```\s{{1,2}}{ISSUE_BODY_CLOSING_TAG})",
+    rf"(?P<end>```\r?\n{ISSUE_BODY_CLOSING_TAG})",
     flags=re.DOTALL
 )
 

@@ -179,27 +179,27 @@ async def test_patch_body_adds_issue_if_not_present():
     vals["body"] = "GH-1234\n"
 
     with patch.object(gh, "patch") as mock:
-        await util.patch_body(gh, vals, 1234, "Issue")
+        await util.patch_body(gh, util.PR, vals, 1234)
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
         vals["body"] = "Multiple\nlines\nwith gh-1234 in some prose"
-        await util.patch_body(gh, vals, 1234, "Issue")
+        await util.patch_body(gh, util.PR, vals, 1234)
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
         vals["body"] = "#1234 in some prose"
-        await util.patch_body(gh, vals, 1234, "Issue")
+        await util.patch_body(gh, util.PR, vals, 1234)
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
         vals["body"] = "Some prose mentioning gh-12345 but not our issue"
-        await util.patch_body(gh, vals, 1234, "Issue")
+        await util.patch_body(gh, util.PR, vals, 1234)
         mock.assert_called_once()
     with patch.object(gh, "patch") as mock:
         vals["body"] = None
-        await util.patch_body(gh, vals, 1234, "Issue")
+        await util.patch_body(gh, util.PR, vals, 1234)
         mock.assert_called_once()
     with patch.object(gh, "patch") as mock:
         vals["body"] = ""
-        await util.patch_body(gh, vals, 1234, "Issue")
+        await util.patch_body(gh, util.PR, vals, 1234)
         data = {"body": "\n\n<!-- gh-issue-number: gh-1234 -->\n* Issue: gh-1234\n<!-- /gh-issue-number -->\n"}
         mock.assert_called_once_with("https://fake.com", data=data)
     assert await gh.patch(vals["url"], data=vals) == None
@@ -224,27 +224,87 @@ async def test_patch_body_adds_pr_if_not_present():
     vals["body"] = "GH-1234\n"
 
     with patch.object(gh, "patch") as mock:
-        await util.patch_body(gh, vals, 1234, "PR")
+        await util.patch_body(gh, util.ISSUE, vals, 1234)
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
         vals["body"] = "Multiple\nlines\nwith gh-1234 in some prose"
-        await util.patch_body(gh, vals, 1234, "PR")
+        await util.patch_body(gh, util.ISSUE, vals, 1234)
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
         vals["body"] = "#1234 in some prose"
-        await util.patch_body(gh, vals, 1234, "PR")
+        await util.patch_body(gh, util.ISSUE, vals, 1234)
         mock.assert_not_called()
     with patch.object(gh, "patch") as mock:
         vals["body"] = "Some prose mentioning gh-12345 but not our issue"
-        await util.patch_body(gh, vals, 1234, "PR")
+        await util.patch_body(gh, util.ISSUE, vals, 1234)
         mock.assert_called_once()
     with patch.object(gh, "patch") as mock:
         vals["body"] = None
-        await util.patch_body(gh, vals, 1234, "PR")
+        await util.patch_body(gh, util.ISSUE, vals, 1234)
         mock.assert_called_once()
     with patch.object(gh, "patch") as mock:
         vals["body"] = ""
-        await util.patch_body(gh, vals, 1234, "PR")
-        data = {"body": "\n\n<!-- gh-pr-number: gh-1234 -->\n* PR: gh-1234\n<!-- /gh-pr-number -->\n"}
+        await util.patch_body(gh, util.ISSUE, vals, 1234)
+        data = {
+            "body": (
+                "\n\n<!-- gh-linked-prs -->\n```[tasklist]\n"
+                "### Linked PRs\n- [ ] gh-1234\n"
+                "```\n<!-- /gh-linked-prs -->\n"
+            )
+        }
+        mock.assert_called_once_with("https://fake.com", data=data)
+    with patch.object(gh, "patch") as mock:
+        vals["body"] = (
+            "\n\n<!-- gh-linked-prs -->\n```[tasklist]\n"
+            "### Linked PRs\n- [ ] gh-1234\n"
+            "```\n<!-- /gh-linked-prs -->\n"
+        )
+        await util.patch_body(gh, util.ISSUE, vals, 54321)
+        data = {
+            "body": (
+                "\n\n<!-- gh-linked-prs -->\n```[tasklist]\n"
+                "### Linked PRs\n- [ ] gh-1234\n- [ ] gh-54321\n"
+                "```\n<!-- /gh-linked-prs -->\n"
+            )
+        }
+        mock.assert_called_once_with("https://fake.com", data=data)
+    assert await gh.patch(vals["url"], data=vals) == None
+
+
+async def test_patch_body_adds_pr_to_legacy_issue_body():
+    """Updates the description of a PR/Issue with the gh issue/pr number if it exists.
+
+    returns if body exists with issue/pr number
+    """
+    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+    gh = FakeGH(
+        getitem={
+            f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+                "total_count": 0,
+                "items": [],
+            }
+        }
+    )
+    vals = {}
+    vals["url"] = "https://fake.com"
+    vals["body"] = "GH-1234\n"
+
+    with patch.object(gh, "patch") as mock:
+        vals["body"] = (
+            "<!-- gh-pr-number: gh-103 -->\n"
+            "* PR: gh-103\n"
+            "<!-- /gh-pr-number -->\n"
+        )
+        await util.patch_body(gh, util.ISSUE, vals, 54321)
+        data = {
+            "body": (
+                "<!-- gh-pr-number: gh-103 -->\n"
+                "* PR: gh-103\n"
+                "<!-- /gh-pr-number -->\n"
+                "\n\n<!-- gh-pr-number: gh-54321 -->\n"
+                "* PR: gh-54321\n"
+                "<!-- /gh-pr-number -->\n"
+            )
+        }
         mock.assert_called_once_with("https://fake.com", data=data)
     assert await gh.patch(vals["url"], data=vals) == None

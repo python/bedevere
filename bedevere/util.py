@@ -1,22 +1,46 @@
 import enum
 import re
 import sys
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 import gidgethub
 from gidgethub.abc import GitHubAPI
 
-DEFAULT_BODY = ""
-TAG_NAME = f"gh-{{tag_type}}-number"
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
-CLOSING_TAG = f"<!-- /{TAG_NAME} -->"
-BODY = f"""\
+PR = 'pr'
+ISSUE = 'issue'
+DEFAULT_BODY = ""
+
+PR_BODY_TAG_NAME = f"gh-{{tag_type}}-number"
+PR_BODY_OPENING_TAG = f"<!-- {PR_BODY_TAG_NAME}: gh-{{pr_or_issue_number}} -->"
+PR_BODY_CLOSING_TAG = f"<!-- /{PR_BODY_TAG_NAME} -->"
+PR_BODY_TEMPLATE = f"""\
 {{body}}
 
-<!-- {TAG_NAME}: gh-{{pr_or_issue_number}} -->
+{PR_BODY_OPENING_TAG}
 * {{key}}: gh-{{pr_or_issue_number}}
-{CLOSING_TAG}
+{PR_BODY_CLOSING_TAG}
 """
+
+ISSUE_BODY_TAG_NAME = f"gh-linked-{PR}s"
+ISSUE_BODY_OPENING_TAG = f'<!-- {ISSUE_BODY_TAG_NAME} -->'
+ISSUE_BODY_CLOSING_TAG = f'<!-- /{ISSUE_BODY_TAG_NAME} -->'
+ISSUE_BODY_TASK_LIST_TEMPLATE = f"""\n
+{ISSUE_BODY_OPENING_TAG}
+```[tasklist]
+### Linked PRs
+- [ ] gh-{{pr_number}}
+```
+{ISSUE_BODY_CLOSING_TAG}
+"""
+
+# Regex pattern to search for tasklist in the issue body
+ISSUE_BODY_TASK_LIST_PATTERN = re.compile(
+    rf"(?P<start>{ISSUE_BODY_OPENING_TAG}\r?\n```\[tasklist\])"
+    rf"(?P<tasks>.*?)"
+    rf"(?P<end>```\r?\n{ISSUE_BODY_CLOSING_TAG})",
+    flags=re.DOTALL
+)
 
 
 @enum.unique
@@ -94,12 +118,50 @@ async def issue_for_PR(gh, pull_request):
     return await gh.getitem(pull_request["issue_url"])
 
 
+def build_pr_body(issue_number: int, body: str) -> str:
+    """Update the Pull Request body with related Issue."""
+    return PR_BODY_TEMPLATE.format(
+        body=body,
+        pr_or_issue_number=issue_number,
+        key=ISSUE.title(),
+        tag_type=ISSUE,
+    )
+
+
+def build_issue_body(pr_number: int, body: str) -> str:
+    """Update the Issue body with related Pull Request."""
+    # If the body already contains a legacy closing tag
+    # (e.g. <!-- /gh-pr-number -->), then we use the legacy template
+    # TODO: Remove this when all the open issues using the legacy tag are closed
+    if PR_BODY_CLOSING_TAG.format(tag_type=PR) in body:
+        return PR_BODY_TEMPLATE.format(
+            body=body,
+            pr_or_issue_number=pr_number,
+            key=PR.upper(),
+            tag_type=PR,
+        )
+
+    # Check if the body already contains a tasklist
+    result = ISSUE_BODY_TASK_LIST_PATTERN.search(body)
+
+    if not result:
+        # If the body doesn't contain a tasklist, we add one using the template
+        body += ISSUE_BODY_TASK_LIST_TEMPLATE.format(pr_number=pr_number)
+        return body
+
+    # If the body already contains a tasklist, only append the new PR to the list
+    return ISSUE_BODY_TASK_LIST_PATTERN.sub(
+        fr"\g<start>\g<tasks>- [ ] gh-{pr_number}\n\g<end>",
+        body
+    )
+
+
 async def patch_body(
     gh: GitHubAPI,
+    content_type: str,
     pr_or_issue: Dict[str, Any],
     pr_or_issue_number: int,
-    key: str
-) -> Union[bytes, None]:
+) -> Any:
     """Updates the description of a PR/Issue with the gh issue/pr number if it exists.
 
     returns if body exists with issue/pr number
@@ -108,17 +170,12 @@ async def patch_body(
     body_search_pattern = rf"(^|\b)(GH-|gh-|#){pr_or_issue_number}\b"
 
     if not body or not re.search(body_search_pattern, body):
-        return await gh.patch(
-            pr_or_issue["url"],
-            data={
-                "body": BODY.format(
-                    body=body,
-                    pr_or_issue_number=pr_or_issue_number,
-                    key=key,
-                    tag_type=key.lower(),
-                )
-            },
+        updated_body = (
+            build_issue_body(pr_or_issue_number, body)
+            if content_type == ISSUE
+            else build_pr_body(pr_or_issue_number, body)
         )
+        return await gh.patch(pr_or_issue["url"], data={"body": updated_body})
     return None
 
 

@@ -27,18 +27,16 @@ ISSUE_BODY_OPENING_TAG = f'<!-- {ISSUE_BODY_TAG_NAME} -->'
 ISSUE_BODY_CLOSING_TAG = f'<!-- /{ISSUE_BODY_TAG_NAME} -->'
 ISSUE_BODY_TASK_LIST_TEMPLATE = f"""\n
 {ISSUE_BODY_OPENING_TAG}
-```[tasklist]
 ### Linked PRs
-- [ ] gh-{{pr_number}}
-```
+* gh-{{pr_number}}
 {ISSUE_BODY_CLOSING_TAG}
 """
 
 # Regex pattern to search for tasklist in the issue body
 ISSUE_BODY_TASK_LIST_PATTERN = re.compile(
-    rf"(?P<start>{ISSUE_BODY_OPENING_TAG}\r?\n```\[tasklist\])"
+    rf"(?P<start>{ISSUE_BODY_OPENING_TAG})"
     rf"(?P<tasks>.*?)"
-    rf"(?P<end>```\r?\n{ISSUE_BODY_CLOSING_TAG})",
+    rf"(?P<end>{ISSUE_BODY_CLOSING_TAG})",
     flags=re.DOTALL
 )
 
@@ -151,8 +149,9 @@ def build_issue_body(pr_number: int, body: str) -> str:
 
     # If the body already contains a tasklist, only append the new PR to the list
     return ISSUE_BODY_TASK_LIST_PATTERN.sub(
-        fr"\g<start>\g<tasks>- [ ] gh-{pr_number}\n\g<end>",
-        body
+        fr"\g<start>\g<tasks>* gh-{pr_number}\n\g<end>",
+        body,
+        count=1,
     )
 
 

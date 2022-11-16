@@ -247,24 +247,24 @@ async def test_patch_body_adds_pr_if_not_present():
         await util.patch_body(gh, util.ISSUE, vals, 1234)
         data = {
             "body": (
-                "\n\n<!-- gh-linked-prs -->\n```[tasklist]\n"
-                "### Linked PRs\n- [ ] gh-1234\n"
-                "```\n<!-- /gh-linked-prs -->\n"
+                "\n\n<!-- gh-linked-prs -->\n"
+                "### Linked PRs\n* gh-1234\n"
+                "<!-- /gh-linked-prs -->\n"
             )
         }
         mock.assert_called_once_with("https://fake.com", data=data)
     with patch.object(gh, "patch") as mock:
         vals["body"] = (
-            "\n\n<!-- gh-linked-prs -->\n```[tasklist]\n"
-            "### Linked PRs\n- [ ] gh-1234\n"
-            "```\n<!-- /gh-linked-prs -->\n"
+            "\n\n<!-- gh-linked-prs -->\n"
+            "### Linked PRs\n* gh-1234\n"
+            "<!-- /gh-linked-prs -->\n"
         )
         await util.patch_body(gh, util.ISSUE, vals, 54321)
         data = {
             "body": (
-                "\n\n<!-- gh-linked-prs -->\n```[tasklist]\n"
-                "### Linked PRs\n- [ ] gh-1234\n- [ ] gh-54321\n"
-                "```\n<!-- /gh-linked-prs -->\n"
+                "\n\n<!-- gh-linked-prs -->\n"
+                "### Linked PRs\n* gh-1234\n* gh-54321\n"
+                "<!-- /gh-linked-prs -->\n"
             )
         }
         mock.assert_called_once_with("https://fake.com", data=data)

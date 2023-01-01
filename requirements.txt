@@ -4,7 +4,7 @@ async-timeout==4.0.2
 cachetools==5.2.0
 chardet==5.0.0
 gidgethub==5.2.1
-multidict==6.0.2
+multidict==6.0.4
 packaging==21.3
 py==1.11.0
 pyparsing==3.0.9

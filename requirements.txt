@@ -6,7 +6,6 @@ chardet==5.1.0
 gidgethub==5.2.1
 multidict==6.0.4
 packaging==23.0
-py==1.11.0
 pyparsing==3.0.9
 six==1.16.0
 uritemplate==4.1.1

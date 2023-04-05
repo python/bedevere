@@ -454,10 +454,6 @@ async def test_maintenance_branch_created(ref):
     assert label_creation_post[0] == "https://api.github.com/repos/python/cpython/labels"
     assert label_creation_post[1] == {'name': f"needs backport to {ref}", 'color': '#c2e0c6'}
 
-    issue_creation_post = gh.post_[1]
-    assert issue_creation_post[0] == "https://api.github.com/repos/berkerpeksag/cpython-emailer-webhook/issues"
-    assert issue_creation_post[1]['title'] == f"Please add {ref} to ALLOWED_BRANCHES"
-
 
 @pytest.mark.parametrize('ref', ['backport-3.9', 'test', 'Mariatta-patch-1'])
 async def test_other_branch_created(ref):

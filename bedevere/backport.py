@@ -135,15 +135,3 @@ async def maintenance_branch_created(event, gh, *args, **kwargs):
             "/repos/python/cpython/labels",
             data={"name": f"needs backport to {branch_name}", "color": "#c2e0c6"},
         )
-
-        await gh.post(
-            "/repos/berkerpeksag/cpython-emailer-webhook/issues",
-            data={
-                "title": f"Please add {branch_name} to ALLOWED_BRANCHES",
-                "body": (
-                    f"A new CPython maintenance branch `{branch_name}` has just been created.",
-                    "\nThis is a reminder to add `{branch_name}` to the list of `ALLOWED_BRANCHES`",
-                    "\nhttps://github.com/berkerpeksag/cpython-emailer-webhook/blob/e164cb9a6735d56012a4e557fd67dd7715c16d7b/mailer.py#L15",
-                ),
-            },
-        )

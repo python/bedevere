@@ -120,9 +120,6 @@ async def validate_maintenance_branch_pr(event, gh, *args, **kwargs):
 async def maintenance_branch_created(event, gh, *args, **kwargs):
     """Create the `needs backport label` when the maintenance branch is created.
 
-    Also post a reminder to add the maintenance branch to the list of
-    `ALLOWED_BRANCHES` in CPython-emailer-webhook.
-
     If a maintenance branch was created (e.g.: 3.9, or 4.0),
     automatically create the `needs backport to ` label.
 

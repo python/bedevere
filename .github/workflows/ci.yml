@@ -13,10 +13,11 @@ jobs:
 
     strategy:
       matrix:
-        # TODO replace 3.12.0-alpha.4 with 3.12-dev when
+        # TODO add 3.12.0-dev when
         # aiohttp, frozenlist and yarl support alpha 5+
         # https://github.com/python/blurb_it/pull/330#issuecomment-1449496275
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12.0-alpha.4"]
+        # https://github.com/python/bedevere/pull/547#issuecomment-1529153851
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3

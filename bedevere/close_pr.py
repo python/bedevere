@@ -9,7 +9,8 @@ PYTHON_MAINT_BRANCH_RE = re.compile(r'^\w+:\d+\.\d+$')
 INVALID_PR_COMMENT = """\
 PRs attempting to merge a maintenance branch into the \
 main branch are deemed to be spam and automatically closed. \
-If you were attempting to report a bug, please go to bugs.python.org; \
+If you were attempting to report a bug, please go to \
+https://github.com/python/cpython/issues; \
 see devguide.python.org for further instruction as needed."""
 
 

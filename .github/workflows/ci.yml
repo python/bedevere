@@ -12,8 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        # TODO add 3.12.0-dev when
+        # TODO add 3.12-dev when
         # aiohttp, frozenlist and yarl support alpha 5+
         # https://github.com/python/blurb_it/pull/330#issuecomment-1449496275
         # https://github.com/python/bedevere/pull/547#issuecomment-1529153851

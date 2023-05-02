@@ -178,6 +178,7 @@ async def test_opened_pr():
                 "login": username,
             },
             "issue_url": issue_url,
+            "draft": False,
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")

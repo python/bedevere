@@ -125,7 +125,7 @@ async def edited_pr(event, gh, *arg, **kwargs):
     issue = await util.issue_for_PR(gh, pull_request)
     username = util.user_login(pull_request)
     if pull_request.get("draft"):
-        _remove_stage_labels(gh, issue)
+        await _remove_stage_labels(gh, issue)
     else:
         blocked_on = Blocker.core_review if await util.is_core_dev(gh, username) else Blocker.review
         await stage(gh, issue, blocked_on)

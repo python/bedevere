@@ -11,14 +11,14 @@ If no GitHub issue number is found the status fails and the
 "Details" link points to the relevant
 [section of the devguide](https://devguide.python.org/getting-started/pull-request-lifecycle.html#submitting).
 - ### Links to GitHub issues
-If an issue number is found then the "Details" link points to the relevant issue 
+If an issue number is found then the "Details" link points to the relevant issue
 itself, making it easier to navigate from PR to issue.
 - ### Identifies missing news entry
-If no `Misc/NEWS.d` entry is found or the news entry is formatted incorrectly 
-and the issue doesn't have the `skip news` label, the status fails and a relevant 
+If no `Misc/NEWS.d` entry is found or the news entry is formatted incorrectly
+and the issue doesn't have the `skip news` label, the status fails and a relevant
 description label is added to it.
 - ### Closes invalid PRs
-Closes PRs that try to merge a maintenance branch into the main branch, adds 
+Closes PRs that try to merge a maintenance branch into the main branch, adds
 `invalid` label, and posts a relevant message.
 - ### Labels PRs for docs
 Labels PRs for documentation as `type-documentation`
@@ -43,7 +43,9 @@ blocking the PR from moving forward:
 
 ```mermaid
 flowchart TD
-    A([New PR]):::creator
+    A([Published PR]):::creator
+    A_draft([New Draft PR]):::creator
+    A_draft -- publish draft by contributor --> A:::creator
     A -- by contributor --> B[Awaiting review]:::anyone
     A -- by core dev --> C[Awaiting core review]:::coredev
     B & C -- new review by\nanother contributor --> C

@@ -109,12 +109,26 @@ async def opened_pr(event, gh, *arg, **kwargs):
     "awaiting review".
     """
     pull_request = event.data["pull_request"]
+    if pull_request.get("draft"):
+        return
     issue = await util.issue_for_PR(gh, pull_request)
     username = util.user_login(pull_request)
     if await util.is_core_dev(gh, username):
         await stage(gh, issue, Blocker.core_review)
     else:
         await stage(gh, issue, Blocker.review)
+
+
+@router.register("pull_request", action="edited")
+async def edited_pr(event, gh, *arg, **kwargs):
+    pull_request = event.data["pull_request"]
+    issue = await util.issue_for_PR(gh, pull_request)
+    username = util.user_login(pull_request)
+    if pull_request.get("draft"):
+        await _remove_stage_labels(gh, issue)
+    else:
+        blocked_on = Blocker.core_review if await util.is_core_dev(gh, username) else Blocker.review
+        await stage(gh, issue, blocked_on)
 
 
 @router.register("push")

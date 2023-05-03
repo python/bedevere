@@ -72,6 +72,74 @@ async def test_stage():
     assert post_[1] == [awaiting.Blocker.merge.value]
 
 
+async def test_opened_draft_pr():
+    # New Draft PR from a core dev.
+    username = "brettcannon"
+    issue_url = "https://api.github.com/issue/42"
+    data = {
+        "action": "opened",
+        "pull_request": {
+            "user": {
+                "login": username,
+            },
+            "issue_url": issue_url,
+            "draft": True,
+        },
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    teams = [{"name": "python core", "id": 6}]
+    items = {
+        f"https://api.github.com/teams/6/memberships/{username}": "OK",
+        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"},
+    }
+    gh = FakeGH(
+        getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
+    )
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 0
+
+    # Draft PR is published
+    data["action"] = "edited"
+    data["pull_request"]["draft"] = False
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH(
+        getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
+    )
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 1
+    post_ = gh.post_[0]
+    assert post_[0] == "https://api.github.com/labels"
+    assert post_[1] == [awaiting.Blocker.core_review.value]
+
+    # Published PR is unpublished (set back to Draft)
+    data["action"] = "edited"
+    data["pull_request"]["draft"] = True
+    encoded_label = "awaiting%20core%20review"
+    items[issue_url] = {
+        "labels": [
+            {
+                "url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
+                "name": "awaiting core review",
+            },
+            {
+                "url": "https://api.github.com/repos/python/cpython/labels/CLA%20signed",
+                "name": "CLA signed",
+            },
+        ],
+        "labels_url": "https://api.github.com/repos/python/cpython/issues/12345/labels{/name}",
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH(
+        getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
+    )
+    await awaiting.router.dispatch(event, gh)
+    assert len(gh.post_) == 0
+    assert (
+        gh.delete_url ==
+        f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
+    )
+
+
 async def test_opened_pr():
     # New PR from a core dev.
     username = "brettcannon"
@@ -110,6 +178,7 @@ async def test_opened_pr():
                 "login": username,
             },
             "issue_url": issue_url,
+            "draft": False,
         },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")

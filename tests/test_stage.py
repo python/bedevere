@@ -99,7 +99,7 @@ async def test_opened_draft_pr():
     assert len(gh.post_) == 0
 
     # Draft PR is published
-    data["action"] = "edited"
+    data["action"] = "ready_for_review"
     data["pull_request"]["draft"] = False
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(
@@ -111,8 +111,8 @@ async def test_opened_draft_pr():
     assert post_[0] == "https://api.github.com/labels"
     assert post_[1] == [awaiting.Blocker.core_review.value]
 
-    # Published PR is unpublished (set back to Draft)
-    data["action"] = "edited"
+    # Published PR is unpublished (converted to Draft)
+    data["action"] = "converted_to_draft"
     data["pull_request"]["draft"] = True
     encoded_label = "awaiting%20core%20review"
     items[issue_url] = {

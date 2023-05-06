@@ -101,15 +101,13 @@ async def stage(gh, issue, blocked_on):
 
 
 async def stage_for_review(gh, pull_request):
-    """Apply awaiting review labels."""
+    """Apply "awaiting review" label."""
     issue = await util.issue_for_PR(gh, pull_request)
     username = util.user_login(pull_request)
-    blocked_on = (
-        Blocker.core_review
-        if await util.is_core_dev(gh, username)
-        else Blocker.review
-    )
-    await stage(gh, issue, blocked_on)
+    if await util.is_core_dev(gh, username):
+        await stage(gh, issue, Blocker.core_review)
+    else:
+        await stage(gh, issue, Blocker.review)
 
 
 @router.register("pull_request", action="opened")

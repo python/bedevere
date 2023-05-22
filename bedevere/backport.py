@@ -130,5 +130,6 @@ async def maintenance_branch_created(event, gh, *args, **kwargs):
     if MAINTENANCE_BRANCH_RE.match(branch_name):
         await gh.post(
             "/repos/python/cpython/labels",
-            data={"name": f"needs backport to {branch_name}", "color": "c2e0c6"},
+            data={"name": f"needs backport to {branch_name}", "color": "c2e0c6",
+                  "description": "bug and security fixes"},
         )

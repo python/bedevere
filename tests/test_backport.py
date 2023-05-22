@@ -452,7 +452,8 @@ async def test_maintenance_branch_created(ref):
     await backport.router.dispatch(event, gh)
     label_creation_post = gh.post_[0]
     assert label_creation_post[0] == "https://api.github.com/repos/python/cpython/labels"
-    assert label_creation_post[1] == {'name': f"needs backport to {ref}", 'color': 'c2e0c6'}
+    assert label_creation_post[1] == {'name': f"needs backport to {ref}", 'color': 'c2e0c6',
+                                      'description': 'bug and security fixes'}
 
 
 @pytest.mark.parametrize('ref', ['backport-3.9', 'test', 'Mariatta-patch-1'])

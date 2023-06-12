@@ -1,0 +1,10 @@
+---
+name: bedevere-action
+description: Bedevere GitHub Actions
+
+branding:
+  color: blue
+  icon: activity
+runs:
+  using: docker
+  image: Dockerfile

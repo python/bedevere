@@ -1,0 +1,45 @@
+name: Bedevere
+
+on:
+  pull_request:
+    types:
+      - edited
+      - opened
+      - synchronize
+      - reopened
+      - edited
+      - labeled
+      - unlabeled
+      - review_requested
+      - ready_for_review
+      - converted_to_draft
+      - closed
+  create:
+    types:
+      - branch
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+  issue_comment:
+    types:
+      - created
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repo
+      uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+    - name: execute bedevere
+      run: |
+        python -m bedevere

@@ -1,38 +1,24 @@
-from aiohttp import web
 import pytest
 
-from bedevere import __main__ as main
+
+from tests.fixtures import tmp_webhook, tmp_event_name, tmp_job_id
 
 
-async def test_ping(aiohttp_client):
-    app = web.Application()
-    app.router.add_post("/", main.main)
-    client = await aiohttp_client(app)
-    headers = {"x-github-event": "ping",
-               "x-github-delivery": "1234"}
-    data = {"zen": "testing is good"}
-    response = await client.post("/", headers=headers, json=data)
-    assert response.status == 200
+@pytest.mark.parametrize('tmp_event_name', ["created"], indirect=True)
+async def test_success(tmp_webhook, tmp_event_name, tmp_job_id, monkeypatch):
+    from bedevere import __main__ as main
 
-
-async def test_success(aiohttp_client):
-    app = web.Application()
-    app.router.add_post("/", main.main)
-    client = await aiohttp_client(app)
-    headers = {"x-github-event": "project",
-               "x-github-delivery": "1234"}
     # Sending a payload that shouldn't trigger any networking, but no errors
     # either.
-    data = {"action": "created"}
-    response = await client.post("/", headers=headers, json=data)
-    assert response.status == 200
+    event_payload = {"action": "created"}
+    response = await main.main(event_payload)
+    assert response
 
+async def test_failure(tmp_webhook):
+    from bedevere import __main__ as main
+    """Even in the face of an exception, actions will not crash."""
 
-async def test_failure(aiohttp_client):
-    """Even in the face of an exception, the server should not crash."""
-    app = web.Application()
-    app.router.add_post("/", main.main)
-    client = await aiohttp_client(app)
-    # Missing key headers.
-    response = await client.post("/", headers={})
-    assert response.status == 500
+    # Missing GitHub environment variables
+    event_payload = {}
+    response = await main.main(event_payload)
+    assert not response

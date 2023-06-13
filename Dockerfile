@@ -7,4 +7,6 @@ COPY bedevere /bedevere
 RUN pip install --no-cache-dir -U pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN dir -s
+
 CMD ["python", "-m", "bedevere"]

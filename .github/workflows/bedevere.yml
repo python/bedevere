@@ -3,7 +3,6 @@ name: Bedevere
 on:
   pull_request:
     types:
-      - edited
       - opened
       - synchronize
       - reopened

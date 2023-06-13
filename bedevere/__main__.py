@@ -31,7 +31,7 @@ async def main(event_payload):
 
         print('GH delivery ID', event.delivery_id, file=sys.stderr)
 
-        oauth_token = os.environ.get("GH_AUTH")
+        oauth_token = os.environ.get("GITHUB_TOKEN")
         async with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere",
                                       oauth_token=oauth_token,
@@ -49,5 +49,8 @@ async def main(event_payload):
         return False
 
 if __name__ == "__main__":  # pragma: no cover
-    event_from = actions.event()
-    asyncio.run(main(event_from))
+    if os.environ.get("GITHUB_EVENT_PATH"):
+        event_from = actions.event()
+        asyncio.run(main(event_from))
+    else:
+        print(f"Environment Variable 'GITHUB_EVENT_PATH' not found.")

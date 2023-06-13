@@ -2,8 +2,9 @@ FROM python:3.11-slim
 
 COPY requirements.txt requirements.txt
 COPY dev-requirements.txt dev-requirements.txt
+COPY bedevere bedevere/
 
-RUN pip install -U pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -U pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["python", "-m", "bedevere"]

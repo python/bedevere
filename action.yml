@@ -8,7 +8,3 @@ branding:
 runs:
   using: docker
   image: Dockerfile
-  with:
-    context: .
-    build-args: |
-      "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"

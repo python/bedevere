@@ -228,11 +228,12 @@ def no_labels(event_data):
         return False
 
 
-async def get_pr_for_commit(gh, sha):
+async def get_pr_for_commit(gh, sha, repo_full_name=None):
     """Find the PR containing the specific commit hash."""
-
+    if not repo_full_name:
+        repo_full_name = "python/cpython"
     prs_for_commit = await gh.getitem(
-        f"/search/issues?q=type:pr+repo:python/cpython+sha:{sha}"
+        f"/search/issues?q=type:pr+repo:{repo_full_name}+sha:{sha}"
     )
     if prs_for_commit["total_count"] > 0:  # there should only be one
         return prs_for_commit["items"][0]

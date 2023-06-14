@@ -40,6 +40,7 @@ async def check_news(gh, pull_request, files=None):
 
     The routing is handled through the filepaths module.
     """
+    print(f"Check news {pull_request=}")
     if not files:
         files = await util.files_for_PR(gh, pull_request)
     in_next_dir = file_found = False

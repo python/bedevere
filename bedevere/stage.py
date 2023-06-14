@@ -142,7 +142,7 @@ async def new_commit_pushed(event, gh, *arg, **kwargs):
     """If there is a new commit pushed to the PR branch that is in `awaiting merge` state,
     move it back to `awaiting core review` stage.
     """
-    print(f"{event=}")
+    print(f"{event.data=}")
     commits = event.data["commits"]
     if len(commits) > 0:
         # get the latest commit hash

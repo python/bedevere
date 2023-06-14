@@ -30,6 +30,7 @@ async def main(event_payload):
         event = sansio.Event(event_payload, event=event_name, delivery_id=job_id)
         print(f"{event.data=}")
         print(f"{event_payload}")
+        print(f"{event_name=}")
         print('GH delivery ID', event.delivery_id, file=sys.stderr)
 
         oauth_token = os.environ.get("GITHUB_TOKEN")

@@ -230,6 +230,7 @@ def no_labels(event_data):
 
 async def get_pr_for_commit(gh, sha):
     """Find the PR containing the specific commit hash."""
+
     prs_for_commit = await gh.getitem(
         f"/search/issues?q=type:pr+repo:python/cpython+sha:{sha}"
     )

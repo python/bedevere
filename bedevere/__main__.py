@@ -43,10 +43,10 @@ async def main(event_payload):
             print('GH requests remaining:', gh.rate_limit.remaining)
         except AttributeError:
             pass
-        return True
+
     except Exception as exc:
         traceback.print_exc(file=sys.stderr)
-        return False
+        sys.exit(1)
 
 if __name__ == "__main__":  # pragma: no cover
     if os.environ.get("GITHUB_EVENT_PATH"):

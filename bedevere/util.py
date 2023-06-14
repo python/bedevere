@@ -77,7 +77,6 @@ def skip_label(what):
 
 
 def labels(issue):
-    print(f"{issue}")
     return {label_data["name"] for label_data in issue["labels"]}
 
 

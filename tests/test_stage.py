@@ -1097,16 +1097,19 @@ async def test_awaiting_label_not_removed_when_pr_not_merged(label):
     assert gh.delete_url is None
 
 
-async def test_new_commit_pushed_to_approved_pr():
+@pytest.mark.parametrize("repo_full_name", ["python/cpython", "mariatta/cpython"])
+async def test_new_commit_pushed_to_approved_pr(repo_full_name):
     # There is new commit on approved PR
     username = "brettcannon"
     sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
-    data = {"commits": [{"id": sha}]}
+    data = {"commits": [{"id": sha}],
+            "repository": {"full_name": repo_full_name},
+            }
     event = sansio.Event(data, event="push", delivery_id="12345")
     teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": "OK",
-        f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+        f"https://api.github.com/search/issues?q=type:pr+repo:{repo_full_name}+sha:{sha}": {
             "total_count": 1,
             "items": [
                 {
@@ -1169,13 +1172,15 @@ async def test_new_commit_pushed_to_approved_pr():
     }
 
 
-async def test_new_commit_pushed_to_not_approved_pr():
+@pytest.mark.parametrize("repo_full_name", ["python/cpython", "mariatta/cpython"])
+async def test_new_commit_pushed_to_not_approved_pr(repo_full_name):
     # There is new commit on approved PR
     sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
-    data = {"commits": [{"id": sha}]}
+    data = {"commits": [{"id": sha}],
+            "repository": {"full_name": repo_full_name},}
     event = sansio.Event(data, event="push", delivery_id="12345")
     items = {
-        f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+        f"https://api.github.com/search/issues?q=type:pr+repo:{repo_full_name}+sha:{sha}": {
             "total_count": 1,
             "items": [
                 {

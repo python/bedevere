@@ -32,8 +32,6 @@ async def main(event_payload):
         print('GH delivery ID', event.delivery_id, file=sys.stderr)
 
         oauth_token = os.environ.get("GITHUB_TOKEN")
-        if len(oauth_token) > 0:
-            print("got GH token")
         async with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere",
                                       oauth_token=oauth_token,

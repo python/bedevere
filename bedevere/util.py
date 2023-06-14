@@ -68,8 +68,6 @@ def create_status(context, state, *, description=None, target_url=None):
 
 async def post_status(gh, event, status):
     """Post a status in reaction to an event."""
-    print(f"{event=}")  # debug
-    print(f"{status=}")  # debug
     await gh.post(event.data["pull_request"]["statuses_url"], data=status)
 
 

@@ -1096,8 +1096,8 @@ async def test_awaiting_label_not_removed_when_pr_not_merged(label):
     await awaiting.router.dispatch(event, gh)
     assert gh.delete_url is None
 
-
-async def test_new_commit_pushed_to_approved_pr():
+@pytest.mark.parametrize("issue_url_key", ["url", "issue_url"])
+async def test_new_commit_pushed_to_approved_pr(issue_url_key):
     # There is new commit on approved PR
     username = "brettcannon"
     sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
@@ -1121,7 +1121,8 @@ async def test_new_commit_pushed_to_approved_pr():
                             "name": "awaiting merge",
                         },
                     ],
-                    "issue_url": "/repos/python/cpython/issues/5547",
+                    # the key could be 'url' or 'issue_url'
+                    issue_url_key: "/repos/python/cpython/issues/5547",
                 }
             ],
         },
@@ -1168,8 +1169,8 @@ async def test_new_commit_pushed_to_approved_pr():
         )
     }
 
-
-async def test_new_commit_pushed_to_not_approved_pr():
+@pytest.mark.parametrize("issue_url_key", ["url", "issue_url"])
+async def test_new_commit_pushed_to_not_approved_pr(issue_url_key):
     # There is new commit on approved PR
     sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
     data = {"commits": [{"id": sha}]}
@@ -1190,7 +1191,8 @@ async def test_new_commit_pushed_to_not_approved_pr():
                             "name": "awaiting review",
                         },
                     ],
-                    "issue_url": "/repos/python/cpython/issues/5547",
+                    #
+                    issue_url_key: "/repos/python/cpython/issues/5547",
                 }
             ],
         },

@@ -113,7 +113,12 @@ async def files_for_PR(gh, pull_request):
 async def issue_for_PR(gh, pull_request):
     """Return a dict with data about the given PR."""
     # "issue_url" is the API endpoint for the given pull_request (despite the name)
-    return await gh.getitem(pull_request["issue_url"])
+    # It could also come from "url"
+
+    url_key = "issue_url"
+    if not pull_request.get(url_key):
+        url_key = "url"
+    return await gh.getitem(pull_request[url_key])
 
 
 def build_pr_body(issue_number: int, body: str) -> str:

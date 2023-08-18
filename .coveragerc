@@ -1,5 +1,9 @@
 [run]
 branch = True
+dynamic_context = test_function
 
 [report]
 fail_under = 100
+
+[html]
+show_contexts = True

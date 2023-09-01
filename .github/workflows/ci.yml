@@ -35,10 +35,7 @@ jobs:
         run: |
           python -m pip install tox
       - name: Run Tests
-        env:
-          # run against the current Python interpreter
-          TOXENV: python
-        run: tox
+        run: tox -e py
       - uses: codecov/codecov-action@v3
         if: always()
         with:

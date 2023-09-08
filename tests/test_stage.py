@@ -1123,6 +1123,7 @@ async def test_new_commit_pushed_to_approved_pr(issue_url_key):
                     ],
                     # the key could be 'url' or 'issue_url'
                     issue_url_key: "/repos/python/cpython/issues/5547",
+                    "state": "open",
                 }
             ],
         },
@@ -1193,6 +1194,7 @@ async def test_new_commit_pushed_to_not_approved_pr(issue_url_key):
                     ],
                     #
                     issue_url_key: "/repos/python/cpython/issues/5547",
+                    "state": "open",
                 }
             ],
         },
@@ -1210,6 +1212,42 @@ async def test_pushed_without_commits():
     data = {"commits": []}
     event = sansio.Event(data, event="push", delivery_id="12345")
     gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+
+    # no posts
+    assert len(gh.post_) == 0
+
+
+@pytest.mark.parametrize("issue_url_key", ["url", "issue_url"])
+async def test_new_commit_pushed_to_closed_pr(issue_url_key):
+    # There is new commit on approved PR
+    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+    data = {"commits": [{"id": sha}]}
+    event = sansio.Event(data, event="push", delivery_id="12345")
+    items = {
+        f"https://api.github.com/search/issues?q=type:pr+repo:python/cpython+sha:{sha}": {
+            "total_count": 1,
+            "items": [
+                {
+                    "number": 5547,
+                    "title": "[3.6] bpo-32720: Fixed the replacement field grammar documentation. (GH-5544)",
+                    "body": "\n\n`arg_name` and `element_index` are defined as `digit`+ instead of `integer`.\n(cherry picked from commit 7a561afd2c79f63a6008843b83733911d07f0119)\n\nCo-authored-by: Mariatta <Mariatta@users.noreply.github.com>",
+                    "labels": [
+                        {
+                            "name": "CLA signed",
+                        },
+                        {
+                            "name": "awaiting review",
+                        },
+                    ],
+                    #
+                    issue_url_key: "/repos/python/cpython/issues/5547",
+                    "state": "closed",
+                }
+            ],
+        },
+    }
+    gh = FakeGH(getitem=items)
     await awaiting.router.dispatch(event, gh)
 
     # no posts

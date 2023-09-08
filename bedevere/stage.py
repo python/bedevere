@@ -147,14 +147,16 @@ async def new_commit_pushed(event, gh, *arg, **kwargs):
         # get the latest commit hash
         commit_hash = commits[-1]["id"]
         pr = await util.get_pr_for_commit(gh, commit_hash)
-        for label in util.labels(pr):
-            if label == "awaiting merge":
-                issue = await util.issue_for_PR(gh, pr)
-                greeting = "There's a new commit after the PR has been approved."
-                await request_core_review(
-                    gh, issue, blocker=Blocker.core_review, greeting=greeting
-                )
-                break
+        if pr["state"] != "closed":
+            # only process the event if PR is still open
+            for label in util.labels(pr):
+                if label == "awaiting merge":
+                    issue = await util.issue_for_PR(gh, pr)
+                    greeting = "There's a new commit after the PR has been approved."
+                    await request_core_review(
+                        gh, issue, blocker=Blocker.core_review, greeting=greeting
+                    )
+                    break
 
 
 async def core_dev_reviewers(gh, pull_request_url):

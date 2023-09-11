@@ -146,7 +146,9 @@ async def new_commit_pushed(event, gh, *arg, **kwargs):
     if len(commits) > 0:
         # get the latest commit hash
         commit_hash = commits[-1]["id"]
-        pr = await util.get_pr_for_commit(gh, commit_hash)
+        repo_full_name = event.data["repository"]["full_name"]
+        pr = await util.get_pr_for_commit(gh, commit_hash, repo_full_name)
+
         for label in util.labels(pr):
             if label == "awaiting merge":
                 issue = await util.issue_for_PR(gh, pr)

@@ -187,11 +187,15 @@ async def is_core_dev(gh, username):
     """Check if the user is a CPython core developer."""
     org_teams = "/orgs/python/teams"
     team_name = "python core"
-    async for team in gh.getiter(org_teams):
-        if team["name"].lower() == team_name:  # pragma: no branch
-            break
-    else:
-        raise ValueError(f"{team_name!r} not found at {org_teams!r}")
+    try:
+        async for team in gh.getiter(org_teams):
+            if team["name"].lower() == team_name:  # pragma: no branch
+                break
+        else:
+            raise ValueError(f"{team_name!r} not found at {org_teams!r}")
+    except gidgethub.BadRequest as exc:
+        # returns 403 error if the resource is not accessible by integration
+        return False
     # The 'teams' object only provides a URL to a deprecated endpoint,
     # so manually construct the URL to the non-deprecated team membership
     # endpoint.
@@ -232,10 +236,12 @@ def no_labels(event_data):
         return False
 
 
-async def get_pr_for_commit(gh, sha):
+async def get_pr_for_commit(gh, sha, repo_full_name=None):
     """Find the PR containing the specific commit hash."""
+    if not repo_full_name:
+        repo_full_name = "python/cpython"
     prs_for_commit = await gh.getitem(
-        f"/search/issues?q=type:pr+repo:python/cpython+sha:{sha}"
+        f"/search/issues?q=type:pr+repo:{repo_full_name}+sha:{sha}"
     )
     if prs_for_commit["total_count"] > 0:  # there should only be one
         return prs_for_commit["items"][0]

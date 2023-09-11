@@ -98,6 +98,14 @@ async def test_is_core_dev():
         await util.is_core_dev(gh, "andrea")
 
 
+async def test_is_core_dev_resource_not_accessible():
+
+    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": [gidgethub.BadRequest(
+            status_code=http.HTTPStatus(403)
+        )]})
+    assert await util.is_core_dev(gh, "mariatta") is False
+
+
 def test_title_normalization():
     title = "abcd"
     body = "1234"

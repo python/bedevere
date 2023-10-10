@@ -31,10 +31,9 @@ async def main(request):
         print('GH delivery ID', event.delivery_id, file=sys.stderr)
         if event.event == "ping":
             return web.Response(status=200)
-        oauth_token = os.environ.get("GH_AUTH")
+
         async with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere",
-                                      oauth_token=oauth_token,
                                       cache=cache)
 
             if event.data.get("installation"):

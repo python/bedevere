@@ -29,10 +29,13 @@ SKIP_LABEL_STATUS = create_status(util.StatusState.SUCCESS,
 
 HELP = f"""\
 Most changes to Python [require a NEWS entry]\
-(https://devguide.python.org/committing/#updating-news-and-what-s-new-in-python).
+(https://devguide.python.org/committing/#updating-news-and-what-s-new-in-python). \
+You can add a NEWS entry using the [blurb_it]({BLURB_IT_URL}) web app or \
+the [blurb]({BLURB_PYPI_URL}) command-line tool.
 
-Please add it using the [blurb_it]({BLURB_IT_URL}) web app or the [blurb]\
-({BLURB_PYPI_URL}) command-line tool."""
+If this change has little impact on Python users, wait for a maintainer to confirm \
+that a NEWS entry is not required (they can apply the `skip news` label).
+"""
 
 
 async def check_news(gh, pull_request, files=None):

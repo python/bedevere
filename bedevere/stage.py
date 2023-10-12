@@ -9,6 +9,7 @@
 
 import enum
 import random
+import logging
 
 import gidgethub.routing
 
@@ -93,6 +94,7 @@ async def _remove_stage_labels(gh, issue):
 
 async def stage(gh, issue, blocked_on):
     """Remove any "awaiting" labels and apply the specified one."""
+    logging.info("Staging: issue %s, Issue labels: %s, blocked on: %s", issue["number"], issue["labels"], blocked_on.value)
     label_name = blocked_on.value
     if any(label_name == label["name"] for label in issue["labels"]):
         return
@@ -188,6 +190,7 @@ async def new_review(event, gh, *args, **kwargs):
     review = event.data["review"]
     reviewer = util.user_login(review)
     state = review["state"].lower()
+    logging.info("PR# %s Review submitted by %s", pull_request["number"], reviewer, )
     if state == "commented":
         # Don't care about comment reviews.
         return
@@ -199,11 +202,13 @@ async def new_review(event, gh, *args, **kwargs):
             return
         else:
             # Waiting for a core developer to leave a review.
+            logging.info("PR# %s, Review by non core developer, adding awaiting core review %s", pull_request["number"], reviewer )
             await stage(
                 gh, await util.issue_for_PR(gh, pull_request), Blocker.core_review
             )
     else:
         if state == "approved":
+            logging.info("PR# %s approved by core dev: %s", pull_request["number"], reviewer)
             if pull_request["state"] == "open":
                 await stage(
                     gh, await util.issue_for_PR(gh, pull_request), Blocker.merge

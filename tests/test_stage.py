@@ -50,7 +50,7 @@ class FakeGH:
 
 async def test_stage():
     # Skip changing labels if the label is already set.
-    issue = {"labels": [{"name": "awaiting merge"}, {"name": "skip issue"}]}
+    issue = {"number": 123, "labels": [{"name": "awaiting merge"}, {"name": "skip issue"}]}
     issue_url = "https://api.github.com/some/issue"
     gh = FakeGH()
     await awaiting.stage(gh, issue, awaiting.Blocker.merge)
@@ -59,6 +59,7 @@ async def test_stage():
 
     # Test deleting an old label and adding a new one.
     issue = {
+        "number": 123,
         "labels": [{"name": "awaiting review"}, {"name": "skip issue"}],
         "labels_url": "https://api.github.com/repos/python/cpython/issues/42/labels{/name}",
     }
@@ -81,6 +82,7 @@ async def test_opened_draft_pr():
     data = {
         "action": "opened",
         "pull_request": {
+            "number": 123,
             "user": {
                 "login": username,
             },
@@ -92,7 +94,7 @@ async def test_opened_draft_pr():
     teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": "OK",
-        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"},
+        issue_url: {"number": 123, "labels": [], "labels_url": "https://api.github.com/labels"},
     }
     gh = FakeGH(
         getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
@@ -118,6 +120,7 @@ async def test_opened_draft_pr():
     data["pull_request"]["draft"] = True
     encoded_label = "awaiting%20core%20review"
     items[issue_url] = {
+        "number": 123,
         "labels": [
             {
                 "url": f"https://api.github.com/repos/python/cpython/labels/{encoded_label}",
@@ -197,6 +200,7 @@ async def test_opened_pr():
     data = {
         "action": "opened",
         "pull_request": {
+            "number": 123,
             "user": {
                 "login": username,
             },
@@ -207,7 +211,7 @@ async def test_opened_pr():
     teams = [{"name": "python core", "id": 6}]
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": "OK",
-        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"},
+        issue_url: {"number": 123, "labels": [], "labels_url": "https://api.github.com/labels"},
     }
     gh = FakeGH(
         getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
@@ -224,6 +228,7 @@ async def test_opened_pr():
     data = {
         "action": "opened",
         "pull_request": {
+            "number": 123,
             "user": {
                 "login": username,
             },
@@ -237,7 +242,7 @@ async def test_opened_pr():
         f"https://api.github.com/teams/6/memberships/{username}": gidgethub.BadRequest(
             status_code=http.HTTPStatus(404)
         ),
-        issue_url: {"labels": [], "labels_url": "https://api.github.com/labels"},
+        issue_url: {"number": 123, "labels": [], "labels_url": "https://api.github.com/labels"},
     }
     gh = FakeGH(
         getiter={"https://api.github.com/orgs/python/teams": teams}, getitem=items
@@ -261,6 +266,7 @@ async def test_new_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "state": "open",
@@ -274,6 +280,7 @@ async def test_new_review():
         ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -298,6 +305,7 @@ async def test_new_review():
         ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -322,6 +330,7 @@ async def test_new_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "state": "open",
@@ -334,6 +343,7 @@ async def test_new_review():
         ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -359,6 +369,7 @@ async def test_new_review():
             "state": "APPROVED",
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "state": "open",
@@ -369,6 +380,7 @@ async def test_new_review():
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -395,6 +407,7 @@ async def test_new_review():
             "state": "APPROVED",
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "state": "closed",
@@ -405,6 +418,7 @@ async def test_new_review():
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -427,6 +441,7 @@ async def test_new_review():
             "state": "changes_requested".upper(),
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
@@ -441,6 +456,7 @@ async def test_new_review():
             status_code=http.HTTPStatus(404)
         ),
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -465,6 +481,7 @@ async def test_new_review():
             "state": "commented".upper(),
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
@@ -486,6 +503,7 @@ async def test_new_review():
             "state": "changes_requested".upper(),
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
@@ -496,6 +514,7 @@ async def test_new_review():
     items = {
         f"https://api.github.com/teams/6/memberships/{username}": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -516,6 +535,7 @@ async def test_dismissed_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
@@ -528,6 +548,7 @@ async def test_dismissed_review():
         ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.core_review.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -555,6 +576,7 @@ async def test_dismissed_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
@@ -567,6 +589,7 @@ async def test_dismissed_review():
         ),
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.merge.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -591,6 +614,7 @@ async def test_dismissed_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
@@ -605,6 +629,7 @@ async def test_dismissed_review():
             status_code=http.HTTPStatus(404)
         ),
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.core_review.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -629,6 +654,7 @@ async def test_dismissed_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
@@ -641,6 +667,7 @@ async def test_dismissed_review():
             status_code=http.HTTPStatus(404)
         ),
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.merge.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -668,6 +695,7 @@ async def test_dismissed_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
@@ -680,6 +708,7 @@ async def test_dismissed_review():
             status_code=http.HTTPStatus(404)
         ),
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.merge.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -707,6 +736,7 @@ async def test_dismissed_review():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
         },
@@ -717,6 +747,7 @@ async def test_dismissed_review():
         f"https://api.github.com/teams/6/memberships/{username}": True,
         f"https://api.github.com/teams/6/memberships/brettcannonalias": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [{"name": awaiting.Blocker.merge.value}],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -742,6 +773,7 @@ async def test_non_core_dev_does_not_downgrade():
         ),
         f"https://api.github.com/teams/6/memberships/{core_dev}": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -757,6 +789,7 @@ async def test_non_core_dev_does_not_downgrade():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "state": "open",
@@ -786,6 +819,7 @@ async def test_non_core_dev_does_not_downgrade():
             },
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "state": "open",
@@ -837,6 +871,7 @@ async def test_new_comment():
     data = {
         "action": "created",
         "issue": {
+            "number": 42,
             "user": {"login": "andreamcinnes"},
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
@@ -886,6 +921,7 @@ async def test_new_comment():
     data = {
         "action": "created",
         "issue": {
+            "number": 42,
             "user": {"login": "andreamcinnes"},
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
@@ -927,6 +963,7 @@ async def test_change_requested_for_core_dev():
             "state": "changes_requested".upper(),
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
@@ -939,6 +976,7 @@ async def test_change_requested_for_core_dev():
         f"https://api.github.com/teams/6/memberships/gvanrossum": True,
         "https://api.github.com/teams/6/memberships/brettcannon": True,
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -975,6 +1013,7 @@ async def test_change_requested_for_non_core_dev():
             "state": "changes_requested".upper(),
         },
         "pull_request": {
+            "number": 42,
             "url": "https://api.github.com/pr/42",
             "issue_url": "https://api.github.com/issue/42",
             "comments_url": "https://api.github.com/comment/42",
@@ -989,6 +1028,7 @@ async def test_change_requested_for_non_core_dev():
             status_code=http.HTTPStatus(404)
         ),
         "https://api.github.com/issue/42": {
+            "number": 42,
             "labels": [],
             "labels_url": "https://api.github.com/labels/42",
         },
@@ -1133,6 +1173,7 @@ async def test_new_commit_pushed_to_approved_pr(issue_url_key, repo_full_name):
             ],
         },
         "https://api.github.com/repos/python/cpython/issues/5547": {
+            "number": 42,
             "labels": [{"name": "awaiting merge"}],
             "labels_url": "https://api.github.com/repos/python/cpython/issues/5547/labels{/name}",
             "pull_request": {

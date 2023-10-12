@@ -15,6 +15,8 @@ from gidgethub import apps
 from . import backport, gh_issue, close_pr, filepaths, news, stage
 
 import sentry_sdk
+import logging
+
 
 router = routing.Router(backport.router, gh_issue.router, close_pr.router,
                         filepaths.router, news.router,
@@ -24,6 +26,7 @@ cache = cachetools.LRUCache(maxsize=500)
 sentry_sdk.init(os.environ.get("SENTRY_DSN"))
 
 async def main(request):
+    logging.basicConfig(level=logging.DEBUG)
     try:
         body = await request.read()
         secret = os.environ.get("GH_SECRET")

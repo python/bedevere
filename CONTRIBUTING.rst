@@ -46,30 +46,30 @@ Heroku admins can do it too.
 #. Install Heroku CLI
 
    Details at: https://devcenter.heroku.com/articles/heroku-cli
-  
+
 #. Login to Heroku CLI on the command line and follow instructions::
-      
+
       heroku login
-   
-  
+
+
 #. If you haven't already, get a clone of the bedevere repo::
-     
+
       git clone git@github.com:python/bedevere.git
-  
+
    Or, using `GitHub CLI`_::
-   
-      gh repo clone python/bedevere 
+
+      gh repo clone python/bedevere
 
 #. From the ``bedevere`` directory, add the ``bedevere`` Heroku app as remote branch::
-   
+
       heroku git:remote -a bedevere
-  
- 
+
+
 #. From the ``bedevere`` directory, push to Heroku::
-  
+
       git push heroku main
-  
-  
+
+
 After a successful push, the deployment will begin.
 
 Heroku app collaborators and members

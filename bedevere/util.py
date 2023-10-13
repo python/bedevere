@@ -7,8 +7,8 @@ import gidgethub
 from gidgethub.abc import GitHubAPI
 
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
-PR = 'pr'
-ISSUE = 'issue'
+PR = "pr"
+ISSUE = "issue"
 DEFAULT_BODY = ""
 
 PR_BODY_TAG_NAME = f"gh-{{tag_type}}-number"
@@ -23,8 +23,8 @@ PR_BODY_TEMPLATE = f"""\
 """
 
 ISSUE_BODY_TAG_NAME = f"gh-linked-{PR}s"
-ISSUE_BODY_OPENING_TAG = f'<!-- {ISSUE_BODY_TAG_NAME} -->'
-ISSUE_BODY_CLOSING_TAG = f'<!-- /{ISSUE_BODY_TAG_NAME} -->'
+ISSUE_BODY_OPENING_TAG = f"<!-- {ISSUE_BODY_TAG_NAME} -->"
+ISSUE_BODY_CLOSING_TAG = f"<!-- /{ISSUE_BODY_TAG_NAME} -->"
 ISSUE_BODY_TASK_LIST_TEMPLATE = f"""\n
 {ISSUE_BODY_OPENING_TAG}
 ### Linked PRs
@@ -37,7 +37,7 @@ ISSUE_BODY_TASK_LIST_PATTERN = re.compile(
     rf"(?P<start>{ISSUE_BODY_OPENING_TAG})"
     rf"(?P<tasks>.*?)"
     rf"(?P<end>{ISSUE_BODY_CLOSING_TAG})",
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
 
@@ -154,7 +154,7 @@ def build_issue_body(pr_number: int, body: str) -> str:
 
     # If the body already contains a tasklist, only append the new PR to the list
     return ISSUE_BODY_TASK_LIST_PATTERN.sub(
-        fr"\g<start>\g<tasks>* gh-{pr_number}\n\g<end>",
+        rf"\g<start>\g<tasks>* gh-{pr_number}\n\g<end>",
         body,
         count=1,
     )

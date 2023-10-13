@@ -1,12 +1,10 @@
 import pytest
-
 from gidgethub import sansio
 
 from bedevere import close_pr
 
 
 class FakeGH:
-
     def __init__(self, *, getitem=None, post=None):
         self._getitem_return = getitem
         self.patch_url = None
@@ -41,12 +39,8 @@ async def test_close_invalid_pr_on_open():
             "title": "No issue in title",
             "issue_url": "https://api.github.com/org/repo/issues/123",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "python:3.6"
-            },
-            "base": {
-                "label": "python:main"
-            }
+            "head": {"label": "python:3.6"},
+            "base": {"label": "python:main"},
         },
     }
     pr_data = {
@@ -61,10 +55,10 @@ async def test_close_invalid_pr_on_open():
     assert patch_data["state"] == "closed"
 
     assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/org/repo/issues/123/labels'
-    assert gh.post_data[0] == ['invalid']
-    assert gh.post_url[1] == 'https://api.github.com/org/repo/issues/123/comments'
-    assert gh.post_data[1] == {'body': close_pr.INVALID_PR_COMMENT}
+    assert gh.post_url[0] == "https://api.github.com/org/repo/issues/123/labels"
+    assert gh.post_data[0] == ["invalid"]
+    assert gh.post_url[1] == "https://api.github.com/org/repo/issues/123/comments"
+    assert gh.post_data[1] == {"body": close_pr.INVALID_PR_COMMENT}
 
 
 @pytest.mark.asyncio
@@ -76,12 +70,8 @@ async def test_close_invalid_pr_on_synchronize():
             "title": "No issue in title",
             "issue_url": "https://api.github.com/org/repo/issues/123",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "python:3.6"
-            },
-            "base": {
-                "label": "python:main"
-            }
+            "head": {"label": "python:3.6"},
+            "base": {"label": "python:main"},
         },
     }
     pr_data = {
@@ -96,10 +86,10 @@ async def test_close_invalid_pr_on_synchronize():
     assert patch_data["state"] == "closed"
 
     assert len(gh.post_url) == 2
-    assert gh.post_url[0] == 'https://api.github.com/org/repo/issues/123/labels'
-    assert gh.post_data[0] == ['invalid']
-    assert gh.post_url[1] == 'https://api.github.com/org/repo/issues/123/comments'
-    assert gh.post_data[1] == {'body': close_pr.INVALID_PR_COMMENT}
+    assert gh.post_url[0] == "https://api.github.com/org/repo/issues/123/labels"
+    assert gh.post_data[0] == ["invalid"]
+    assert gh.post_url[1] == "https://api.github.com/org/repo/issues/123/comments"
+    assert gh.post_data[1] == {"body": close_pr.INVALID_PR_COMMENT}
 
 
 @pytest.mark.asyncio
@@ -111,12 +101,8 @@ async def test_valid_pr_not_closed():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "someuser:bpo-3.6"
-            },
-            "base": {
-                "label": "python:main"
-            }
+            "head": {"label": "someuser:bpo-3.6"},
+            "base": {"label": "python:main"},
         },
     }
     pr_data = {
@@ -140,12 +126,8 @@ async def test_close_invalid_pr_on_open_not_python_as_head():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "username123:3.6"
-            },
-            "base": {
-                "label": "python:main"
-            }
+            "head": {"label": "username123:3.6"},
+            "base": {"label": "python:main"},
         },
     }
     pr_data = {
@@ -169,12 +151,8 @@ async def test_pr_with_head_branch_containing_all_digits_not_closed():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "someuser:12345"
-            },
-            "base": {
-                "label": "python:main"
-            }
+            "head": {"label": "someuser:12345"},
+            "base": {"label": "python:main"},
         },
     }
     pr_data = {
@@ -199,12 +177,8 @@ async def test_dismiss_review_request_for_invalid_pr():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "python:3.6"
-            },
-            "base": {
-                "label": "python:main"
-            },
+            "head": {"label": "python:3.6"},
+            "base": {"label": "python:main"},
             "requested_reviewers": [
                 {
                     "login": "gpshead",
@@ -220,17 +194,21 @@ async def test_dismiss_review_request_for_invalid_pr():
                 {
                     "name": "windows-team",
                 },
-            ]
+            ],
         },
     }
 
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH()
     await close_pr.router.dispatch(event, gh)
-    assert gh.delete_data == {'reviewers': ['gpshead', 'gvanrossum'],
-                              'team_reviewers': ['import-team', 'windows-team']
-                              }
-    assert gh.delete_url == f"https://api.github.com/org/repo/pulls/123/requested_reviewers"
+    assert gh.delete_data == {
+        "reviewers": ["gpshead", "gvanrossum"],
+        "team_reviewers": ["import-team", "windows-team"],
+    }
+    assert (
+        gh.delete_url
+        == f"https://api.github.com/org/repo/pulls/123/requested_reviewers"
+    )
 
 
 @pytest.mark.asyncio
@@ -242,12 +220,8 @@ async def test_valid_pr_review_request_not_dismissed():
             "title": "No issue in title",
             "issue_url": "issue URL",
             "url": "https://api.github.com/org/repo/pulls/123",
-            "head": {
-                "label": "someuser:bpo-3.6"
-            },
-            "base": {
-                "label": "python:main"
-            },
+            "head": {"label": "someuser:bpo-3.6"},
+            "base": {"label": "python:main"},
             "requested_reviewers": [
                 {
                     "login": "gpshead",
@@ -263,7 +237,7 @@ async def test_valid_pr_review_request_not_dismissed():
                 {
                     "name": "windows-team",
                 },
-            ]
+            ],
         },
     }
 

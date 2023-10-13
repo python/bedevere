@@ -1,11 +1,10 @@
 import http
 
 import gidgethub
-from gidgethub import sansio
 import pytest
+from gidgethub import sansio
 
 from bedevere import stage as awaiting
-
 from bedevere.stage import ACK
 
 
@@ -137,8 +136,8 @@ async def test_opened_draft_pr():
     await awaiting.router.dispatch(event, gh)
     assert len(gh.post_) == 0
     assert (
-        gh.delete_url ==
-        f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
+        gh.delete_url
+        == f"https://api.github.com/repos/python/cpython/issues/12345/labels/{encoded_label}"
     )
 
 
@@ -159,7 +158,7 @@ async def test_edited_pr_title():
         },
         "changes": {
             "title": "So long and thanks for all the phish",
-        }
+        },
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     teams = [{"name": "python core", "id": 6}]
@@ -1105,9 +1104,10 @@ async def test_new_commit_pushed_to_approved_pr(issue_url_key, repo_full_name):
     # There is new commit on approved PR
     username = "brettcannon"
     sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
-    data = {"commits": [{"id": sha}],
-            "repository": {"full_name": repo_full_name},
-            }
+    data = {
+        "commits": [{"id": sha}],
+        "repository": {"full_name": repo_full_name},
+    }
     event = sansio.Event(data, event="push", delivery_id="12345")
     teams = [{"name": "python core", "id": 6}]
     items = {
@@ -1181,9 +1181,10 @@ async def test_new_commit_pushed_to_approved_pr(issue_url_key, repo_full_name):
 async def test_new_commit_pushed_to_not_approved_pr(issue_url_key, repo_full_name):
     # There is new commit on approved PR
     sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
-    data = {"commits": [{"id": sha}],
-            "repository": {"full_name": repo_full_name},
-            }
+    data = {
+        "commits": [{"id": sha}],
+        "repository": {"full_name": repo_full_name},
+    }
     event = sansio.Event(data, event="push", delivery_id="12345")
     items = {
         f"https://api.github.com/search/issues?q=type:pr+repo:{repo_full_name}+sha:{sha}": {

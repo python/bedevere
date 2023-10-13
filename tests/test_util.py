@@ -1,8 +1,8 @@
 import http
+from unittest.mock import patch
 
 import gidgethub
 import pytest
-from unittest.mock import patch
 
 from bedevere import util
 
@@ -99,10 +99,13 @@ async def test_is_core_dev():
 
 
 async def test_is_core_dev_resource_not_accessible():
-
-    gh = FakeGH(getiter={"https://api.github.com/orgs/python/teams": [gidgethub.BadRequest(
-            status_code=http.HTTPStatus(403)
-        )]})
+    gh = FakeGH(
+        getiter={
+            "https://api.github.com/orgs/python/teams": [
+                gidgethub.BadRequest(status_code=http.HTTPStatus(403))
+            ]
+        }
+    )
     assert await util.is_core_dev(gh, "mariatta") is False
 
 
@@ -208,7 +211,9 @@ async def test_patch_body_adds_issue_if_not_present():
     with patch.object(gh, "patch") as mock:
         vals["body"] = ""
         await util.patch_body(gh, util.PR, vals, 1234)
-        data = {"body": "\n\n<!-- gh-issue-number: gh-1234 -->\n* Issue: gh-1234\n<!-- /gh-issue-number -->\n"}
+        data = {
+            "body": "\n\n<!-- gh-issue-number: gh-1234 -->\n* Issue: gh-1234\n<!-- /gh-issue-number -->\n"
+        }
         mock.assert_called_once_with("https://fake.com", data=data)
     assert await gh.patch(vals["url"], data=vals) == None
 

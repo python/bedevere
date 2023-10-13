@@ -1,28 +1,23 @@
-from aiohttp import web
-
 from unittest import mock
 
+from aiohttp import web
+from gidgethub import sansio
 
 from bedevere import __main__ as main
 
-from gidgethub import sansio
-
-
 app_installation_payload = {
-    "installation":
-        {
-            "id": 123,
-            "account": {"login": "mariatta"},
-        }
+    "installation": {
+        "id": 123,
+        "account": {"login": "mariatta"},
     }
+}
 
 
 async def test_ping(aiohttp_client):
     app = web.Application()
     app.router.add_post("/", main.main)
     client = await aiohttp_client(app)
-    headers = {"x-github-event": "ping",
-               "x-github-delivery": "1234"}
+    headers = {"x-github-event": "ping", "x-github-delivery": "1234"}
     data = {"zen": "testing is good"}
     response = await client.post("/", headers=headers, json=data)
     assert response.status == 200
@@ -32,8 +27,7 @@ async def test_success(aiohttp_client):
     app = web.Application()
     app.router.add_post("/", main.main)
     client = await aiohttp_client(app)
-    headers = {"x-github-event": "project",
-               "x-github-delivery": "1234"}
+    headers = {"x-github-event": "project", "x-github-delivery": "1234"}
     # Sending a payload that shouldn't trigger any networking, but no errors
     # either.
     data = {"action": "created"}
@@ -53,13 +47,14 @@ async def test_failure(aiohttp_client):
 
 @mock.patch("gidgethub.apps.get_installation_access_token")
 async def test_success_with_installation(get_access_token_mock, aiohttp_client):
-
-    get_access_token_mock.return_value = {'token': 'ghs_blablabla', 'expires_at': '2023-06-14T19:02:50Z'}
+    get_access_token_mock.return_value = {
+        "token": "ghs_blablabla",
+        "expires_at": "2023-06-14T19:02:50Z",
+    }
     app = web.Application()
     app.router.add_post("/", main.main)
     client = await aiohttp_client(app)
-    headers = {"x-github-event": "project",
-               "x-github-delivery": "1234"}
+    headers = {"x-github-event": "project", "x-github-delivery": "1234"}
     # Sending a payload that shouldn't trigger any networking, but no errors
     # either.
     data = {"action": "created"}
@@ -69,7 +64,6 @@ async def test_success_with_installation(get_access_token_mock, aiohttp_client):
 
 
 class FakeGH:
-
     def __init__(self):
         pass
 
@@ -80,9 +74,11 @@ async def test_repo_installation_added(capfd):
     }
     event_data.update(app_installation_payload)
 
-    event = sansio.Event(event_data, event='installation',
-                        delivery_id='1')
+    event = sansio.Event(event_data, event="installation", delivery_id="1")
     gh = FakeGH()
     await main.router.dispatch(event, gh)
     out, err = capfd.readouterr()
-    assert f"App installed by {event.data['installation']['account']['login']}, installation_id: {event.data['installation']['id']}" in out
+    assert (
+        f"App installed by {event.data['installation']['account']['login']}, installation_id: {event.data['installation']['id']}"
+        in out
+    )

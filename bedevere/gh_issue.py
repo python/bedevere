@@ -2,13 +2,12 @@
 import re
 from typing import Dict, Literal
 
-from aiohttp import ClientSession
 import gidgethub
+from aiohttp import ClientSession
 from gidgethub import routing
 from gidgethub.abc import GitHubAPI
 
 from . import util
-
 
 router = routing.Router()
 
@@ -18,24 +17,23 @@ ISSUE_RE = re.compile(r"(?P<kind>bpo|gh)-(?P<issue>\d+)", re.IGNORECASE)
 SKIP_ISSUE_LABEL = util.skip_label("issue")
 STATUS_CONTEXT = "bedevere/issue-number"
 # Try to keep descriptions at or below 50 characters, else GitHub's CSS will truncate it.
-SKIP_ISSUE_STATUS = util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
-                                       description="Issue report skipped")
+SKIP_ISSUE_STATUS = util.create_status(
+    STATUS_CONTEXT, util.StatusState.SUCCESS, description="Issue report skipped"
+)
 ISSUE_URL: Dict[IssueKind, str] = {
     "gh": "https://github.com/python/cpython/issues/{issue_number}",
-    "bpo": "https://bugs.python.org/issue?@action=redirect&bpo={issue_number}"
+    "bpo": "https://bugs.python.org/issue?@action=redirect&bpo={issue_number}",
 }
 ISSUE_CHECK_URL: Dict[IssueKind, str] = {
     "gh": "https://api.github.com/repos/python/cpython/issues/{issue_number}",
-    "bpo": "https://bugs.python.org/issue{issue_number}"
+    "bpo": "https://bugs.python.org/issue{issue_number}",
 }
 
 
 @router.register("pull_request", action="opened")
 @router.register("pull_request", action="synchronize")
 @router.register("pull_request", action="reopened")
-async def set_status(
-    event, gh: GitHubAPI, *args, session: ClientSession, **kwargs
-):
+async def set_status(event, gh: GitHubAPI, *args, session: ClientSession, **kwargs):
     """Set the issue number status on the pull request."""
     pull_request = event.data["pull_request"]
     issue = await util.issue_for_PR(gh, pull_request)
@@ -86,8 +84,7 @@ async def title_edited(event, gh, *args, session, **kwargs):
 async def new_label(event, gh, *args, **kwargs):
     """Update the status if the "skip issue" label was added."""
     if util.label_name(event.data) == SKIP_ISSUE_LABEL:
-        issue_number_found = ISSUE_RE.search(
-            event.data["pull_request"]["title"])
+        issue_number_found = ISSUE_RE.search(event.data["pull_request"]["title"])
         if issue_number_found:
             status = create_success_status(issue_number_found.group("issue"))
         else:
@@ -107,35 +104,42 @@ async def removed_label(event, gh, *args, session, **kwargs):
 def create_success_status(issue_number: int, *, kind: IssueKind = "gh"):
     """Create a success status for when an issue number was found in the title."""
     url = ISSUE_URL[kind].format(issue_number=issue_number)
-    return util.create_status(STATUS_CONTEXT, util.StatusState.SUCCESS,
-                              description=f"Issue number {issue_number} found",
-                              target_url=url)
+    return util.create_status(
+        STATUS_CONTEXT,
+        util.StatusState.SUCCESS,
+        description=f"Issue number {issue_number} found",
+        target_url=url,
+    )
 
 
-def create_failure_status_issue_not_present(issue_number: int, *, kind: IssueKind = "gh"):
+def create_failure_status_issue_not_present(
+    issue_number: int, *, kind: IssueKind = "gh"
+):
     """Create a failure status for when an issue does not exist on the GitHub issue tracker."""
     url = ISSUE_URL[kind].format(issue_number=issue_number)
     description = f"{kind.upper()} Issue #{issue_number} is not valid."
-    return util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
-                              description=description,
-                              target_url=url)
+    return util.create_status(
+        STATUS_CONTEXT,
+        util.StatusState.FAILURE,
+        description=description,
+        target_url=url,
+    )
 
 
 def create_failure_status_no_issue():
     """Create a failure status for when no issue number was found in the title."""
     description = 'No issue # in title or "skip issue" label found'
     url = "https://devguide.python.org/getting-started/pull-request-lifecycle.html#submitting"
-    return util.create_status(STATUS_CONTEXT, util.StatusState.FAILURE,
-                              description=description,
-                              target_url=url)
+    return util.create_status(
+        STATUS_CONTEXT,
+        util.StatusState.FAILURE,
+        description=description,
+        target_url=url,
+    )
 
 
 async def _validate_issue_number(
-    gh: GitHubAPI,
-    issue_number: int,
-    *,
-    session: ClientSession,
-    kind: IssueKind = "gh"
+    gh: GitHubAPI, issue_number: int, *, session: ClientSession, kind: IssueKind = "gh"
 ) -> bool:
     """Ensure the GitHub Issue number is valid."""
     if kind == "bpo":

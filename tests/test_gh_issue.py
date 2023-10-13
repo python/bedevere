@@ -1,17 +1,15 @@
+import http
 from unittest import mock
 
-import http
 import aiohttp
-import pytest
 import gidgethub
-
+import pytest
 from gidgethub import sansio
 
 from bedevere import gh_issue
 
 
 class FakeGH:
-
     def __init__(self, *, getitem=None, post=None, patch=None):
         self._getitem_return = getitem
         self._post_return = post
@@ -45,8 +43,9 @@ async def issue_number():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_failure(action, monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": action,
         "pull_request": {
@@ -61,7 +60,7 @@ async def test_set_status_failure(action, monkeypatch):
         "url": "url",
         "labels": [
             {"name": "non-trivial"},
-        ]
+        ],
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
@@ -76,8 +75,9 @@ async def test_set_status_failure(action, monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_failure_via_issue_not_found_on_github(action, monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=False))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=False)
+    )
 
     data = {
         "action": action,
@@ -133,8 +133,9 @@ async def test_set_status_success_issue_found_on_bpo(action):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success(action, monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": action,
         "pull_request": {
@@ -155,14 +156,17 @@ async def test_set_status_success(action, monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
-    gh_issue._validate_issue_number.assert_awaited_with(gh, 1234, session=None, kind="gh")
+    gh_issue._validate_issue_number.assert_awaited_with(
+        gh, 1234, session=None, kind="gh"
+    )
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_number):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": action,
         "pull_request": {
@@ -180,7 +184,10 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_n
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
     assert status["state"] == "success"
-    assert status["target_url"] == f"https://github.com/python/cpython/issues/{issue_number}"
+    assert (
+        status["target_url"]
+        == f"https://github.com/python/cpython/issues/{issue_number}"
+    )
     assert str(issue_number) in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
@@ -199,9 +206,12 @@ async def test_set_status_success_issue_found_on_gh(action, monkeypatch, issue_n
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
-async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypatch, issue_number):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+async def test_set_status_success_issue_found_on_gh_ignore_case(
+    action, monkeypatch, issue_number
+):
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": action,
         "pull_request": {
@@ -219,7 +229,10 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
         await gh_issue.router.dispatch(event, gh, session=session)
     status = gh.post_data[0]
     assert status["state"] == "success"
-    assert status["target_url"] == f"https://github.com/python/cpython/issues/{issue_number}"
+    assert (
+        status["target_url"]
+        == f"https://github.com/python/cpython/issues/{issue_number}"
+    )
     assert str(issue_number) in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
@@ -239,8 +252,9 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(action, monkeypa
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": action,
         "pull_request": {
@@ -255,7 +269,7 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
         "url": "url",
         "labels": [
             {"name": "skip issue"},
-        ]
+        ],
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
@@ -269,11 +283,13 @@ async def test_set_status_success_via_skip_issue_label(action, monkeypatch):
     assert len(gh.patch_data) == 0
     assert len(gh.patch_url) == 0
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
 async def test_set_status_success_via_skip_issue_label_pr_in_title(action, monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=False))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=False)
+    )
     data = {
         "action": action,
         "pull_request": {
@@ -288,7 +304,7 @@ async def test_set_status_success_via_skip_issue_label_pr_in_title(action, monke
         "url": "url",
         "labels": [
             {"name": "skip issue"},
-        ]
+        ],
     }
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
@@ -305,8 +321,9 @@ async def test_set_status_success_via_skip_issue_label_pr_in_title(action, monke
 
 @pytest.mark.asyncio
 async def test_edit_title(monkeypatch, issue_number):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -323,12 +340,16 @@ async def test_edit_title(monkeypatch, issue_number):
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
     assert len(gh.post_data) == 1
-    gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
+    gh_issue._validate_issue_number.assert_awaited_with(
+        gh, issue_number, session=None, kind="gh"
+    )
+
 
 @pytest.mark.asyncio
 async def test_no_body_when_edit_title(monkeypatch, issue_number):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": "edited",
         "pull_request": {
@@ -347,7 +368,9 @@ async def test_no_body_when_edit_title(monkeypatch, issue_number):
     event = sansio.Event(data, event="pull_request", delivery_id="12345")
     gh = FakeGH(getitem=issue_data)
     await gh_issue.router.dispatch(event, gh, session=None)
-    gh_issue._validate_issue_number.assert_awaited_with(gh, issue_number, session=None, kind="gh")
+    gh_issue._validate_issue_number.assert_awaited_with(
+        gh, issue_number, session=None, kind="gh"
+    )
 
     assert len(gh.patch_data) > 0
     assert f"<!-- gh-issue-number: gh-{issue_number} -->" in gh.patch_data[0]["body"]
@@ -363,8 +386,9 @@ async def test_no_body_when_edit_title(monkeypatch, issue_number):
 
 @pytest.mark.asyncio
 async def test_edit_other_than_title(monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "pull_request": {
             "statuses_url": "https://api.github.com/blah/blah/git-sha",
@@ -457,6 +481,7 @@ async def test_new_label_skip_issue_with_issue_number_ignore_case():
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
 
+
 @pytest.mark.asyncio
 async def test_new_label_not_skip_issue():
     data = {
@@ -480,8 +505,9 @@ async def test_new_label_not_skip_issue():
 async def test_removed_label_from_label_deletion(monkeypatch):
     """When a label is completely deleted from a repo, it triggers an 'unlabeled'
     event, but the payload has no details about the removed label."""
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": "unlabeled",
         # No "label" key.
@@ -503,8 +529,9 @@ async def test_removed_label_from_label_deletion(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_removed_label_skip_issue(monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": "unlabeled",
         "label": {"name": "skip issue"},
@@ -526,13 +553,16 @@ async def test_removed_label_skip_issue(monkeypatch):
     assert "1234" in status["description"]
     assert status["context"] == "bedevere/issue-number"
     assert "git-sha" in gh.post_url[0]
-    gh_issue._validate_issue_number.assert_awaited_with(gh, 1234, session=None, kind="gh")
+    gh_issue._validate_issue_number.assert_awaited_with(
+        gh, 1234, session=None, kind="gh"
+    )
 
 
 @pytest.mark.asyncio
 async def test_removed_label_non_skip_issue(monkeypatch):
-    monkeypatch.setattr(gh_issue, '_validate_issue_number',
-                        mock.AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
     data = {
         "action": "unlabeled",
         "label": {"name": "non-trivial"},
@@ -553,7 +583,6 @@ async def test_removed_label_non_skip_issue(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_validate_issue_number_valid_on_github():
-
     gh = FakeGH(getitem={"number": 123})
     async with aiohttp.ClientSession() as session:
         response = await gh_issue._validate_issue_number(gh, 123, session=session)
@@ -572,15 +601,16 @@ async def test_validate_issue_number_valid_on_bpo():
 
 @pytest.mark.asyncio
 async def test_validate_issue_number_is_pr_on_github():
-
-    gh = FakeGH(getitem={
-        "number": 123,
-        "pull_request": {
-            "html_url": "https://github.com/python/cpython/pull/123",
-            "url": "url",
-            "number": 1234,
+    gh = FakeGH(
+        getitem={
+            "number": 123,
+            "pull_request": {
+                "html_url": "https://github.com/python/cpython/pull/123",
+                "url": "url",
+                "number": 1234,
+            },
         }
-    })
+    )
     async with aiohttp.ClientSession() as session:
         response = await gh_issue._validate_issue_number(gh, 123, session=session)
     assert response is False
@@ -588,11 +618,7 @@ async def test_validate_issue_number_is_pr_on_github():
 
 @pytest.mark.asyncio
 async def test_validate_issue_number_is_not_valid():
-    gh = FakeGH(
-        getitem=gidgethub.BadRequest(
-            status_code=http.HTTPStatus(404)
-        )
-    )
+    gh = FakeGH(getitem=gidgethub.BadRequest(status_code=http.HTTPStatus(404)))
     async with aiohttp.ClientSession() as session:
         response = await gh_issue._validate_issue_number(gh, 123, session=session)
     assert response is False

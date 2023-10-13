@@ -14,7 +14,6 @@ import gidgethub.routing
 
 from . import util
 
-
 router = gidgethub.routing.Router()
 
 BORING_TRIGGER_PHRASE = "I have made the requested changes; please review again"

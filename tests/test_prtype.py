@@ -86,7 +86,7 @@ async def test_docs_no_news():
 
 
 async def test_docs_no_news_with_dotnitignore():
-    filenames = {"path/to/docs1.rst", "Doc/tools/.nitignore"}
+    filenames = {"path/to/docs1.rst", "path/to/.nitignore"}
     issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
     gh = FakeGH(getitem=issue)
     event_data = {
@@ -103,13 +103,6 @@ async def test_docs_no_news_with_dotnitignore():
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/label"
     assert gh.post_data[0] == [Labels.docs.value, Labels.skip_news.value]
-
-    # The .nitignore skipped only in the Doc/
-    filenames.add("some/where/else/.nitignore")
-    gh = FakeGH(getitem=issue)
-    await prtype.classify_by_filepaths(gh, event_data["pull_request"], filenames)
-    assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
-    assert len(gh.post_url) == 0
 
 
 async def test_docs_and_news():

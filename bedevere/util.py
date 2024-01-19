@@ -7,6 +7,7 @@ import gidgethub
 from gidgethub.abc import GitHubAPI
 
 NEWS_NEXT_DIR = "Misc/NEWS.d/next/"
+DOCS_DIR = "Doc/"
 PR = "pr"
 ISSUE = "issue"
 DEFAULT_BODY = ""
@@ -213,6 +214,11 @@ async def is_core_dev(gh, username):
 def is_news_dir(filename):
     "Return True if file is in the News directory."
     return filename.startswith(NEWS_NEXT_DIR)
+
+
+def is_docs_dir(filename):
+    "Return True if file is in the Doc directory."
+    return filename.startswith(DOCS_DIR)
 
 
 def normalize_title(title, body):

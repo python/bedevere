@@ -85,6 +85,26 @@ async def test_docs_no_news():
     assert gh.post_data[0] == [Labels.docs.value, Labels.skip_news.value]
 
 
+async def test_docs_no_news_with_dotnitignore():
+    filenames = {"path/to/docs1.rst", "path/to/.nitignore"}
+    issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
+    gh = FakeGH(getitem=issue)
+    event_data = {
+        "action": "opened",
+        "number": 1234,
+        "pull_request": {
+            "url": "https://api.github.com/repos/cpython/python/pulls/1234",
+            "statuses_url": "https://api.github.com/some/status",
+            "issue_url": "https://api.github.com/repos/cpython/python/issue/1234",
+        },
+    }
+    await prtype.classify_by_filepaths(gh, event_data["pull_request"], filenames)
+    assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
+    assert len(gh.post_url) == 1
+    assert gh.post_url[0] == "https://api.github.com/some/label"
+    assert gh.post_data[0] == [Labels.docs.value, Labels.skip_news.value]
+
+
 async def test_docs_and_news():
     filenames = {"/path/to/docs1.rst", f"Misc/NEWS.d/next/Lib/{GOOD_BASENAME}"}
     issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}

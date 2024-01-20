@@ -145,6 +145,26 @@ async def test_tests_only():
     assert gh.post_data[0] == [Labels.tests.value]
 
 
+async def test_tests_and_testmods_only():
+    filenames = {"/path/to/_testmod.c", "_test_module.c", "test_capi,py"}
+    issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
+    gh = FakeGH(getitem=issue)
+    event_data = {
+        "action": "opened",
+        "number": 1234,
+        "pull_request": {
+            "url": "https://api.github.com/repos/cpython/python/pulls/1234",
+            "statuses_url": "https://api.github.com/some/status",
+            "issue_url": "https://api.github.com/repos/cpython/python/issue/1234",
+        },
+    }
+    await prtype.classify_by_filepaths(gh, event_data["pull_request"], filenames)
+    assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
+    assert len(gh.post_url) == 1
+    assert gh.post_url[0] == "https://api.github.com/some/label"
+    assert gh.post_data[0] == [Labels.tests.value]
+
+
 async def test_docs_and_tests():
     filenames = {"/path/to/docs.rst", "test_docs2.py"}
     issue = {

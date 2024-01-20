@@ -45,7 +45,7 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         filepath = pathlib.PurePath(filename)
         if filepath.suffix == ".rst" or filepath.name == ".nitignore":
             docs = True
-        elif filepath.name.startswith("test_"):
+        elif filepath.name.startswith(("test_", "_test")):
             tests = True
         else:
             return pr_labels

@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         id: python-install
         with:
           python-version: ${{ matrix.python-version }}
@@ -33,7 +33,7 @@ jobs:
           python -m pip install tox
       - name: Run Tests
         run: tox -e py
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

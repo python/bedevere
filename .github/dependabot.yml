@@ -7,7 +7,10 @@ updates:
       interval: monthly
     assignees:
       - "ezio-melotti"
-    open-pull-requests-limit: 10
+    groups:
+      pip:
+        patterns:
+          - "*"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -16,4 +19,7 @@ updates:
       interval: monthly
     assignees:
       - "ezio-melotti"
-    open-pull-requests-limit: 10
+    groups:
+      actions:
+        patterns:
+          - "*"

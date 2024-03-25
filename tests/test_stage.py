@@ -1217,7 +1217,7 @@ async def test_new_commit_pushed_to_not_approved_pr(issue_url_key, repo_full_nam
 
 async def test_pushed_without_commits():
     # There is new commit on approved PR
-    sha = "f2393593c99dd2d3ab8bfab6fcc5ddee540518a9"
+
     data = {"commits": []}
     event = sansio.Event(data, event="push", delivery_id="12345")
     gh = FakeGH()

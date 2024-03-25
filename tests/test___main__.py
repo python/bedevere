@@ -23,7 +23,7 @@ async def test_ping(aiohttp_client):
     assert response.status == 200
 
 
-async def test_success(aiohttp_client):
+async def test_bad_request_if_no_installation(aiohttp_client):
     app = web.Application()
     app.router.add_post("/", main.main)
     client = await aiohttp_client(app)
@@ -32,7 +32,8 @@ async def test_success(aiohttp_client):
     # either.
     data = {"action": "created"}
     response = await client.post("/", headers=headers, json=data)
-    assert response.status == 200
+    assert response.status == 400
+    assert await response.text() == "Must be installed as an App."
 
 
 async def test_failure(aiohttp_client):

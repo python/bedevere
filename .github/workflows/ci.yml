@@ -36,6 +36,6 @@ jobs:
       - uses: codecov/codecov-action@v4
         if: always()
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_ORG_TOKEN }}
           file: ./coverage.xml
           flags: Python_${{ steps.python-install.outputs.python-version }}

@@ -276,7 +276,13 @@ async def test_label_copying(pr_prefix):
         },
     }
     event = sansio.Event(event_data, event="pull_request", delivery_id="1")
-    labels_to_test = "CLA signed", "skip news", "type-enhancement", "sprint"
+    labels_to_test = (
+        "CLA signed",
+        "skip news",
+        "type-enhancement",
+        "sprint",
+        "topic-repl",
+    )
     getitem_data = {
         "https://api.github.com/issue/1234": {
             "labels": [{"name": label} for label in labels_to_test],
@@ -293,7 +299,12 @@ async def test_label_copying(pr_prefix):
     expected_post = None
     for post in gh.post_:
         if post[0] == "https://api.github.com/issue/1234/labels":
-            assert {"skip news", "type-enhancement", "sprint"} == frozenset(post[1])
+            assert {
+                "skip news",
+                "type-enhancement",
+                "sprint",
+                "topic-repl",
+            } == frozenset(post[1])
             expected_post = post
 
     assert expected_post is not None

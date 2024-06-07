@@ -31,7 +31,7 @@ BACKPORT_TITLE_DEVGUIDE_URL = (
 
 async def _copy_over_labels(gh, original_issue, backport_issue):
     """Copy over relevant labels from the original PR to the backport PR."""
-    label_prefixes = "skip", "type", "sprint"
+    label_prefixes = "skip", "type", "sprint", "topic"
     labels = list(
         filter(lambda x: x.startswith(label_prefixes), util.labels(original_issue))
     )

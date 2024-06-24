@@ -31,7 +31,7 @@ SKIP_LABEL_STATUS = create_status(
 
 HELP = f"""\
 Most changes to Python [require a NEWS entry]\
-(https://devguide.python.org/committing/#updating-news-and-what-s-new-in-python). \
+(https://devguide.python.org/core-developers/committing/#updating-news-and-what-s-new-in-python). \
 Add one using the [blurb_it]({BLURB_IT_URL}) web app or \
 the [blurb]({BLURB_PYPI_URL}) command-line tool.
 

@@ -37,17 +37,17 @@ async def main(request):
 
         async with aiohttp.ClientSession() as session:
             gh = gh_aiohttp.GitHubAPI(session, "python/bedevere", cache=cache)
+            if not event.data.get("installation"):
+                return web.Response(text="Must be installed as an App.", status=400)
+            installation_id = event.data["installation"]["id"]
+            installation_access_token = await apps.get_installation_access_token(
+                gh,
+                installation_id=installation_id,
+                app_id=os.environ.get("GH_APP_ID"),
+                private_key=os.environ.get("GH_PRIVATE_KEY"),
+            )
+            gh.oauth_token = installation_access_token["token"]
 
-            if event.data.get("installation"):
-                # This path only works on GitHub App
-                installation_id = event.data["installation"]["id"]
-                installation_access_token = await apps.get_installation_access_token(
-                    gh,
-                    installation_id=installation_id,
-                    app_id=os.environ.get("GH_APP_ID"),
-                    private_key=os.environ.get("GH_PRIVATE_KEY"),
-                )
-                gh.oauth_token = installation_access_token["token"]
             # Give GitHub some time to reach internal consistency.
             await asyncio.sleep(1)
             await router.dispatch(event, gh, session=session)
@@ -63,7 +63,6 @@ async def main(request):
 
 @router.register("installation", action="created")
 async def repo_installation_added(event, gh, *args, **kwargs):
-    # installation_id = event.data["installation"]["id"]
     print(
         f"App installed by {event.data['installation']['account']['login']}, installation_id: {event.data['installation']['id']}"
     )

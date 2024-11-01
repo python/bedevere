@@ -1,6 +1,6 @@
 """Check if a GitHub issue number is specified in the pull request's title."""
 import re
-from typing import Dict, Literal
+from typing import Literal
 
 import gidgethub
 from aiohttp import ClientSession
@@ -20,11 +20,11 @@ STATUS_CONTEXT = "bedevere/issue-number"
 SKIP_ISSUE_STATUS = util.create_status(
     STATUS_CONTEXT, util.StatusState.SUCCESS, description="Issue report skipped"
 )
-ISSUE_URL: Dict[IssueKind, str] = {
+ISSUE_URL: dict[IssueKind, str] = {
     "gh": "https://github.com/python/cpython/issues/{issue_number}",
     "bpo": "https://bugs.python.org/issue?@action=redirect&bpo={issue_number}",
 }
-ISSUE_CHECK_URL: Dict[IssueKind, str] = {
+ISSUE_CHECK_URL: dict[IssueKind, str] = {
     "gh": "https://api.github.com/repos/python/cpython/issues/{issue_number}",
     "bpo": "https://bugs.python.org/issue{issue_number}",
 }

@@ -43,7 +43,7 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         if util.is_news_dir(filename):
             news = True
         filepath = pathlib.PurePath(filename)
-        if filepath.suffix in [".md", ".rst"] or filepath.name == ".nitignore":
+        if filepath.suffix in {".md", ".rst"} or filepath.name == ".nitignore":
             docs = True
         elif filepath.name.startswith(("test_", "_test")):
             tests = True

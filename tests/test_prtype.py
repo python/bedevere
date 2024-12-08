@@ -66,7 +66,7 @@ async def test_news_only():
 
 
 async def test_docs_no_news():
-    filenames = {"path/to/docs1.rst"}
+    filenames = {"path/to/docs1.rst", "other/path/to/docs2.md"}
     issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
     gh = FakeGH(getitem=issue)
     event_data = {

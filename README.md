@@ -48,11 +48,11 @@ flowchart TD
     A_draft -- publish draft by contributor --> A:::creator
     A -- by contributor --> B[Awaiting review]:::anyone
     A -- by core dev --> C[Awaiting core review]:::coredev
-    B & C -- new review by\nanother contributor --> C
-    C & B & E  -- new core review\nrequests changes --> D[Awaiting changes]:::creator
+    B & C -- new review by<br/>another contributor --> C
+    C & B & E  -- new core review<br/>requests changes --> D[Awaiting changes]:::creator
     D -- changes by contributor --> E[Awaiting change review]:::coredev
-    C & E & B -- new core review\napproves ---> F[Awaiting merge]:::coredev
-    G[When a review is dismissed\nthe highest remaining state is restored\nbased on the remaining reviews]
+    C & E & B -- new core review<br/>approves ---> F[Awaiting merge]:::coredev
+    G[When a review is dismissed<br/>the highest remaining state is restored<br/>based on the remaining reviews]
 classDef creator stroke:#CC0;
 classDef anyone stroke:#00C;
 classDef coredev stroke:#0C0;

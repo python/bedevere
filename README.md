@@ -57,9 +57,9 @@ classDef creator stroke:#CC0;
 classDef anyone stroke:#00C;
 classDef coredev stroke:#0C0;
 classDef triager stroke:#C0C;
-linkStyle 0,1,2,8 stroke:#CC0,color:auto;
+linkStyle 0,1,8 stroke:#CC0,color:auto;
 linkStyle 3,4 stroke:#00C,color:auto;
-linkStyle 5,6,7,9,10,11 stroke:#0C0,color:auto;
+linkStyle 2,5,6,7,9,10,11 stroke:#0C0,color:auto;
 ```
 
 ## *Aside*: where does the name come from?

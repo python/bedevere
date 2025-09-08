@@ -51,6 +51,8 @@ async def classify_by_filepaths(gh, pull_request, filenames):
             return pr_labels
     if tests:
         pr_labels = [Labels.tests]
+        if not news and not docs:
+            pr_labels.append(Labels.skip_news)
     elif docs:
         if news:
             pr_labels = [Labels.docs]

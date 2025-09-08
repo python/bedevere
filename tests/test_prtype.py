@@ -142,7 +142,7 @@ async def test_tests_only():
     assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/label"
-    assert gh.post_data[0] == [Labels.tests.value]
+    assert gh.post_data[0] == [Labels.tests.value, Labels.skip_news.value]
 
 
 async def test_tests_and_testmods_only():
@@ -162,7 +162,7 @@ async def test_tests_and_testmods_only():
     assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/label"
-    assert gh.post_data[0] == [Labels.tests.value]
+    assert gh.post_data[0] == [Labels.tests.value, Labels.skip_news.value]
 
 
 async def test_docs_and_tests():

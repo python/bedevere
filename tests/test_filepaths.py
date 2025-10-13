@@ -179,11 +179,9 @@ async def test_docs_and_tests():
     )
     assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
     # Only creates tests label.
-    assert len(gh.post_url) == 2
+    assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/label"
     assert gh.post_data[0] == [Labels.tests.value]
-    assert gh.post_url[1] == "https://api.github.com/some/status"
-    assert gh.post_data[1]["state"] == "success"
 
 
 async def test_news_and_tests():

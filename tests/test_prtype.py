@@ -27,7 +27,7 @@ GOOD_BASENAME = "2017-06-16-20-32-50.bpo-1234.nonce.rst"
 
 async def test_no_files():
     filenames = {}
-    issue = {"labels": []}
+    issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
     gh = FakeGH(getitem=issue)
     event_data = {
         "action": "opened",
@@ -183,7 +183,7 @@ async def test_docs_and_tests():
     }
     await prtype.classify_by_filepaths(gh, event_data["pull_request"], filenames)
     assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
-    # Only creates type-tests label.
+    # Only creates tests label.
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/label"
     assert gh.post_data[0] == [Labels.tests.value]

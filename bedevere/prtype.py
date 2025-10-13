@@ -50,13 +50,10 @@ async def classify_by_filepaths(gh, pull_request, filenames):
         else:
             return pr_labels
     if tests:
-        pr_labels = [Labels.tests]
-        if not news and not docs:
-            pr_labels.append(Labels.skip_news)
+        pr_labels.append(Labels.tests)
     elif docs:
-        if news:
-            pr_labels = [Labels.docs]
-        else:
-            pr_labels = [Labels.docs, Labels.skip_news]
+        pr_labels.append(Labels.docs)
+    if (tests or docs) and not news:
+        pr_labels.append(Labels.skip_news)
     await add_labels(gh, issue, pr_labels)
     return pr_labels

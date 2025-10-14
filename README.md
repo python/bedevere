@@ -15,19 +15,19 @@ If an issue number is found then the "Details" link points to the relevant issue
 itself, making it easier to navigate from PR to issue.
 - ### Identifies missing news entry
 If no `Misc/NEWS.d` entry is found or the news entry is formatted incorrectly
-and the issue doesn't have the `skip news` label, the status fails and a relevant
+and the issue doesn't have the `skip-news` label, the status fails and a relevant
 description label is added to it.
 - ### Closes invalid PRs
 Closes PRs that try to merge a maintenance branch into the main branch, adds
 `invalid` label, and posts a relevant message.
 - ### Labels PRs for docs
-Labels PRs for documentation as `type-documentation`
+Labels PRs for documentation as `docs`
 - ### Copies main labels to backport
 Copies labels from main PRs to backport PRs
 
 ## PR State Machine
 
-This diagram represent the state machine for pull requests, and the labels
+This diagram represents the state machine for pull requests, and the labels
 applied by Bedevere.
 
 The colors represent who can make a state change or who is currently

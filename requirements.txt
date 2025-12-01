@@ -1,7 +1,7 @@
 aiohttp==3.13.2
 appdirs==1.4.4
 async-timeout==5.0.1
-cachetools==6.2.1
+cachetools==6.2.2
 chardet==5.2.0
 gidgethub==5.4.0
 multidict==6.7.0
@@ -10,4 +10,4 @@ pyparsing==3.2.5
 six==1.17.0
 uritemplate==4.2.0
 yarl==1.22.0
-sentry-sdk==2.43.0
+sentry-sdk==2.46.0

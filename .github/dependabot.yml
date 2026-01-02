@@ -11,6 +11,8 @@ updates:
       pip:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -23,3 +25,5 @@ updates:
       actions:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7

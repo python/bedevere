@@ -1,4 +1,5 @@
 """Automatically close PR that tries to merge maintenance branch into main."""
+
 import re
 
 import gidgethub.routing

@@ -1,4 +1,5 @@
 """Checks related to filepaths on a pull request."""
+
 import gidgethub.routing
 
 from . import news, prtype, util

@@ -1,24 +1,50 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.9.1
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.12.0
     hooks:
       - id: black
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+    rev: 7.0.0
     hooks:
       - id: isort
         files: \.py$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: check-builtin-literals
       - id: check-added-large-files
       - id: check-case-conflict
-      - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
-      - id: forbid-new-submodules
+      - id: forbid-submodules
+      - id: requirements-txt-fixer
       - id: trailing-whitespace
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.36.0
+    hooks:
+      - id: check-dependabot
+      - id: check-github-workflows
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.10
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.19.0
+    hooks:
+      - id: zizmor
+
+  - repo: https://github.com/tox-dev/tox-ini-fmt
+    rev: 1.7.1
+    hooks:
+      - id: tox-ini-fmt
+
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes

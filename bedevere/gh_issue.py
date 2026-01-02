@@ -1,4 +1,5 @@
 """Check if a GitHub issue number is specified in the pull request's title."""
+
 import re
 from typing import Literal
 

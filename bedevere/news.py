@@ -1,4 +1,5 @@
 """Check for a news entry."""
+
 import functools
 import pathlib
 import re

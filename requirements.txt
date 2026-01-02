@@ -7,7 +7,7 @@ gidgethub==5.4.0
 multidict==6.7.0
 packaging==25.0
 pyparsing==3.3.1
+sentry-sdk==2.48.0
 six==1.17.0
 uritemplate==4.2.0
 yarl==1.22.0
-sentry-sdk==2.48.0

@@ -1,4 +1,5 @@
 """Label a pull request based on its type."""
+
 import enum
 import pathlib
 

@@ -78,20 +78,8 @@ if __name__ == "__main__":  # pragma: no cover
     app.router.add_post("/", main)
     app.router.add_get("/health", health_check)
 
-    socket_path = os.environ.get("SOCKET_PATH")
-    port = os.environ.get("PORT")
-
-    if socket_path:
-
-        async def run_with_socket():
-            runner = web.AppRunner(app)
-            await runner.setup()
-            site = web.UnixSite(runner, path=socket_path)
-            await site.start()
-            await asyncio.Event().wait()
-
-        asyncio.run(run_with_socket())
+    if os.path.isdir("/var/run/cabotage"):
+        web.run_app(app, path="/var/run/cabotage/cabotage.sock")
     else:
-        if port is not None:
-            port = int(port)
-        web.run_app(app, port=port)
+        port = os.environ.get("PORT")
+        web.run_app(app, port=int(port) if port else None)

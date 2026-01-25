@@ -68,10 +68,18 @@ async def repo_installation_added(event, gh, *args, **kwargs):
     )
 
 
+async def health_check(request):
+    """Health check endpoint for container orchestration."""
+    return web.Response(status=200, text="OK")
+
+
 if __name__ == "__main__":  # pragma: no cover
     app = web.Application()
     app.router.add_post("/", main)
-    port = os.environ.get("PORT")
-    if port is not None:
-        port = int(port)
-    web.run_app(app, port=port)
+    app.router.add_get("/health", health_check)
+
+    if os.path.isdir("/var/run/cabotage"):
+        web.run_app(app, path="/var/run/cabotage/cabotage.sock")
+    else:
+        port = os.environ.get("PORT")
+        web.run_app(app, port=int(port) if port else None)

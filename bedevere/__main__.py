@@ -68,10 +68,30 @@ async def repo_installation_added(event, gh, *args, **kwargs):
     )
 
 
+async def health_check(request):
+    """Health check endpoint for container orchestration."""
+    return web.Response(status=200, text="OK")
+
+
 if __name__ == "__main__":  # pragma: no cover
     app = web.Application()
     app.router.add_post("/", main)
+    app.router.add_get("/health", health_check)
+
+    socket_path = os.environ.get("SOCKET_PATH")
     port = os.environ.get("PORT")
-    if port is not None:
-        port = int(port)
-    web.run_app(app, port=port)
+
+    if socket_path:
+
+        async def run_with_socket():
+            runner = web.AppRunner(app)
+            await runner.setup()
+            site = web.UnixSite(runner, path=socket_path)
+            await site.start()
+            await asyncio.Event().wait()
+
+        asyncio.run(run_with_socket())
+    else:
+        if port is not None:
+            port = int(port)
+        web.run_app(app, port=port)

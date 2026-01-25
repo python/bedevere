@@ -43,5 +43,5 @@ jobs:
         if: always()
         with:
           token: ${{ secrets.CODECOV_ORG_TOKEN }}
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: Python_${{ steps.python-install.outputs.python-version }}

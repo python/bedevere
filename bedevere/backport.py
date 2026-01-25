@@ -1,4 +1,5 @@
 """Automatically remove a backport label, and check backport PR validity."""
+
 import functools
 import re
 

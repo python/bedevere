@@ -39,7 +39,7 @@ jobs:
         run: |
           uvx --with tox-uv tox -e py
 
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v6
         if: always()
         with:
           token: ${{ secrets.CODECOV_ORG_TOKEN }}

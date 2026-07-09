@@ -374,7 +374,7 @@ async def test_not_valid_maintenance_branch_pr_title(action):
     assert post[1]["state"] == "failure"
     assert (
         post[1]["target_url"]
-        == "https://devguide.python.org/committing/#backport-pr-title"
+        == "https://devguide.python.org/getting-started/git-boot-camp/#backport-pr"
     )
 
 

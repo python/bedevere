@@ -130,7 +130,9 @@ def create_failure_status_issue_not_present(
 def create_failure_status_no_issue():
     """Create a failure status for when no issue number was found in the title."""
     description = 'No issue # in title or "skip issue" label found'
-    url = "https://devguide.python.org/getting-started/pull-request-lifecycle.html#submitting"
+    url = (
+        "https://devguide.python.org/getting-started/pull-request-lifecycle/#submitting"
+    )
     return util.create_status(
         STATUS_CONTEXT,
         util.StatusState.FAILURE,

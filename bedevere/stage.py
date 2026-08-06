@@ -9,8 +9,11 @@
 
 import enum
 import random
+from typing import Any
 
 import gidgethub.routing
+from gidgethub.abc import GitHubAPI
+from gidgethub.sansio import Event
 
 from . import util
 
@@ -248,12 +251,14 @@ async def dismissed_review(event, gh, *args, **kwargs):
             await stage(gh, await util.issue_for_PR(gh, pull_request), Blocker.review)
 
 
+@router.register("pull_request_review_comment", action="created")
 @router.register("issue_comment", action="created")
-async def new_comment(event, gh, *args, **kwargs):
-    issue = event.data["issue"]
+async def new_comment(event: Event, gh: GitHubAPI, *args: Any, **kwargs: Any) -> None:
+    commented_on = event.data.get("issue") or event.data.get("pull_request")
     comment = event.data["comment"]
     comment_body = comment["body"].lower()
-    if util.user_login(issue) != util.user_login(comment):
+
+    if util.user_login(commented_on) != util.user_login(comment):
         # Only care about the PR creator leaving a comment.
         return
     elif not any(trigger.lower() in comment_body for trigger in TRIGGERS):
@@ -264,6 +269,14 @@ async def new_comment(event, gh, *args, **kwargs):
             thanks = FUN_THANKS
         else:
             thanks = BORING_THANKS
+
+        # For `issue_comment` event,
+        # the required data is already present in the `issue` dict.
+        # But, for `pull_request_review_comment` event,
+        # we need to fetch the issue (pull_request) data.
+        issue = event.data.get("issue") or await util.issue_for_PR(
+            gh, event.data.get("pull_request")
+        )
         await request_core_review(
             gh, issue, blocker=Blocker.change_review, greeting=thanks
         )

@@ -13,6 +13,15 @@ app_installation_payload = {
 }
 
 
+async def test_health_check(aiohttp_client):
+    app = web.Application()
+    app.router.add_get("/health", main.health_check)
+    client = await aiohttp_client(app)
+    response = await client.get("/health")
+    assert response.status == 200
+    assert await response.text() == "OK"
+
+
 async def test_ping(aiohttp_client):
     app = web.Application()
     app.router.add_post("/", main.main)

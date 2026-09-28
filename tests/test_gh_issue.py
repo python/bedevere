@@ -10,8 +10,9 @@ from bedevere import gh_issue
 
 
 class FakeGH:
-    def __init__(self, *, getitem=None, post=None, patch=None):
+    def __init__(self, *, getitem=None, getitem_by_url=None, post=None, patch=None):
         self._getitem_return = getitem
+        self._getitem_by_url = getitem_by_url or {}
         self._post_return = post
         self._patch_return = patch
         self.post_url = []
@@ -20,6 +21,8 @@ class FakeGH:
         self.patch_data = []
 
     async def getitem(self, url):
+        if url in self._getitem_by_url:
+            return self._getitem_by_url[url]
         if isinstance(self._getitem_return, Exception):
             raise self._getitem_return
         return self._getitem_return
@@ -247,6 +250,67 @@ async def test_set_status_success_issue_found_on_gh_ignore_case(
     assert len(gh.patch_url) == 2
     assert gh.patch_url[0] == data["pull_request"]["url"]
     assert gh.patch_url[1] == issue_data["url"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["opened", "synchronize", "reopened"])
+@pytest.mark.parametrize(
+    "pr_labels, issue_labels, expected_pr_labels_posted",
+    [
+        pytest.param([], ["type-feature", "3.15"], ["type-feature"], id="copied"),
+        pytest.param(["type-feature"], ["type-feature"], None, id="already-on-pr"),
+        pytest.param([], [], None, id="issue-unlabeled"),
+        pytest.param([], ["type-bug"], None, id="issue-not-feature"),
+    ],
+)
+async def test_type_feature_label_copied_from_issue(
+    action,
+    pr_labels,
+    issue_labels,
+    expected_pr_labels_posted,
+    monkeypatch,
+    issue_number,
+):
+    # Arrange
+    monkeypatch.setattr(
+        gh_issue, "_validate_issue_number", mock.AsyncMock(return_value=True)
+    )
+    data = {
+        "action": action,
+        "pull_request": {
+            "statuses_url": "https://api.github.com/blah/blah/git-sha",
+            "title": f"gh-{issue_number}: a change",
+            "url": "url",
+            "issue_url": "issue URL",
+            "number": 1234,
+        },
+    }
+    pr_issue_data = {
+        "url": "url",
+        "labels_url": "labels URL",
+        "labels": [{"name": name} for name in pr_labels],
+    }
+    linked_issue_data = {
+        "url": f"https://api.github.com/repos/python/cpython/issues/{issue_number}",
+        "labels": [{"name": name} for name in issue_labels],
+    }
+    event = sansio.Event(data, event="pull_request", delivery_id="12345")
+    gh = FakeGH(
+        getitem=pr_issue_data,
+        getitem_by_url={linked_issue_data["url"]: linked_issue_data},
+    )
+
+    # Act
+    await gh_issue.router.dispatch(event, gh, session=None)
+
+    # Assert
+    if expected_pr_labels_posted:
+        assert gh.post_url[0] == "labels URL"
+        assert gh.post_data[0] == expected_pr_labels_posted
+        assert len(gh.post_data) == 2
+    else:
+        assert len(gh.post_data) == 1
+    assert gh.post_data[-1]["state"] == "success"
 
 
 @pytest.mark.asyncio

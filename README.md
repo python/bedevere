@@ -22,6 +22,9 @@ Closes PRs that try to merge a maintenance branch into the main branch, adds
 `invalid` label, and posts a relevant message.
 - ### Labels PRs for docs
 Labels PRs for documentation as `docs`
+- ### Copies `type-feature` label from issue to PR
+If the GitHub issue referenced in the PR title is labeled `type-feature`,
+the same label is added to the PR
 - ### Copies main labels to backport
 Copies labels from main PRs to backport PRs
 

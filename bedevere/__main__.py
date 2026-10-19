@@ -79,6 +79,7 @@ if __name__ == "__main__":  # pragma: no cover
     app.router.add_get("/health", health_check)
 
     if os.path.isdir("/var/run/cabotage"):
+        os.umask(0)
         web.run_app(app, path="/var/run/cabotage/cabotage.sock")
     else:
         port = os.environ.get("PORT")

@@ -26,7 +26,7 @@ MESSAGE_TEMPLATE = (
 
 
 BACKPORT_TITLE_DEVGUIDE_URL = (
-    "https://devguide.python.org/committing/#backport-pr-title"
+    "https://devguide.python.org/getting-started/git-boot-camp/#backport-pr"
 )
 
 

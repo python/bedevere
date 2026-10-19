@@ -8,7 +8,7 @@ from aiohttp import ClientSession
 from gidgethub import routing
 from gidgethub.abc import GitHubAPI
 
-from . import util
+from . import prtype, util
 
 router = routing.Router()
 
@@ -66,6 +66,8 @@ async def set_status(event, gh: GitHubAPI, *args, session: ClientSession, **kwar
                 await util.patch_body(
                     gh, util.ISSUE, issue_data, pull_request["number"]
                 )
+                # Copy the "type-feature" label from the issue to the pull request
+                await _copy_type_feature_label(gh, issue_data, issue)
         else:
             status = create_failure_status_issue_not_present(
                 issue_number, kind=issue_kind
@@ -130,13 +132,21 @@ def create_failure_status_issue_not_present(
 def create_failure_status_no_issue():
     """Create a failure status for when no issue number was found in the title."""
     description = 'No issue # in title or "skip issue" label found'
-    url = "https://devguide.python.org/getting-started/pull-request-lifecycle.html#submitting"
+    url = (
+        "https://devguide.python.org/getting-started/pull-request-lifecycle/#submitting"
+    )
     return util.create_status(
         STATUS_CONTEXT,
         util.StatusState.FAILURE,
         description=description,
         target_url=url,
     )
+
+
+async def _copy_type_feature_label(gh: GitHubAPI, issue_data, pr_issue) -> None:
+    """Label the PR "type-feature" if its linked issue is labeled "type-feature"."""
+    if prtype.Labels.type_feature.value in util.labels(issue_data):
+        await prtype.add_labels(gh, pr_issue, [prtype.Labels.type_feature])
 
 
 async def _validate_issue_number(

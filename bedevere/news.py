@@ -13,7 +13,7 @@ router = gidgethub.routing.Router()
 
 create_status = functools.partial(util.create_status, "bedevere/news")
 
-BLURB_IT_URL = "https://blurb-it.herokuapp.com"
+BLURB_IT_URL = "https://blurb-it.python.org"
 BLURB_PYPI_URL = "https://pypi.org/project/blurb/"
 
 FILENAME_RE = re.compile(

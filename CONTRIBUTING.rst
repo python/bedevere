@@ -1,7 +1,42 @@
 Contributing and Maintenance Guide
 ==================================
 
-Bedevere web service is deployed to Heroku, which is managed by The PSF.
+Bedevere web service is deployed to `cabotage`_, the container platform
+managed by The PSF. The application lives at
+https://cabotage.us-east-2.psfhosted.computer/projects/python/bedevere/applications/bedevere
+and is only visible to members of the ``python`` organization on cabotage.
+
+How bedevere runs on cabotage
+-----------------------------
+
+- cabotage builds the container image from the ``Dockerfile`` in this repo.
+- The processes to run come from the ``Procfile`` (the ``CMD`` in the
+  ``Dockerfile`` is ignored). bedevere has a single ``web`` process.
+- The ``web`` process must listen on the unix socket
+  ``/var/run/cabotage/cabotage.sock``; a TLS sidecar forwards public traffic
+  to it. ``bedevere/__main__.py`` binds to that socket when the
+  ``/var/run/cabotage`` directory exists, and falls back to the ``PORT``
+  environment variable otherwise, so the same code runs locally and on
+  cabotage.
+- The container runs as the unprivileged ``nobody`` user with a read-only
+  home directory. Do not write to disk at runtime.
+- ``GET /health`` returns ``200 OK``. It is the path cabotage's health probes
+  request (set under *Settings*, *Health path*).
+
+Configuration
+-------------
+
+Configuration variables are set in the cabotage UI under
+the *Config* menu, *Variables*. Secrets are stored encrypted and cannot be read back
+once set. bedevere needs:
+
+- ``GH_APP_ID``: the GitHub App ID.
+- ``GH_PRIVATE_KEY``: the GitHub App private key (secret).
+- ``GH_SECRET``: the webhook secret configured on the GitHub App (secret).
+- ``SENTRY_DSN``: where errors are reported.
+
+A change to a variable only takes effect once a new release is created and
+deployed.
 
 Deployment
 ----------
@@ -9,75 +44,48 @@ Deployment
 There are two ways to have bedevere deployed: automatic deployment, and
 manual deployment.
 
-Automatic Deployment (currently broken)
-'''''''''''''''''''''''''''''''''''''''
+Automatic Deployment
+''''''''''''''''''''
 
-When the automatic deployment is enabled (on Heroku side), any merged PR
-will automatically be deployed to Heroku. This process takes less than 5 minutes.
+The cabotage application is connected to the ``python/bedevere`` repository
+through the cabotage GitHub App and auto-deploys the ``main`` branch. Any PR
+merged into ``main`` is built, released and deployed automatically. This
+process takes a few minutes.
 
-If after 10 minutes you did not see the changes reflected, please ping one
-of the collaborators listed below.
-
-To enable Automatic deployment:
-
-- On the Heroku dashboard for bedevere, choose the "Deploy" tab.
-- Scroll down to the "Automatic deploys" section
-- Enter the name of the branch to be deployed (in this case: ``main``)
-- Check the "Wait for CI to pass before deploy" button
-- Press the "Enable automatic deploys" button.
-
-Once done, merging a PR against the ``main`` branch will trigger a new
-deployment using a webhook that is already set up in the repo settings.
-
-
-.. note::
-
-   Due to recent `security incident`_, the Heroku GitHub integration is broken.
-   Automatic deployment does not currently work. Until this gets resolved,
-   maintainers have to deploy bedevere to Heroku manually.
-
+If after 10 minutes you did not see the changes reflected, check the
+*Deploys* tab of the application for a failed build or deployment, or ping
+one of the collaborators listed below.
 
 Manual Deployment
 '''''''''''''''''
 
-The app can be deployed manually to Heroku by collaborators and members of the ``bedevere`` app on Heroku.
-Heroku admins can do it too.
+The app can be deployed manually from the cabotage UI by members of the
+``python`` organization on cabotage. A deployment is three steps, each with
+its own button on the application page:
 
-#. Install Heroku CLI
+#. **Build Image**: builds a container image from the configured repository
+   and branch.
 
-   Details at: https://devcenter.heroku.com/articles/heroku-cli
+#. **Create a release**: bundles the image with the current configuration
+   variables into a release. This is also the step to run after changing a
+   configuration variable.
 
-#. Login to Heroku CLI on the command line and follow instructions::
+#. **Deploy**: pushes the release live. cabotage waits for ``/health`` to
+   answer before it considers the deployment complete.
 
-      heroku login
+After the first deployment of a new or renamed process, its replica count is
+zero. Scale the ``web`` process to 1 from the application page.
 
+Logs for the running process, and a shell inside the container, are both
+available from the application page.
 
-#. If you haven't already, get a clone of the bedevere repo::
-
-      git clone git@github.com:python/bedevere.git
-
-   Or, using `GitHub CLI`_::
-
-      gh repo clone python/bedevere
-
-#. From the ``bedevere`` directory, add the ``bedevere`` Heroku app as remote branch::
-
-      heroku git:remote -a bedevere
-
-
-#. From the ``bedevere`` directory, push to Heroku::
-
-      git push heroku main
-
-
-After a successful push, the deployment will begin.
-
-Heroku app collaborators and members
-''''''''''''''''''''''''''''''''''''
+Maintainers
+'''''''''''
 
 - @Mariatta
 - @ambv
 - @brettcannon
 
-.. _security incident: https://status.heroku.com/incidents/2413
-.. _GitHub CLI: https://cli.github.com/
+Access to the cabotage application is granted by the PSF infrastructure team.
+
+.. _cabotage: https://github.com/cabotage/cabotage-app

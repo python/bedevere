@@ -46,10 +46,6 @@ _ISSUE_MESSAGE_TEMPLATE = """\
 Thank you for taking the time to open this issue. Python is a community-driven \
 project, and we want it to be a welcoming place to learn and collaborate.
 
-Please review and verify the information in your issue and make sure you can \
-explain it in your own words. This helps us understand your issue and leaves \
-more time to address other issues.
-
 {action}
 
 Please read our [guidelines for using AI tools]\
@@ -59,16 +55,18 @@ ISSUE_COMMENT_MESSAGE = _ISSUE_MESSAGE_TEMPLATE.format(
     action=(
         "This issue appears to have been written with AI assistance. "
         "Please explain your issue in your own words and describe how you checked "
-        "the information you provided."
+        "the information you provided. This helps us understand your issue and "
+        "leaves more time to address other issues."
     )
 )
 
 ISSUE_CLOSE_MESSAGE = _ISSUE_MESSAGE_TEMPLATE.format(
     action=(
+        "We expect issues to be explained in your own words. "
         "We're closing this issue because we believe it does not meet our "
         "guidelines for using AI tools. "
-        "If you think we've misunderstood your issue, please let us know. "
-        "You're welcome to clarify it or ask questions about the guidelines."
+        "If you think we've misunderstood, you're welcome to clarify the issue "
+        "or ask questions about the guidelines."
     )
 )
 

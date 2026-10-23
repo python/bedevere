@@ -1,4 +1,4 @@
-"""Respond to AI policy labels applied by triagers and core developers."""
+"""Respond to AI policy labels applied by triage and core teams."""
 
 import os
 
@@ -12,8 +12,8 @@ COMMENT_LABEL = "ai policy comment"
 CLOSE_LABEL = "ai policy close"
 
 _PR_MESSAGE_TEMPLATE = """\
-Thank you for your interest in contributing to Python. This is a community \
-driven project, and we want it to be a welcoming place to learn and collaborate.
+Thank you for your interest in contributing to Python. This is a community-driven \
+project, and we want it to be a welcoming place to learn and collaborate.
 
 Contributors are responsible for reviewing and \
 understanding what they submit, checking its claims, and being able to explain \
@@ -43,7 +43,7 @@ PR_CLOSE_MESSAGE = _PR_MESSAGE_TEMPLATE.format(
 )
 
 _ISSUE_MESSAGE_TEMPLATE = """\
-Thank you for taking the time to open this issue. Python is a community driven \
+Thank you for taking the time to open this issue. Python is a community-driven \
 project, and we want it to be a welcoming place to learn and collaborate.
 
 Please review and verify the information in your issue and make sure you can \

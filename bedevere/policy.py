@@ -11,7 +11,7 @@ router = gidgethub.routing.Router()
 COMMENT_LABEL = "ai policy comment"
 CLOSE_LABEL = "ai policy close"
 
-_MESSAGE_TEMPLATE = """\
+_PR_MESSAGE_TEMPLATE = """\
 Thank you for your interest in contributing to Python. This is a community \
 driven project, and we want it to be a welcoming place to learn and collaborate.
 
@@ -25,7 +25,7 @@ leaves more time to support other contributors.
 Please read our [guidelines for using AI tools]\
 (https://devguide.python.org/getting-started/ai-tools/index.html)."""
 
-POLICY_MESSAGE = _MESSAGE_TEMPLATE.format(
+PR_COMMENT_MESSAGE = _PR_MESSAGE_TEMPLATE.format(
     action=(
         "This contribution appears to have been authored with AI assistance. "
         "Please explain your contribution in your own words and describe how you "
@@ -33,12 +33,42 @@ POLICY_MESSAGE = _MESSAGE_TEMPLATE.format(
     )
 )
 
-CLOSE_MESSAGE = _MESSAGE_TEMPLATE.format(
+PR_CLOSE_MESSAGE = _PR_MESSAGE_TEMPLATE.format(
     action=(
         "We're closing this contribution because we believe it does not meet our "
         "guidelines for using AI tools. "
         "If you think we've misunderstood your contribution, please let us know. "
         "You're welcome to explain your approach or ask questions about the guidelines."
+    )
+)
+
+_ISSUE_MESSAGE_TEMPLATE = """\
+Thank you for taking the time to open this issue. Python is a community driven \
+project, and we want it to be a welcoming place to learn and collaborate.
+
+Please review and verify the information in your issue and make sure you can \
+explain it in your own words. This helps us understand your issue and leaves \
+more time to address other issues.
+
+{action}
+
+Please read our [guidelines for using AI tools]\
+(https://devguide.python.org/getting-started/ai-tools/index.html)."""
+
+ISSUE_COMMENT_MESSAGE = _ISSUE_MESSAGE_TEMPLATE.format(
+    action=(
+        "This issue appears to have been written with AI assistance. "
+        "Please explain your issue in your own words and describe how you checked "
+        "the information you provided."
+    )
+)
+
+ISSUE_CLOSE_MESSAGE = _ISSUE_MESSAGE_TEMPLATE.format(
+    action=(
+        "We're closing this issue because we believe it does not meet our "
+        "guidelines for using AI tools. "
+        "If you think we've misunderstood your issue, please let us know. "
+        "You're welcome to clarify it or ask questions about the guidelines."
     )
 )
 
@@ -70,7 +100,12 @@ async def label_added(event, gh, *args, **kwargs):
         if str(app.get("id")) == app_id and marker in comment["body"]:
             break
     else:
-        message = CLOSE_MESSAGE if label == CLOSE_LABEL else POLICY_MESSAGE
+        if is_pr:
+            message = PR_CLOSE_MESSAGE if label == CLOSE_LABEL else PR_COMMENT_MESSAGE
+        else:
+            message = (
+                ISSUE_CLOSE_MESSAGE if label == CLOSE_LABEL else ISSUE_COMMENT_MESSAGE
+            )
         await gh.post(issue["comments_url"], data={"body": f"{message}\n\n{marker}"})
 
     if label == CLOSE_LABEL:

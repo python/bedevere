@@ -74,9 +74,16 @@ def app_id(monkeypatch):
     monkeypatch.setenv("GH_APP_ID", str(APP_ID))
 
 
-@pytest.mark.parametrize("kind", ["issues", "pull_request"])
-@pytest.mark.parametrize("label", [policy.COMMENT_LABEL, policy.CLOSE_LABEL])
-async def test_policy_action_through_main_router(kind, label):
+@pytest.mark.parametrize(
+    "kind, label, message",
+    [
+        ("issues", policy.COMMENT_LABEL, policy.ISSUE_COMMENT_MESSAGE),
+        ("issues", policy.CLOSE_LABEL, policy.ISSUE_CLOSE_MESSAGE),
+        ("pull_request", policy.COMMENT_LABEL, policy.PR_COMMENT_MESSAGE),
+        ("pull_request", policy.CLOSE_LABEL, policy.PR_CLOSE_MESSAGE),
+    ],
+)
+async def test_policy_action_through_main_router(kind, label, message):
     event = make_event(kind, label)
     gh = FakeGH(label)
 
@@ -84,9 +91,6 @@ async def test_policy_action_through_main_router(kind, label):
 
     assert gh.calls[0] == ("get", ISSUE_URL)
     assert gh.calls[1] == ("getiter", COMMENTS_URL)
-    message = (
-        policy.CLOSE_MESSAGE if label == policy.CLOSE_LABEL else policy.POLICY_MESSAGE
-    )
     assert gh.comments[0]["body"] == f"{message}\n\n<!-- bedevere: {label} -->"
     assert gh.calls[2] == ("post", COMMENTS_URL, {"body": gh.comments[0]["body"]})
     if label == policy.CLOSE_LABEL:
@@ -192,7 +196,7 @@ async def test_other_authors_cannot_suppress_message(app):
     )
     await policy.router.dispatch(make_event("issues", policy.COMMENT_LABEL), gh)
     assert len(gh.comments) == 2
-    assert policy.POLICY_MESSAGE in gh.comments[-1]["body"]
+    assert policy.ISSUE_COMMENT_MESSAGE in gh.comments[-1]["body"]
 
 
 async def test_comment_then_close():
@@ -201,6 +205,6 @@ async def test_comment_then_close():
     gh.issue["labels"].append({"name": policy.CLOSE_LABEL})
     await policy.router.dispatch(make_event("issues", policy.CLOSE_LABEL), gh)
     assert len(gh.comments) == 2
-    assert policy.POLICY_MESSAGE in gh.comments[0]["body"]
-    assert policy.CLOSE_MESSAGE in gh.comments[1]["body"]
+    assert policy.ISSUE_COMMENT_MESSAGE in gh.comments[0]["body"]
+    assert policy.ISSUE_CLOSE_MESSAGE in gh.comments[1]["body"]
     assert gh.issue["state"] == "closed"

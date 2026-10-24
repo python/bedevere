@@ -20,6 +20,9 @@ description label is added to it.
 - ### Closes invalid PRs
 Closes PRs that try to merge a maintenance branch into the main branch, adds
 `invalid` label, and posts a relevant message.
+- ### Responds to AI policy labels
+Posts a reminder of the AI guidelines on issues and PRs labeled
+`ai policy comment`. The `ai policy close` label also closes the contribution.
 - ### Labels PRs for docs
 Labels PRs for documentation as `docs`
 - ### Copies `type-feature` label from issue to PR

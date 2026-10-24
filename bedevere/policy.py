@@ -35,8 +35,8 @@ PR_COMMENT_MESSAGE = _PR_MESSAGE_TEMPLATE.format(
 
 PR_CLOSE_MESSAGE = _PR_MESSAGE_TEMPLATE.format(
     action=(
-        "We're closing this contribution because we believe it does not meet our "
-        "guidelines for using AI tools. "
+        "We believe this contribution does not meet our guidelines for using AI "
+        "tools, so we're closing it. "
         "If you think we've misunderstood your contribution, please let us know. "
         "You're welcome to explain your approach or ask questions about the guidelines."
     )
@@ -63,8 +63,8 @@ ISSUE_COMMENT_MESSAGE = _ISSUE_MESSAGE_TEMPLATE.format(
 ISSUE_CLOSE_MESSAGE = _ISSUE_MESSAGE_TEMPLATE.format(
     action=(
         "We expect issues to be explained in your own words. "
-        "We're closing this issue because we believe it does not meet our "
-        "guidelines for using AI tools. "
+        "We believe this issue does not meet our guidelines for using AI tools, "
+        "so we're closing it. "
         "If you think we've misunderstood, you're welcome to clarify the issue "
         "or ask questions about the guidelines."
     )

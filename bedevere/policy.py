@@ -81,29 +81,32 @@ async def label_added(event, gh, *args, **kwargs):
     if event.data["sender"]["type"] == "Bot":
         return
 
-    is_pr = "pull_request" in event.data
-    target = event.data["pull_request" if is_pr else "issue"]
+    if "pull_request" in event.data:
+        target = event.data["pull_request"]
+        issue_url = target["issue_url"]
+        comment_message, close_message = PR_COMMENT_MESSAGE, PR_CLOSE_MESSAGE
+        close_data = {"state": "closed"}
+    else:
+        target = event.data["issue"]
+        issue_url = target["url"]
+        comment_message, close_message = ISSUE_COMMENT_MESSAGE, ISSUE_CLOSE_MESSAGE
+        close_data = {"state": "closed", "state_reason": "not_planned"}
+
     if target["state"] != "open":
         return
 
-    issue_url = target["issue_url"] if is_pr else target["url"]
     issue = await gh.getitem(issue_url)
     if issue["state"] != "open" or label not in util.labels(issue):
         return
 
     marker = f"<!-- bedevere: {label} -->"
-    app_id = os.environ["GH_APP_ID"]
+    app_id = os.environ.get("GH_APP_ID")
     async for comment in gh.getiter(issue["comments_url"]):
         app = comment.get("performed_via_github_app") or {}
         if str(app.get("id")) == app_id and marker in comment["body"]:
             break
     else:
-        if is_pr:
-            message = PR_CLOSE_MESSAGE if label == CLOSE_LABEL else PR_COMMENT_MESSAGE
-        else:
-            message = (
-                ISSUE_CLOSE_MESSAGE if label == CLOSE_LABEL else ISSUE_COMMENT_MESSAGE
-            )
+        message = close_message if label == CLOSE_LABEL else comment_message
         await gh.post(issue["comments_url"], data={"body": f"{message}\n\n{marker}"})
 
     if label == CLOSE_LABEL:
@@ -111,7 +114,4 @@ async def label_added(event, gh, *args, **kwargs):
         issue = await gh.getitem(issue_url)
         if issue["state"] != "open" or label not in util.labels(issue):
             return
-        data = {"state": "closed"}
-        if not is_pr:
-            data["state_reason"] = "not_planned"
-        await gh.patch(target["url"], data=data)
+        await gh.patch(target["url"], data=close_data)

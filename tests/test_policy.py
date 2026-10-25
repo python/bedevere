@@ -17,16 +17,17 @@ def make_event(kind, label, *, action="labeled", state="open", sender_type="User
         "number": 42,
         "state": state,
         "labels": [{"name": label}],
-        "url": PR_URL if kind == "pull_request" else ISSUE_URL,
-        "issue_url": ISSUE_URL,
         "comments_url": COMMENTS_URL,
     }
     data = {
         "action": action,
         "label": {"name": label},
         "sender": {"login": "triager", "type": sender_type},
-        "pull_request" if kind == "pull_request" else "issue": target,
     }
+    if kind == "pull_request":
+        data["pull_request"] = {**target, "url": PR_URL, "issue_url": ISSUE_URL}
+    else:
+        data["issue"] = {**target, "url": ISSUE_URL}
     return sansio.Event(data, event=kind, delivery_id="policy-label-delivery")
 
 

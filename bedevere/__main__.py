@@ -11,7 +11,7 @@ from aiohttp import web
 from gidgethub import aiohttp as gh_aiohttp
 from gidgethub import apps, routing, sansio
 
-from . import backport, close_pr, filepaths, gh_issue, news, stage
+from . import backport, close_pr, filepaths, gh_issue, news, policy, stage
 
 router = routing.Router(
     backport.router,
@@ -19,6 +19,7 @@ router = routing.Router(
     close_pr.router,
     filepaths.router,
     news.router,
+    policy.router,
     stage.router,
 )
 cache = cachetools.LRUCache(maxsize=500)

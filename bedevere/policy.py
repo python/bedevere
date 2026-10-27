@@ -8,8 +8,8 @@ from . import util
 
 router = gidgethub.routing.Router()
 
-COMMENT_LABEL = "AI policy comment"
-CLOSE_LABEL = "AI policy close"
+COMMENT_LABEL = "AI-needs-explanation"
+CLOSE_LABEL = "AI-guidelines-not-met"
 
 _PR_MESSAGE_TEMPLATE = """\
 Thank you for your interest in contributing to Python. This is a community-driven \

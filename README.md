@@ -22,7 +22,8 @@ Closes PRs that try to merge a maintenance branch into the main branch, adds
 `invalid` label, and posts a relevant message.
 - ### Remind Contributors about AI policy
 Posts a reminder of the AI guidelines on issues and PRs labeled
-`AI policy comment`. The `AI policy close` label also closes the contribution.
+`AI-needs-explanation` or `AI-guidelines-not-met`. The `AI-guidelines-not-met`
+label also closes the contribution.
 - ### Labels PRs for docs
 Labels PRs for documentation as `docs`
 - ### Copies `type-feature` label from issue to PR

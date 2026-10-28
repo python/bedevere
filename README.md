@@ -52,7 +52,7 @@ settings: a feature behaves the same on every repository that runs it.
 | ----------- | ----------------------------------- |
 | `policy`    | Yes. |
 | `stage`     | Yes, if PRs are reviewed by members of the python org's **Python core** team. A review from anyone else counts as a non-core review, so a repository whose reviewers aren't in that team would leave PRs at `awaiting core review`. Its comments say "A Python core developer". |
-| `filepaths` | Partly. It goes by file name, so it works on any repository: a PR that changes only docs files (`.rst`, `.md`) gets `docs`, and one that changes only test files (`test_*`, `_test*`), or tests mixed with docs, gets `tests`. But a docs-only PR with no `Misc/NEWS.d` entry also gets CPython's `skip news` label. |
+| `filepaths` | Partly. It goes by file name, so it works on any repository: when it's opened, a PR that changes only docs files (`.rst`, `.md`, `.nitignore`) gets `docs`, and one that changes only test files (`test_*`, `_test*`), or tests mixed with docs, gets `tests`. But a docs-only PR with no `Misc/NEWS.d` entry also gets CPython's `skip news` label. |
 | `close_pr`  | Only if `X.Y` branches are maintenance branches that must never be merged into `main`. Its comment links to CPython. |
 | `gh_issue`, `news`, `backport` | No. They expect CPython's `gh-NNNNN` titles, `Misc/NEWS.d` entries and backport workflow, and post failing statuses or wrong labels elsewhere. |
 
@@ -83,9 +83,9 @@ settings: a feature behaves the same on every repository that runs it.
    - `policy`: `AI-needs-explanation` (bedevere asks the author to explain
      the contribution in their own words) and `AI-guidelines-not-met`
      (bedevere comments, closes the issue or PR, and removes
-     `AI-needs-explanation` if it's there). Only one of the two stays on an
-     item: adding `AI-needs-explanation` to an item that already has
-     `AI-guidelines-not-met` does nothing. People apply these, and
+     `AI-needs-explanation` if it's there). Adding `AI-needs-explanation` to
+     an item that already has `AI-guidelines-not-met`, or to a closed item,
+     does nothing. People apply these, and
      bedevere acts only when the name matches exactly, including case. Until
      they exist bedevere does nothing, and a different spelling
      (`AI needs explanation`) is ignored without any error.

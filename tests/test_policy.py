@@ -268,6 +268,8 @@ async def test_both_labels_added_together(kind, first):
 async def test_only_the_other_policy_label_is_removed():
     gh = FakeGH("type-bug")
     gh.issue["labels"].append({"name": policy.COMMENT_LABEL})
-    await policy.router.dispatch(make_event("issues", policy.COMMENT_LABEL), gh)
-    assert not any(call[0] == "delete" for call in gh.calls)
-    assert gh.issue["labels"] == [{"name": "type-bug"}, {"name": policy.COMMENT_LABEL}]
+    gh.issue["labels"].append({"name": policy.CLOSE_LABEL})
+    await policy.router.dispatch(make_event("issues", policy.CLOSE_LABEL), gh)
+    assert sum(call[0] == "delete" for call in gh.calls) == 1
+    assert gh.issue["labels"] == [{"name": "type-bug"}, {"name": policy.CLOSE_LABEL}]
+    assert gh.issue["state"] == "closed"

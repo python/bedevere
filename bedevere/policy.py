@@ -99,6 +99,15 @@ async def label_added(event, gh, *args, **kwargs):
     if issue["state"] != "open" or label not in util.labels(issue):
         return
 
+    # Only one AI policy label applies at a time and the close label wins,
+    # so its handler drops the other label and saves the triager a click.
+    # When both labels arrive together, the handler for the other label
+    # steps aside so only one of them comments and only one removes a label.
+    if label == COMMENT_LABEL and CLOSE_LABEL in util.labels(issue):
+        return
+    if label == CLOSE_LABEL and COMMENT_LABEL in util.labels(issue):
+        await gh.delete(issue["labels_url"], {"name": COMMENT_LABEL})
+
     marker = f"<!-- bedevere: {label} -->"
     app_id = os.environ.get("GH_APP_ID")
     async for comment in gh.getiter(issue["comments_url"]):

@@ -12,19 +12,37 @@ from gidgethub import aiohttp as gh_aiohttp
 from gidgethub import apps, routing, sansio
 
 from . import backport, close_pr, filepaths, gh_issue, news, policy, stage
+from .config import features_for
 
-router = routing.Router(
-    backport.router,
-    gh_issue.router,
-    close_pr.router,
-    filepaths.router,
-    news.router,
-    policy.router,
-    stage.router,
-)
+# App-level handlers that run for every event, whatever the repository.
+router = routing.Router()
+
+# Feature routers, in dispatch order. Each repository runs only the features
+# that features_for() enables for it.
+FEATURE_ROUTERS = {
+    "backport": backport.router,
+    "gh_issue": gh_issue.router,
+    "close_pr": close_pr.router,
+    "filepaths": filepaths.router,
+    "news": news.router,
+    "policy": policy.router,
+    "stage": stage.router,
+}
 cache = cachetools.LRUCache(maxsize=500)
 
 sentry_sdk.init(os.environ.get("SENTRY_DSN"))
+
+
+async def dispatch(event, gh, **kwargs):
+    """Dispatch an event to the app-level router and the repo's features."""
+    await router.dispatch(event, gh, **kwargs)
+    repo = event.data.get("repository")
+    if repo is None:
+        return
+    enabled = features_for(repo["full_name"])
+    for name, feature_router in FEATURE_ROUTERS.items():
+        if name in enabled:
+            await feature_router.dispatch(event, gh, features=enabled, **kwargs)
 
 
 async def main(request):
@@ -51,7 +69,7 @@ async def main(request):
 
             # Give GitHub some time to reach internal consistency.
             await asyncio.sleep(1)
-            await router.dispatch(event, gh, session=session)
+            await dispatch(event, gh, session=session)
         try:
             print("GH requests remaining:", gh.rate_limit.remaining)
         except AttributeError:

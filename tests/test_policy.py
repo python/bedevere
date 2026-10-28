@@ -252,7 +252,9 @@ async def test_comment_label_defers_to_close_label(kind):
 async def test_both_labels_added_together(kind, first):
     gh = FakeGH(policy.COMMENT_LABEL)
     gh.issue["labels"].append({"name": policy.CLOSE_LABEL})
-    second = policy.CLOSE_LABEL if first == policy.COMMENT_LABEL else policy.COMMENT_LABEL
+    second = (
+        policy.CLOSE_LABEL if first == policy.COMMENT_LABEL else policy.COMMENT_LABEL
+    )
     await policy.router.dispatch(make_event(kind, first), gh)
     await policy.router.dispatch(make_event(kind, second), gh)
 

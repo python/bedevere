@@ -10,6 +10,7 @@ APP_ID = 123
 ISSUE_URL = "https://api.github.com/repos/python/cpython/issues/42"
 PR_URL = "https://api.github.com/repos/python/cpython/pulls/42"
 COMMENTS_URL = f"{ISSUE_URL}/comments"
+LABELS_URL = f"{ISSUE_URL}/labels{{/name}}"
 
 
 def make_event(kind, label, *, action="labeled", state="open", sender_type="User"):
@@ -37,6 +38,7 @@ class FakeGH:
             "state": "open",
             "labels": [{"name": label}],
             "comments_url": COMMENTS_URL,
+            "labels_url": LABELS_URL,
         }
         self.comments = []
         self.calls = []
@@ -47,6 +49,12 @@ class FakeGH:
     async def getitem(self, url):
         self.calls.append(("get", url))
         return deepcopy(self.issue)
+
+    async def delete(self, url, url_vars):
+        self.calls.append(("delete", sansio.format_url(url, url_vars)))
+        self.issue["labels"] = [
+            label for label in self.issue["labels"] if label["name"] != url_vars["name"]
+        ]
 
     async def getiter(self, url):
         self.calls.append(("getiter", url))
@@ -203,9 +211,61 @@ async def test_other_authors_cannot_suppress_message(app):
 async def test_comment_then_close():
     gh = FakeGH(policy.COMMENT_LABEL)
     await policy.router.dispatch(make_event("issues", policy.COMMENT_LABEL), gh)
+    assert not any(call[0] == "delete" for call in gh.calls)
     gh.issue["labels"].append({"name": policy.CLOSE_LABEL})
     await policy.router.dispatch(make_event("issues", policy.CLOSE_LABEL), gh)
     assert len(gh.comments) == 2
     assert policy.ISSUE_COMMENT_MESSAGE in gh.comments[0]["body"]
     assert policy.ISSUE_CLOSE_MESSAGE in gh.comments[1]["body"]
     assert gh.issue["state"] == "closed"
+    assert gh.issue["labels"] == [{"name": policy.CLOSE_LABEL}]
+
+
+@pytest.mark.parametrize("kind", ["issues", "pull_request"])
+async def test_close_label_replaces_comment_label(kind):
+    gh = FakeGH(policy.COMMENT_LABEL)
+    gh.issue["labels"].append({"name": policy.CLOSE_LABEL})
+    await policy.router.dispatch(make_event(kind, policy.CLOSE_LABEL), gh)
+
+    removed_url = f"{ISSUE_URL}/labels/{policy.COMMENT_LABEL}"
+    assert gh.calls[:2] == [("get", ISSUE_URL), ("delete", removed_url)]
+    assert gh.issue["labels"] == [{"name": policy.CLOSE_LABEL}]
+    assert gh.issue["state"] == "closed"
+    assert len(gh.comments) == 1
+    assert gh.comments[0]["body"].endswith(f"<!-- bedevere: {policy.CLOSE_LABEL} -->")
+
+
+@pytest.mark.parametrize("kind", ["issues", "pull_request"])
+async def test_comment_label_defers_to_close_label(kind):
+    gh = FakeGH(policy.CLOSE_LABEL)
+    gh.issue["labels"].append({"name": policy.COMMENT_LABEL})
+    await policy.router.dispatch(make_event(kind, policy.COMMENT_LABEL), gh)
+
+    assert gh.calls == [("get", ISSUE_URL)]
+    assert not gh.comments
+    assert gh.issue["state"] == "open"
+    assert len(gh.issue["labels"]) == 2
+
+
+@pytest.mark.parametrize("kind", ["issues", "pull_request"])
+@pytest.mark.parametrize("first", [policy.COMMENT_LABEL, policy.CLOSE_LABEL])
+async def test_both_labels_added_together(kind, first):
+    gh = FakeGH(policy.COMMENT_LABEL)
+    gh.issue["labels"].append({"name": policy.CLOSE_LABEL})
+    second = policy.CLOSE_LABEL if first == policy.COMMENT_LABEL else policy.COMMENT_LABEL
+    await policy.router.dispatch(make_event(kind, first), gh)
+    await policy.router.dispatch(make_event(kind, second), gh)
+
+    assert gh.issue["labels"] == [{"name": policy.CLOSE_LABEL}]
+    assert gh.issue["state"] == "closed"
+    assert len(gh.comments) == 1
+    assert gh.comments[0]["body"].endswith(f"<!-- bedevere: {policy.CLOSE_LABEL} -->")
+    assert sum(call[0] == "delete" for call in gh.calls) == 1
+
+
+async def test_only_the_other_policy_label_is_removed():
+    gh = FakeGH("type-bug")
+    gh.issue["labels"].append({"name": policy.COMMENT_LABEL})
+    await policy.router.dispatch(make_event("issues", policy.COMMENT_LABEL), gh)
+    assert not any(call[0] == "delete" for call in gh.calls)
+    assert gh.issue["labels"] == [{"name": "type-bug"}, {"name": policy.COMMENT_LABEL}]

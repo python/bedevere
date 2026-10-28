@@ -23,7 +23,8 @@ Closes PRs that try to merge a maintenance branch into the main branch, adds
 - ### Remind Contributors about AI policy
 Posts a reminder of the AI guidelines on issues and PRs labeled
 `AI-needs-explanation` or `AI-guidelines-not-met`. The `AI-guidelines-not-met`
-label also closes the contribution.
+label also closes the contribution and removes `AI-needs-explanation` if it
+is present, so only one of the two labels applies at a time.
 - ### Labels PRs for docs
 Labels PRs for documentation as `docs`
 - ### Copies `type-feature` label from issue to PR

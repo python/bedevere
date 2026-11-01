@@ -92,11 +92,13 @@ def app_id(monkeypatch):
         ("pull_request", policy.CLOSE_LABEL, policy.PR_CLOSE_MESSAGE),
     ],
 )
-async def test_policy_action_through_main_router(kind, label, message):
+@pytest.mark.parametrize("repo", ["python/cpython", "python/devguide"])
+async def test_policy_action_through_main_dispatch(repo, kind, label, message):
     event = make_event(kind, label)
+    event.data["repository"] = {"full_name": repo}
     gh = FakeGH(label)
 
-    await main.router.dispatch(event, gh)
+    await main.dispatch(event, gh)
 
     assert gh.calls[0] == ("get", ISSUE_URL)
     assert gh.calls[1] == ("getiter", COMMENTS_URL)
@@ -111,6 +113,16 @@ async def test_policy_action_through_main_router(kind, label, message):
     else:
         assert len(gh.calls) == 3
         assert gh.issue["state"] == "open"
+
+
+async def test_no_policy_action_outside_python_org():
+    event = make_event("issues", policy.CLOSE_LABEL)
+    event.data["repository"] = {"full_name": "mariatta/devguide"}
+    gh = FakeGH(policy.CLOSE_LABEL)
+
+    await main.dispatch(event, gh)
+
+    assert gh.calls == []
 
 
 async def test_unrelated_label():

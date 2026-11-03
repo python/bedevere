@@ -832,12 +832,34 @@ async def test_new_comment():
     await awaiting.router.dispatch(event, gh)
     assert not len(gh.post_)
 
+    # Comment from PR author with trigger phrase, but no changes were requested.
+    data = {
+        "action": "created",
+        "issue": {
+            "user": {"login": "andreamcinnes"},
+            "labels": [{"name": awaiting.Blocker.review.value}],
+            "labels_url": "https://api.github.com/labels/42",
+            "url": "https://api.github.com/issue/42",
+            "pull_request": {"url": "https://api.github.com/pr/42"},
+            "comments_url": "https://api.github.com/comments/42",
+        },
+        "comment": {
+            "user": {"login": "andreamcinnes"},
+            "body": awaiting.BORING_TRIGGER_PHRASE,
+        },
+    }
+    event = sansio.Event(data, event="issue_comment", delivery_id="12345")
+    gh = FakeGH()
+    await awaiting.router.dispatch(event, gh)
+    assert not len(gh.post_)
+    assert not gh.delete_url
+
     # Everything is right with the world.
     data = {
         "action": "created",
         "issue": {
             "user": {"login": "andreamcinnes"},
-            "labels": [],
+            "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
             "url": "https://api.github.com/issue/42",
             "pull_request": {"url": "https://api.github.com/pr/42"},
@@ -886,7 +908,7 @@ async def test_new_comment():
         "action": "created",
         "issue": {
             "user": {"login": "andreamcinnes"},
-            "labels": [],
+            "labels": [{"name": awaiting.Blocker.changes.value}],
             "labels_url": "https://api.github.com/labels/42",
             "url": "https://api.github.com/issue/42",
             "pull_request": {"url": "https://api.github.com/pr/42"},

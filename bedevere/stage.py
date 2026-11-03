@@ -259,6 +259,9 @@ async def new_comment(event, gh, *args, **kwargs):
     elif not any(trigger.lower() in comment_body for trigger in TRIGGERS):
         # PR creator didn't request another review.
         return
+    elif Blocker.changes.value not in util.labels(issue):
+        # No changes were requested, so there is nothing to re-review.
+        return
     else:
         if FUN_TRIGGER_PHRASE.lower() in comment_body:
             thanks = FUN_THANKS

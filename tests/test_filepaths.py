@@ -261,3 +261,34 @@ async def test_synchronize():
     assert len(gh.post_url) == 1
     assert gh.post_url[0] == "https://api.github.com/some/status"
     assert gh.post_data[0]["state"] == "success"
+
+
+@pytest.mark.parametrize("action", ["opened", "synchronize"])
+async def test_no_news_check_when_news_disabled(action):
+    filenames = [
+        {
+            "filename": "test_docs2.py",
+            "patch": "@@ -31,3 +31,7 @@ # Licensed to PSF under a Contributor Agreement.",
+        },
+    ]
+    issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
+    gh = FakeGH(getiter=filenames, getitem=issue)
+    event_data = {
+        "action": action,
+        "number": 1234,
+        "pull_request": {
+            "url": "https://api.github.com/repos/cpython/python/pulls/1234",
+            "statuses_url": "https://api.github.com/some/status",
+            "issue_url": "https://api.github.com/repos/cpython/python/issue/1234",
+            "issue_comment_url": "https://api.github.com/repos/cpython/python/issue/1234/comments",
+            "author_association": "NONE",
+        },
+    }
+    event = sansio.Event(event_data, event="pull_request", delivery_id="1")
+    await filepaths.router.dispatch(event, gh, features=frozenset({"filepaths"}))
+    if action == "opened":
+        # The type label is still applied, but there's no NEWS status or help.
+        assert gh.post_url == ["https://api.github.com/some/label"]
+        assert gh.post_data == [[Labels.tests.value]]
+    else:
+        assert gh.post_url == []

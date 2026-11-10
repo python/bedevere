@@ -1,3 +1,7 @@
+import itertools
+
+import pytest
+
 from bedevere import prtype
 from bedevere.prtype import Labels
 
@@ -23,6 +27,13 @@ class FakeGH:
 
 
 GOOD_BASENAME = "2017-06-16-20-32-50.bpo-1234.nonce.rst"
+SSL_FILENAMES = frozenset(
+    [
+        "Lib/ssl.py",
+        "Lib/test/test_ssl.py",
+        "Doc/library/ssl.rst",
+    ]
+)
 
 
 async def test_no_files():
@@ -278,3 +289,31 @@ async def test_other_files():
     assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
     # No labels if a file other than doc or test exists.
     assert len(gh.post_url) == 0
+
+
+@pytest.mark.parametrize(
+    "filenames",
+    [
+        subset
+        for count in range(len(SSL_FILENAMES) + 1)
+        for subset in itertools.combinations(SSL_FILENAMES, count)
+    ],
+)
+async def test_security(filenames):
+    filenames = {f"Misc/NEWS.d/next/Security/{GOOD_BASENAME}", *filenames}
+    issue = {"labels": [], "labels_url": "https://api.github.com/some/label"}
+    gh = FakeGH(getitem=issue)
+    event_data = {
+        "action": "opened",
+        "number": 1234,
+        "pull_request": {
+            "url": "https://api.github.com/repos/cpython/python/pulls/1234",
+            "statuses_url": "https://api.github.com/some/status",
+            "issue_url": "https://api.github.com/repos/cpython/python/issue/1234",
+        },
+    }
+    await prtype.classify_by_filepaths(gh, event_data["pull_request"], filenames)
+    assert gh.getitem_url == "https://api.github.com/repos/cpython/python/issue/1234"
+    assert len(gh.post_url) == 1
+    assert gh.post_url[0] == "https://api.github.com/some/label"
+    assert gh.post_data[0] == [Labels.type_security.value]

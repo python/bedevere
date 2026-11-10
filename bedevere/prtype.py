@@ -5,6 +5,7 @@ import pathlib
 
 from . import util
 
+NEWS_NEXT_PATH = pathlib.PurePosixPath(util.NEWS_NEXT_DIR)
 TYPE_LABEL_PREFIX = "type"
 
 
@@ -37,25 +38,36 @@ async def classify_by_filepaths(gh, pull_request, filenames):
 
     The routing is handled by the filepaths module.
     """
-    pr_labels = []
     issue = await util.issue_for_PR(gh, pull_request)
-    news = docs = tests = False
+    news = docs = tests = security = unclassified = False
     for filename in filenames:
-        if util.is_news_dir(filename):
-            news = True
         filepath = pathlib.PurePath(filename)
+        try:
+            news_path = filepath.relative_to(NEWS_NEXT_PATH)
+        except ValueError:
+            pass  # Not news
+        else:
+            news = True
+            if news_path.parts[0] == "Security":
+                security = True
         if filepath.suffix in {".md", ".rst"} or filepath.name == ".nitignore":
             docs = True
         elif filepath.name.startswith(("test_", "_test")):
             tests = True
         else:
-            return pr_labels
-    if tests:
+            unclassified = True
+
+    if security:
+        pr_labels = [Labels.type_security]
+    elif unclassified:
+        return []
+    elif tests:
         pr_labels = [Labels.tests]
     elif docs:
-        if news:
-            pr_labels = [Labels.docs]
-        else:
-            pr_labels = [Labels.docs, Labels.skip_news]
+        pr_labels = [Labels.docs]
+        if not news:
+            pr_labels.append(Labels.skip_news)
+    else:
+        return []
     await add_labels(gh, issue, pr_labels)
     return pr_labels
